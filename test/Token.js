@@ -24,7 +24,7 @@ describe("Token contract", function () {
   // Network to that snapshot in every test.
   async function deployTokenFixture() {
     // Get the ContractFactory and Signers here.
-    const Token = await ethers.getContractFactory("Token");
+    const Token = await ethers.getContractFactory("SampleToken");
     const [owner, addr1, addr2] = await ethers.getSigners();
 
     // To deploy our contract, we just have to call Token.deploy() and await
