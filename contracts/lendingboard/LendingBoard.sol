@@ -1,11 +1,23 @@
 //SPDX-License-Identifier: UNLICENSED
-
-pragma solidity >=0.5.0;
+pragma solidity >=0.8.0;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "../libraries/openzeppelin-upgradeability/VersionedInitializable.sol";
+
+import "../configuration/LendingBoardAddressesProvider.sol";
+import "../configuration/LendingBoardParametersProvider.sol";
+import "../tokenization/AToken.sol";
+import "../libraries/CoreLibrary.sol";
+import "../libraries/WadRayMath.sol";
+import "../interfaces/IFeeProvider.sol";
+// import "../flashloan/interfaces/IFlashLoanReceiver.sol";
+import "./LendingBoardCore.sol";
+import "./LendingBoardDataProvider.sol";
+import "./LendingBoardLiquidationManager.sol";
+import "../libraries/EthAddressLib.sol";
 
 contract LendingBoard is ReentrancyGuard{
     //'indexed' : 하나의 event에 최대 3개의 indexed를 붙일 수 있다. indexed attr를 통해 fast filtering 가능해짐
@@ -449,5 +461,178 @@ contract LendingBoard is ReentrancyGuard{
             block.timestamp
         );
     }
+
+    /**
+    * @dev allows depositors to enable or disable a specific deposit as collateral.
+    * @param _reserve the address of the reserve
+    * @param _useAsCollateral true if the user wants to user the deposit as collateral, false otherwise.
+    **/
+    function setUserUseReserveAsCollateral(address _reserve, bool _useAsCollateral)
+        external
+        nonReentrant
+        onlyActiveReserve(_reserve)
+        onlyUnfreezedReserve(_reserve)
+    {
+        uint256 underlyingBalance = core.getUserUnderlyingAssetBalance(_reserve, msg.sender);
+
+        require(underlyingBalance > 0, "User does not have any liquidity deposited");
+
+        require(
+            dataProvider.balanceDecreaseAllowed(_reserve, msg.sender, underlyingBalance),
+            "User deposit is already being used as collateral"
+        );
+
+        core.setUserUseReserveAsCollateral(_reserve, msg.sender, _useAsCollateral);
+
+        if (_useAsCollateral) {
+            emit ReserveUsedAsCollateralEnabled(_reserve, msg.sender);
+        } else {
+            emit ReserveUsedAsCollateralDisabled(_reserve, msg.sender);
+        }
+    }
+
+    /**
+    * @dev users can invoke this function to liquidate an undercollateralized position.
+    * @param _reserve the address of the collateral to liquidated
+    * @param _reserve the address of the principal reserve
+    * @param _user the address of the borrower
+    * @param _purchaseAmount the amount of principal that the liquidator wants to repay
+    * @param _receiveAToken true if the liquidators wants to receive the aTokens, false if
+    * he wants to receive the underlying asset directly
+    **/
+    function liquidationCall(
+        address _collateral,
+        address _reserve,
+        address _user,
+        uint256 _purchaseAmount,
+        bool _receiveAToken
+    ) external payable nonReentrant onlyActiveReserve(_reserve) onlyActiveReserve(_collateral) {
+        address liquidationManager = addressesProvider.getLendingPoolLiquidationManager();
+
+        //solium-disable-next-line
+        (bool success, bytes memory result) = liquidationManager.delegatecall(
+            abi.encodeWithSignature(
+                "liquidationCall(address,address,address,uint256,bool)",
+                _collateral,
+                _reserve,
+                _user,
+                _purchaseAmount,
+                _receiveAToken
+            )
+        );
+        require(success, "Liquidation call failed");
+
+        (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
+
+        if (returnCode != 0) {
+            //error found
+            revert(string(abi.encodePacked("Liquidation failed: ", returnMessage)));
+        }
+    }
+
+    /**
+    * @dev accessory functions to fetch data from the core contract
+    **/
+
+    function getReserveConfigurationData(address _reserve)
+        external
+        view
+        returns (
+            uint256 ltv,
+            uint256 liquidationThreshold,
+            uint256 liquidationBonus,
+            address interestRateStrategyAddress,
+            bool usageAsCollateralEnabled,
+            bool borrowingEnabled,
+            bool stableBorrowRateEnabled,
+            bool isActive
+        )
+    {
+        return dataProvider.getReserveConfigurationData(_reserve);
+    }
+
+    function getReserveData(address _reserve)
+        external
+        view
+        returns (
+            uint256 totalLiquidity,
+            uint256 availableLiquidity,
+            uint256 totalBorrowsStable,
+            uint256 totalBorrowsVariable,
+            uint256 liquidityRate,
+            uint256 variableBorrowRate,
+            uint256 stableBorrowRate,
+            uint256 averageStableBorrowRate,
+            uint256 utilizationRate,
+            uint256 liquidityIndex,
+            uint256 variableBorrowIndex,
+            address aTokenAddress,
+            uint40 lastUpdateTimestamp
+        )
+    {
+        return dataProvider.getReserveData(_reserve);
+    }
+
+    function getUserAccountData(address _user)
+        external
+        view
+        returns (
+            uint256 totalLiquidityETH,
+            uint256 totalCollateralETH,
+            uint256 totalBorrowsETH,
+            uint256 totalFeesETH,
+            uint256 availableBorrowsETH,
+            uint256 currentLiquidationThreshold,
+            uint256 ltv,
+            uint256 healthFactor
+        )
+    {
+        return dataProvider.getUserAccountData(_user);
+    }
+
+    function getUserReserveData(address _reserve, address _user)
+        external
+        view
+        returns (
+            uint256 currentATokenBalance,
+            uint256 currentBorrowBalance,
+            uint256 principalBorrowBalance,
+            uint256 borrowRateMode,
+            uint256 borrowRate,
+            uint256 liquidityRate,
+            uint256 originationFee,
+            uint256 variableBorrowIndex,
+            uint256 lastUpdateTimestamp,
+            bool usageAsCollateralEnabled
+        )
+    {
+        return dataProvider.getUserReserveData(_reserve, _user);
+    }
+
+    function getReserves() external view returns (address[] memory) {
+        return core.getReserves();
+    }
+
+    /**
+    * @dev internal function to save on code size for the onlyActiveReserve modifier
+    **/
+    function requireReserveActiveInternal(address _reserve) internal view {
+        require(core.getReserveIsActive(_reserve), "Action requires an active reserve");
+    }
+
+    /**
+    * @notice internal function to save on code size for the onlyUnfreezedReserve modifier
+    **/
+    function requireReserveNotFreezedInternal(address _reserve) internal view {
+        require(!core.getReserveIsFreezed(_reserve), "Action requires an unfreezed reserve");
+    }
+
+    /**
+    * @notice internal function to save on code size for the onlyAmountGreaterThanZero modifier
+    **/
+    function requireAmountGreaterThanZeroInternal(uint256 _amount) internal pure {
+        require(_amount > 0, "Amount must be greater than 0");
+    }    
+
 
 }
