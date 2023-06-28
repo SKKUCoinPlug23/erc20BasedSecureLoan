@@ -188,7 +188,7 @@ contract LendingBoard is ReentrancyGuard,VersionedInitializable{
         //minting AToken to user 1:1 with the specific exchange rate
         aToken.mintOnDeposit(msg.sender, _amount);
 
-        //transfer to the core contract
+        // transfer to the core contract
         // core.transferToReserve.value(msg.value)(_reserve, msg.sender, _amount);
         address payable senderPayable = payable(msg.sender);
         core.transferToReserve{value: msg.value}(_reserve,senderPayable, _amount);
