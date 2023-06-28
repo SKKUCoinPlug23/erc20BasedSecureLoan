@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+// import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 // import "../libraries/openzeppelin-upgradeability/InitializableAdminUpgradeabilityProxy.sol";
 
 import "./AddressStorage.sol";
@@ -14,7 +15,7 @@ import "../interfaces/ILendingBoardAddressesProvider.sol";
 * @author Aave
 **/
 
-contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider, AddressStorage {
+contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvider, AddressStorage {
     //events
     event LendingBoardUpdated(address indexed newAddress);
     event LendingBoardCoreUpdated(address indexed newAddress);
@@ -51,7 +52,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     * @dev returns the address of the LendingPool proxy
     * @return the lending pool proxy address
     **/
-    function getLendingBoard() public view returns (address) {
+    function getLendingBoard() override public view returns (address) {
         return getAddress(LENDING_BOARD);
     }
 
@@ -60,17 +61,17 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     * @dev updates the implementation of the lending board
     * @param _board the new lending board implementation
     **/
-    function setLendingBoardImpl(address _board) public onlyOwner {
-        updateImplInternal(LENDING_BOARD, _board);
-        emit LendingBoardUpdated(_board);
-    }
+    // function setLendingBoardImpl(address _board) public onlyOwner {
+    //     updateImplInternal(LENDING_BOARD, _board);
+    //     emit LendingBoardUpdated(_board);
+    // }
 
     /**
     * @dev returns the address of the LendingBoardCore proxy
     * @return the lending board core proxy address
      */
-    function getLendingBoardCore() public view returns (address payable) {
-        address payable core = address(uint160(getAddress(LENDING_BOARD_CORE)));
+    function getLendingBoardCore() override public view returns (address payable) {
+        address payable core = payable(getAddress(LENDING_BOARD_CORE));
         return core;
     }
 
@@ -87,7 +88,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     * @dev returns the address of the LendingBoardConfigurator proxy
     * @return the lending board configurator proxy address
     **/
-    function getLendingBoardConfigurator() public view returns (address) {
+    function getLendingBoardConfigurator() override public view returns (address) {
         return getAddress(LENDING_BOARD_CONFIGURATOR);
     }
 
@@ -104,7 +105,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     * @dev returns the address of the LendingBoardDataProvider proxy
     * @return the lending board data provider proxy address
      */
-    function getLendingBoardDataProvider() public view returns (address) {
+    function getLendingBoardDataProvider() override public view returns (address) {
         return getAddress(DATA_PROVIDER);
     }
 
@@ -121,7 +122,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     * @dev returns the address of the LendingBoardParametersProvider proxy
     * @return the address of the Lending board parameters provider proxy
     **/
-    function getLendingBoardParametersProvider() public view returns (address) {
+    function getLendingBoardParametersProvider() override public view returns (address) {
         return getAddress(LENDING_BOARD_PARAMETERS_PROVIDER);
     }
 
@@ -138,7 +139,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     * @dev returns the address of the FeeProvider proxy
     * @return the address of the Fee provider proxy
     **/
-    function getFeeProvider() public view returns (address) {
+    function getFeeProvider() override public view returns (address) {
         return getAddress(FEE_PROVIDER);
     }
 
@@ -158,7 +159,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     * @return the address of the Lending Board liquidation manager
     **/
 
-    function getLendingBoardLiquidationManager() public view returns (address) {
+    function getLendingBoardLiquidationManager() override public view returns (address) {
         return getAddress(LENDING_BOARD_LIQUIDATION_MANAGER);
     }
 
@@ -166,7 +167,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     * @dev updates the address of the Lending Board liquidation manager
     * @param _manager the new lending Board liquidation manager address
     **/
-    function setLendingBoardLiquidationManager(address _manager) public onlyOwner {
+    function setLendingBoardLiquidationManager(address _manager) override public onlyOwner {
         _setAddress(LENDING_BOARD_LIQUIDATION_MANAGER, _manager);
         emit LendingBoardLiquidationManagerUpdated(_manager);
     }
@@ -177,39 +178,39 @@ contract LendingBoardAddressesProvider is Ownable, ILendingPoolAddressesProvider
     **/
 
 
-    function getLendingBoardManager() public view returns (address) {
+    function getLendingBoardManager() override public view returns (address) {
         return getAddress(LENDING_BOARD_MANAGER);
     }
 
-    function setLendingBoardManager(address _lendingBoardManager) public onlyOwner {
+    function setLendingBoardManager(address _lendingBoardManager) override public onlyOwner {
         _setAddress(LENDING_BOARD_MANAGER, _lendingBoardManager);
         emit LendingBoardManagerUpdated(_lendingBoardManager);
     }
 
-    function getPriceOracle() public view returns (address) {
+    function getPriceOracle() override public view returns (address) {
         return getAddress(PRICE_ORACLE);
     }
 
-    function setPriceOracle(address _priceOracle) public onlyOwner {
+    function setPriceOracle(address _priceOracle) override public onlyOwner {
         _setAddress(PRICE_ORACLE, _priceOracle);
         emit PriceOracleUpdated(_priceOracle);
     }
 
-    function getLendingRateOracle() public view returns (address) {
+    function getLendingRateOracle() override public view returns (address) {
         return getAddress(LENDING_RATE_ORACLE);
     }
 
-    function setLendingRateOracle(address _lendingRateOracle) public onlyOwner {
+    function setLendingRateOracle(address _lendingRateOracle) override public onlyOwner {
         _setAddress(LENDING_RATE_ORACLE, _lendingRateOracle);
         emit LendingRateOracleUpdated(_lendingRateOracle);
     }
 
 
-    function getTokenDistributor() public view returns (address) {
+    function getTokenDistributor() override public view returns (address) {
         return getAddress(TOKEN_DISTRIBUTOR);
     }
 
-    function setTokenDistributor(address _tokenDistributor) public onlyOwner {
+    function setTokenDistributor(address _tokenDistributor) override public onlyOwner {
         _setAddress(TOKEN_DISTRIBUTOR, _tokenDistributor);
         emit TokenDistributorUpdated(_tokenDistributor);
     }

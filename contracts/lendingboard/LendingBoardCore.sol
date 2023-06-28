@@ -1,10 +1,14 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-solidity/contracts/utils/Address.sol";
+// import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+// import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+// import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+// import "openzeppelin-solidity/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol"; // Not necessary in Solidity >=0.8.0
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "../libraries/openzeppelin-upgradeability/VersionedInitializable.sol";
 
 import "../libraries/CoreLibrary.sol";
@@ -24,7 +28,7 @@ import "../libraries/EthAddressLib.sol";
 * The check that an action can be performed is a duty of the overlying LendingPool contract.
 **/
 
-contract LendingPoolCore is VersionedInitializable {
+contract LendingBoardCore is VersionedInitializable {
     using SafeMath for uint256;
     using WadRayMath for uint256;
     using CoreLibrary for CoreLibrary.ReserveData;
@@ -52,7 +56,7 @@ contract LendingPoolCore is VersionedInitializable {
 
     address public lendingPoolAddress;
 
-    LendingPoolAddressesProvider public addressesProvider;
+    LendingBoardAddressesProvider public addressesProvider;
 
     /**
     * @dev only lending pools can use functions affected by this modifier
@@ -67,7 +71,7 @@ contract LendingPoolCore is VersionedInitializable {
     **/
     modifier onlyLendingPoolConfigurator {
         require(
-            addressesProvider.getLendingPoolConfigurator() == msg.sender,
+            addressesProvider.getLendingBoardConfigurator() == msg.sender,
             "The caller must be a lending pool configurator contract"
         );
         _;
@@ -83,7 +87,7 @@ contract LendingPoolCore is VersionedInitializable {
     /**
     * @dev returns the revision number of the contract
     **/
-    function getRevision() internal pure returns (uint256) {
+    function getRevision() override internal pure returns (uint256) {
         return CORE_REVISION;
     }
 
@@ -92,7 +96,7 @@ contract LendingPoolCore is VersionedInitializable {
     * @param _addressesProvider the addressesProvider contract
     **/
 
-    function initialize(LendingPoolAddressesProvider _addressesProvider) public initializer {
+    function initialize(LendingBoardAddressesProvider _addressesProvider) public initializer {
         addressesProvider = _addressesProvider;
         refreshConfigInternal();
     }
@@ -380,13 +384,13 @@ contract LendingPoolCore is VersionedInitializable {
     * @notice ETH/token transfer functions
     **/
 
-    /**
-    * @dev fallback function enforces that the caller is a contract, to support flashloan transfers
-    **/
-    receive() external payable { // WIP : 기존 function() => receive와 fallback으로 구분되어짐 (0.6.0 이후) => 수정완료
-        //only contracts can send ETH to the core
-        require(msg.sender.isContract(), "Only contracts can send ether to the Lending pool core");
-    }
+    // /**
+    // * @dev fallback function enforces that the caller is a contract, to support flashloan transfers
+    // **/
+    // receive() external payable { // WIP : 기존 function() => receive와 fallback으로 구분되어짐 (0.6.0 이후) => 수정완료
+    //     //only contracts can send ETH to the core
+    //     require(msg.sender.isContract(), "Only contracts can send ether to the Lending pool core");
+    // }
 
     /**
     * @dev transfers to the user a specific amount from the reserve.
@@ -402,7 +406,8 @@ contract LendingPoolCore is VersionedInitializable {
             ERC20(_reserve).safeTransfer(_user, _amount);
         } else {
             //solium-disable-next-line
-            (bool result, ) = _user.call.value(_amount).gas(50000)("");
+            // (bool success, ) = _user.call{value: _amount}("");
+            (bool result, ) = _user.call{value: _amount}("");
             require(result, "Transfer of ETH failed");
         }
     }
@@ -421,7 +426,9 @@ contract LendingPoolCore is VersionedInitializable {
         uint256 _amount,
         address _destination
     ) external payable onlyLendingPool {
-        address payable feeAddress = address(uint160(_destination)); //cast the address to payable
+        // address payable feeAddress = address(uint160(_destination)); //cast the address to payable
+        address payable feeAddress = payable(_destination);
+
 
         if (_token != EthAddressLib.ethAddress()) {
             require(
@@ -432,7 +439,8 @@ contract LendingPoolCore is VersionedInitializable {
         } else {
             require(msg.value >= _amount, "The amount and the value sent to deposit do not match");
             //solium-disable-next-line
-            (bool result, ) = feeAddress.call.value(_amount).gas(50000)("");
+            // (bool result, ) = feeAddress.call.value(_amount).gas(50000)("");
+            (bool result, ) = feeAddress.call{value: _amount}("");
             require(result, "Transfer of ETH failed");
         }
     }
@@ -448,7 +456,8 @@ contract LendingPoolCore is VersionedInitializable {
         uint256 _amount,
         address _destination
     ) external payable onlyLendingPool {
-        address payable feeAddress = address(uint160(_destination)); //cast the address to payable
+        // address payable feeAddress = address(uint160(_destination)); //cast the address to payable
+        address payable feeAddress = payable(_destination); //cast the address to payable
         require(
             msg.value == 0,
             "Fee liquidation does not require any transfer of value"
@@ -458,7 +467,8 @@ contract LendingPoolCore is VersionedInitializable {
             ERC20(_token).safeTransfer(feeAddress, _amount);
         } else {
             //solium-disable-next-line
-            (bool result, ) = feeAddress.call.value(_amount).gas(50000)("");
+            // (bool result, ) = feeAddress.call.value(_amount).gas(50000)("");
+            (bool result, ) = feeAddress.call{value: _amount}("");
             require(result, "Transfer of ETH failed");
         }
     }
@@ -485,7 +495,8 @@ contract LendingPoolCore is VersionedInitializable {
                 //send back excess ETH
                 uint256 excessAmount = msg.value.sub(_amount);
                 //solium-disable-next-line
-                (bool result, ) = _user.call.value(excessAmount).gas(50000)("");
+                // (bool result, ) = _user.call.value(excessAmount).gas(50000)("");
+                (bool result, ) = _user.call{value: _amount}("");
                 require(result, "Transfer of ETH failed");
             }
         }
@@ -850,11 +861,11 @@ contract LendingPoolCore is VersionedInitializable {
         return reserve.isFreezed;
     }
 
-    /**
-    * @notice returns the timestamp of the last action on the reserve
-    * @param _reserve the reserve for which the information is needed
-    * @return the last updated timestamp of the reserve
-    **/
+    // /**
+    // * @notice returns the timestamp of the last action on the reserve
+    // * @param _reserve the reserve for which the information is needed
+    // * @return the last updated timestamp of the reserve
+    // **/
 
     function getReserveLastUpdate(address _reserve) external view returns (uint40 timestamp) {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
@@ -1019,12 +1030,12 @@ contract LendingPoolCore is VersionedInitializable {
         return user.lastVariableBorrowCumulativeIndex;
     }
 
-    /**
-    * @dev the variable borrow index of the user is 0 if the user is not borrowing or borrowing at stable
-    * @param _reserve the address of the reserve for which the information is needed
-    * @param _user the address of the user for which the information is needed
-    * @return the variable borrow index for the user
-    **/
+    // /**
+    // * @dev the variable borrow index of the user is 0 if the user is not borrowing or borrowing at stable
+    // * @param _reserve the address of the reserve for which the information is needed
+    // * @param _user the address of the user for which the information is needed
+    // * @return the variable borrow index for the user
+    // **/
 
     function getUserLastUpdate(address _reserve, address _user)
         external
@@ -1301,15 +1312,15 @@ contract LendingPoolCore is VersionedInitializable {
         );
     }
 
-    /**
-    * @dev updates the state of a user as a consequence of a borrow action.
-    * @param _reserve the address of the reserve on which the user is borrowing
-    * @param _user the address of the borrower
-    * @param _amountBorrowed the amount borrowed
-    * @param _balanceIncrease the accrued interest of the user on the previous borrowed amount
-    * @param _rateMode the borrow rate mode (stable, variable)
-    * @return the final borrow rate for the user. Emitted by the borrow() event
-    **/
+    // /**
+    // * @dev updates the state of a user as a consequence of a borrow action.
+    // * @param _reserve the address of the reserve on which the user is borrowing
+    // * @param _user the address of the borrower
+    // * @param _amountBorrowed the amount borrowed
+    // * @param _balanceIncrease the accrued interest of the user on the previous borrowed amount
+    // * @param _rateMode the borrow rate mode (stable, variable)
+    // * @return the final borrow rate for the user. Emitted by the borrow() event
+    // **/
 
     function updateUserStateOnBorrowInternal(
         address _reserve,
@@ -1742,13 +1753,15 @@ contract LendingPoolCore is VersionedInitializable {
     **/
 
     function transferFlashLoanProtocolFeeInternal(address _token, uint256 _amount) internal {
-        address payable receiver = address(uint160(addressesProvider.getTokenDistributor()));
+        // address payable receiver = address(uint160(addressesProvider.getTokenDistributor()));
+        address payable receiver = payable(addressesProvider.getTokenDistributor());
 
         if (_token != EthAddressLib.ethAddress()) {
             ERC20(_token).safeTransfer(receiver, _amount);
         } else {
             //solium-disable-next-line
-            (bool result, ) = receiver.call.value(_amount)("");
+            // (bool result, ) = receiver.call.value(_amount)("");
+            (bool result, ) = receiver.call{value: _amount}("");
             require(result, "Transfer to token distributor failed");
         }
     }
@@ -1757,7 +1770,7 @@ contract LendingPoolCore is VersionedInitializable {
     * @dev updates the internal configuration of the core
     **/
     function refreshConfigInternal() internal {
-        lendingPoolAddress = addressesProvider.getLendingPool();
+        lendingPoolAddress = addressesProvider.getLendingBoard();
     }
 
     /**
