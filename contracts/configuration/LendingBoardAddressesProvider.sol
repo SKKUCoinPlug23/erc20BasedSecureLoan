@@ -61,10 +61,11 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     * @dev updates the implementation of the lending board
     * @param _board the new lending board implementation
     **/
-    // function setLendingBoardImpl(address _board) public onlyOwner {
-    //     updateImplInternal(LENDING_BOARD, _board);
-    //     emit LendingBoardUpdated(_board);
-    // }
+    function setLendingBoardImpl(address _board) public onlyOwner {
+        // updateImplInternal(LENDING_BOARD, _board); //Proxy 관련 Implementation을 나중에 시행, 일단은 _setAddress로 direct run
+        _setAddress(LENDING_BOARD,_board);
+        emit LendingBoardUpdated(_board);
+    }
 
     /**
     * @dev returns the address of the LendingBoardCore proxy
@@ -79,10 +80,11 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     * @dev updates the implementation of the lending board core
     * @param _lendingBoardCore the new lending board core implementation
     **/
-    // function setLendingBoardCoreImpl(address _lendingBoardCore) public onlyOwner {
-    //     updateImplInternal(LENDING_BOARD_CORE, _lendingBoardCore);
-    //     emit LendingBoardCoreUpdated(_lendingBoardCore);
-    // }
+    function setLendingBoardCoreImpl(address _lendingBoardCore) public onlyOwner {
+        // updateImplInternal(LENDING_BOARD_CORE, _lendingBoardCore);
+        _setAddress(LENDING_BOARD_CORE,_lendingBoardCore);
+        emit LendingBoardCoreUpdated(_lendingBoardCore);
+    }
 
     /**
     * @dev returns the address of the LendingBoardConfigurator proxy
@@ -96,10 +98,11 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     * @dev updates the implementation of the lending board configurator
     * @param _configurator the new lending board configurator implementation
     **/
-    // function setLendingBoardConfiguratorImpl(address _configurator) public onlyOwner {
-    //     updateImplInternal(LENDING_BOARDL_CONFIGURATOR, _configurator);
-    //     emit LendingBoardlConfiguratorUpdated(_configurator);
-    // }
+    function setLendingBoardConfiguratorImpl(address _configurator) public onlyOwner {
+        // updateImplInternal(LENDING_BOARD_CONFIGURATOR, _configurator);
+        _setAddress(LENDING_BOARD_CONFIGURATOR,_configurator);
+        emit LendingBoardConfiguratorUpdated(_configurator);
+    }
 
     /**
     * @dev returns the address of the LendingBoardDataProvider proxy
@@ -113,10 +116,11 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     * @dev updates the implementation of the lending board data provider
     * @param _provider the new lending board data provider implementation
     **/
-    // function setLendingboardDataProviderImpl(address _provider) public onlyOwner {
-    //     updateImplInternal(DATA_PROVIDER, _provider);
-    //     emit LendingboardDataProviderUpdated(_provider);
-    // }
+    function setLendingboardDataProviderImpl(address _provider) public onlyOwner {
+        // updateImplInternal(DATA_PROVIDER, _provider);
+        _setAddress(DATA_PROVIDER, _provider); // 일단 바로 setAddress하게끔 설정
+        emit LendingBoardDataProviderUpdated(_provider);
+    }
 
     /**
     * @dev returns the address of the LendingBoardParametersProvider proxy
@@ -130,10 +134,11 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     * @dev updates the implementation of the lending Board parameters provider
     * @param _parametersProvider the new lending Board parameters provider implementation
     **/
-    // function setLendingBoardParametersProviderImpl(address _parametersProvider) public onlyOwner {
-    //     updateImplInternal(LENDING_Board_PARAMETERS_PROVIDER, _parametersProvider);
-    //     emit LendingBoardParametersProviderUpdated(_parametersProvider);
-    // }
+    function setLendingBoardParametersProviderImpl(address _parametersProvider) public onlyOwner {
+        // updateImplInternal(LENDING_BOARD_PARAMETERS_PROVIDER, _parametersProvider);
+        _setAddress(LENDING_BOARD_PARAMETERS_PROVIDER, _parametersProvider); // 일단 바로 setAddress하게끔 설정
+        emit LendingBoardParametersProviderUpdated(_parametersProvider);
+    }
 
     /**
     * @dev returns the address of the FeeProvider proxy
@@ -147,10 +152,11 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     * @dev updates the implementation of the FeeProvider proxy
     * @param _feeProvider the new lending Board fee provider implementation
     **/
-    // function setFeeProviderImpl(address _feeProvider) public onlyOwner {
-    //     updateImplInternal(FEE_PROVIDER, _feeProvider);
-    //     emit FeeProviderUpdated(_feeProvider);
-    // }
+    function setFeeProviderImpl(address _feeProvider) public onlyOwner {
+        // updateImplInternal(FEE_PROVIDER, _feeProvider); // Proxy 관련 설정은 later 일단을 작동에 목표
+        _setAddress(FEE_PROVIDER, _feeProvider); // 일단 바로 setAddress하게끔 설정
+        emit FeeProviderUpdated(_feeProvider);
+    }
 
     /**
     * @dev returns the address of the LendingBoardLiquidationManager. Since the manager is used
@@ -222,7 +228,8 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     * @param _newAddress the address of the new implementation
     **/
     // function updateImplInternal(bytes32 _id, address _newAddress) internal {
-    //     address payable proxyAddress = address(uint160(getAddress(_id)));
+    //     // address payable proxyAddress = address(uint160(getAddress(_id)));
+    //     address payable proxyAddress = payable(getAddress(_id));
 
     //     InitializableAdminUpgradeabilityProxy proxy = InitializableAdminUpgradeabilityProxy(proxyAddress);
     //     bytes memory params = abi.encodeWithSignature("initialize(address)", address(this));
