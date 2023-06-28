@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+// import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol"; // Not necessary in Solidity >=0.8.0
 import "../libraries/openzeppelin-upgradeability/VersionedInitializable.sol";
 
 import "../libraries/CoreLibrary.sol";
@@ -34,7 +35,7 @@ contract LendingBoardDataProvider is VersionedInitializable {
 
     uint256 public constant DATA_PROVIDER_REVISION = 0x1;
 
-    function getRevision() internal pure returns (uint256) {
+    function getRevision() override internal pure returns (uint256) {
         return DATA_PROVIDER_REVISION;
     }
 
@@ -60,14 +61,15 @@ contract LendingBoardDataProvider is VersionedInitializable {
         address currentReserve;
     }
 
-    /**
-    * @dev calculates the user data across the reserves.
-    * this includes the total liquidity/collateral/borrow balances in ETH,
-    * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
-    * @param _user the address of the user
-    * @return the total liquidity, total collateral, total borrow balances of the user in ETH.
-    * also the average Ltv, liquidation threshold, and the health factor
-    **/
+    // /**
+    // * @dev calculates the user data across the reserves.
+    // * this includes the total liquidity/collateral/borrow balances in ETH,
+    // * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
+    // * @param _user the address of the user
+    // * @return the total liquidity, total collateral, total borrow balances of the user in ETH.
+    // * also the average Ltv, liquidation threshold, and the health factor
+    // **/
+
     function calculateUserGlobalData(address _user)
         public
         view
@@ -326,7 +328,7 @@ contract LendingBoardDataProvider is VersionedInitializable {
         uint256 totalFeesETH,
         uint256 liquidationThreshold
     ) internal pure returns (uint256) {
-        if (borrowBalanceETH == 0) return uint256(-1);
+        if (borrowBalanceETH == 0) return type(uint256).max;
 
         return
             (collateralBalanceETH.mul(liquidationThreshold).div(100)).wadDiv(
