@@ -1,8 +1,10 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >= 0.8.0;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+// import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+// import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol"; // ERC20 & ERC20Deatailed merged in recent openzeppelin
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "../configuration/LendingBoardAddressesProvider.sol";
 import "../lendingboard/LendingBoard.sol";
@@ -16,10 +18,11 @@ import "../libraries/WadRayMath.sol";
  * @dev Implementation of the interest bearing token for the DLP protocol.
  * @author Aave
  */
-contract AToken is ERC20, ERC20Detailed {
+contract AToken is ERC20 {
     using WadRayMath for uint256;
+    using SafeMath for uint256;
 
-    uint256 public constant UINT_MAX_VALUE = uint256(-1);
+    uint256 public constant UINT_MAX_VALUE = type(uint256).max;
 
     /**
     * @dev emitted after the redeem action
@@ -128,10 +131,10 @@ contract AToken is ERC20, ERC20Detailed {
     mapping (address => uint256) private redirectedBalances;
     mapping (address => address) private interestRedirectionAllowances;
 
-    LendingPoolAddressesProvider private addressesProvider;
-    LendingPoolCore private core;
-    LendingPool private pool;
-    LendingPoolDataProvider private dataProvider;
+    LendingBoardAddressesProvider private addressesProvider;
+    LendingBoardCore private core;
+    LendingBoard private pool;
+    LendingBoardDataProvider private dataProvider;
 
     modifier onlyLendingPool {
         require(
@@ -147,17 +150,17 @@ contract AToken is ERC20, ERC20Detailed {
     }
 
     constructor(
-        LendingPoolAddressesProvider _addressesProvider,
+        LendingBoardAddressesProvider _addressesProvider,
         address _underlyingAsset,
-        uint8 _underlyingAssetDecimals,
+        uint8 _underlyingAssetDecimals, // _underlyingAssetDecimal은 최신 openzeppelin에서 default 18로 설정되기에 explictly 설정할 필요없음. 일단은 다른 contract에서 AToken 선언시 에러 발생 방지를 위해 input은 받아둠
         string memory _name,
         string memory _symbol
-    ) public ERC20Detailed(_name, _symbol, _underlyingAssetDecimals) {
+    ) ERC20(_name, _symbol) { // WIP : 기존 ERC2Detailed => ERC20으로 바꿔봄
 
         addressesProvider = _addressesProvider;
-        core = LendingPoolCore(addressesProvider.getLendingPoolCore());
-        pool = LendingPool(addressesProvider.getLendingPool());
-        dataProvider = LendingPoolDataProvider(addressesProvider.getLendingPoolDataProvider());
+        core = LendingBoardCore(addressesProvider.getLendingBoardCore());
+        pool = LendingBoard(addressesProvider.getLendingBoard());
+        dataProvider = LendingBoardDataProvider(addressesProvider.getLendingBoardDataProvider());
         underlyingAssetAddress = _underlyingAsset;
     }
 
@@ -165,7 +168,7 @@ contract AToken is ERC20, ERC20Detailed {
      * @notice ERC20 implementation internal function backing transfer() and transferFrom()
      * @dev validates the transfer before allowing it. NOTE: This is not standard ERC20 behavior
      **/
-    function _transfer(address _from, address _to, uint256 _amount) internal whenTransferAllowed(_from, _amount) {
+    function _transfer(address _from, address _to, uint256 _amount) override internal whenTransferAllowed(_from, _amount) {
 
         executeTransferInternal(_from, _to, _amount);
     }
@@ -253,9 +256,11 @@ contract AToken is ERC20, ERC20Detailed {
         }
 
         // executes redeem of the underlying asset
+        address payable senderPayable = payable(msg.sender);
+
         pool.redeemUnderlying(
             underlyingAssetAddress,
-            msg.sender,
+            senderPayable,
             amountToRedeem,
             currentBalance.sub(amountToRedeem)
         );
@@ -336,7 +341,7 @@ contract AToken is ERC20, ERC20Detailed {
     * @param _user the user for which the balance is being calculated
     * @return the total balance of the user
     **/
-    function balanceOf(address _user) public view returns(uint256) {
+    function balanceOf(address _user) override public view returns(uint256) {
 
         //current principal balance of the user
         uint256 currentPrincipalBalance = super.balanceOf(_user);
@@ -390,7 +395,7 @@ contract AToken is ERC20, ERC20Detailed {
     * does that too.
     * @return the current total supply
     **/
-    function totalSupply() public view returns(uint256) {
+    function totalSupply() override public view returns(uint256) {
 
         uint256 currentSupplyPrincipal = super.totalSupply();
 

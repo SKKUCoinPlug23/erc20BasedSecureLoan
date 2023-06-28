@@ -1,0 +1,30 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "AddressStorage",
+  "sourceName": "contracts/configuration/AddressStorage.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_key",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60808060405234601457608f908161001a8239f35b600080fdfe6080806040526004361015601257600080fd5b600090813560e01c6321f8a7211460295750600080fd5b346055576020366003190112605557600435825260208281526040909220546001600160a01b03168152f35b5080fdfea2646970667358221220f7947c6c498a0b2be2412de255b156cb06c3515a3f61629ae77d121ebdac8da864736f6c634300080d0033",
+  "deployedBytecode": "0x6080806040526004361015601257600080fd5b600090813560e01c6321f8a7211460295750600080fd5b346055576020366003190112605557600435825260208281526040909220546001600160a01b03168152f35b5080fdfea2646970667358221220f7947c6c498a0b2be2412de255b156cb06c3515a3f61629ae77d121ebdac8da864736f6c634300080d0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

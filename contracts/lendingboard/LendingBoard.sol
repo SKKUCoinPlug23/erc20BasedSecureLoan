@@ -1,10 +1,14 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
-import "openzeppelin-solidity/contracts/utils/Address.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+// import "openzeppelin-solidity/contracts/math/SafeMath.sol"; // not needed
+// import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
+// import "openzeppelin-solidity/contracts/utils/Address.sol";
+// import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/openzeppelin-upgradeability/VersionedInitializable.sol";
 
 import "../configuration/LendingBoardAddressesProvider.sol";
@@ -19,7 +23,17 @@ import "./LendingBoardDataProvider.sol";
 import "./LendingBoardLiquidationManager.sol";
 import "../libraries/EthAddressLib.sol";
 
-contract LendingBoard is ReentrancyGuard{
+contract LendingBoard is ReentrancyGuard,VersionedInitializable{
+    using SafeMath for uint256;
+    using WadRayMath for uint256;
+    using Address for address;
+
+    LendingBoardAddressesProvider public addressesProvider;
+    LendingBoardCore public core;
+    LendingBoardDataProvider public dataProvider;
+    LendingBoardParametersProvider public parametersProvider;
+    IFeeProvider feeProvider;
+
     //'indexed' : 하나의 event에 최대 3개의 indexed를 붙일 수 있다. indexed attr를 통해 fast filtering 가능해짐
     event Deposit(
         address indexed _reserve, 
@@ -43,7 +57,6 @@ contract LendingBoard is ReentrancyGuard{
         uint256 _borrowRate,
         uint256 _originationFee,
         uint256 _borrowBalanceIncrease,
-        uint16 indexed _referral,
         uint256 _timestamp
     );
 
@@ -92,28 +105,66 @@ contract LendingBoard is ReentrancyGuard{
     );
 
     // @dev functions affected by this modifier can only be invoked by the aToken.sol contract
-    // modifier onlyOverlyingAToken(address _reserve) {
-    //     require(
-    //         msg.sender == core.getReserveATokenAddress(_reserve),
-    //         "The caller of this function can only be the aToken contract of this reserve"
-    //     );
-    //     _;
-    // }
+    modifier onlyOverlyingAToken(address _reserve) {
+        require(
+            msg.sender == core.getReserveATokenAddress(_reserve),
+            "The caller of this function can only be the aToken contract of this reserve"
+        );
+        _;
+    }
+
+    /**
+    * @dev functions affected by this modifier can only be invoked if the reserve is active
+    * @param _reserve the address of the reserve
+    **/
+    modifier onlyActiveReserve(address _reserve) {
+        requireReserveActiveInternal(_reserve);
+        _;
+    }
+
+    /**
+    * @dev functions affected by this modifier can only be invoked if the reserve is not freezed.
+    * A freezed reserve only allows redeems, repays, rebalances and liquidations.
+    * @param _reserve the address of the reserve
+    **/
+    modifier onlyUnfreezedReserve(address _reserve) {
+        requireReserveNotFreezedInternal(_reserve);
+        _;
+    }
 
     /**
     * @dev functions affected by this modifier can only be invoked if the provided _amount input parameter
     * is not zero.
     * @param _amount the amount provided
     **/
+
     modifier onlyAmountGreaterThanZero(uint256 _amount) {
         requireAmountGreaterThanZeroInternal(_amount);
         _;
     }
-    function requireAmountGreaterThanZeroInternal(uint256 _amount) internal pure {
-        require(_amount > 0, "Amount must be greater than 0");
+
+    uint256 public constant UINT_MAX_VALUE = type(uint256).max;
+
+    uint256 public constant LENDINGPOOL_REVISION = 0x3;
+
+    function getRevision() override internal pure returns (uint256) {
+        return LENDINGPOOL_REVISION;
     }
 
-    // uint256 public constant UINT_MAX_VALUE = uint256(-1);
+    /**
+    * @dev this function is invoked by the proxy contract when the LendingPool contract is added to the
+    * AddressesProvider.
+    * @param _addressesProvider the address of the LendingPoolAddressesProvider registry
+    **/
+    function initialize(LendingBoardAddressesProvider _addressesProvider) public initializer {
+        addressesProvider = _addressesProvider;
+        core = LendingBoardCore(addressesProvider.getLendingBoardCore());
+        dataProvider = LendingBoardDataProvider(addressesProvider.getLendingBoardDataProvider());
+        parametersProvider = LendingBoardParametersProvider(
+            addressesProvider.getLendingBoardParametersProvider()
+        );
+        feeProvider = IFeeProvider(addressesProvider.getFeeProvider());
+    }
 
     /**
     * @dev deposits The underlying asset into the reserve. A corresponding amount of the overlying asset (aTokens)
@@ -138,10 +189,12 @@ contract LendingBoard is ReentrancyGuard{
         aToken.mintOnDeposit(msg.sender, _amount);
 
         //transfer to the core contract
-        core.transferToReserve.value(msg.value)(_reserve, msg.sender, _amount);
+        // core.transferToReserve.value(msg.value)(_reserve, msg.sender, _amount);
+        address payable senderPayable = payable(msg.sender);
+        core.transferToReserve{value: msg.value}(_reserve,senderPayable, _amount);
 
         //solium-disable-next-line security/no-block-members // Ethlint 예외처리 표기
-        emit Deposit(_reserve, msg.sender, _amount, _referralCode, block.timestamp);
+        emit Deposit(_reserve, msg.sender, _amount, block.timestamp);
     }
 
     /**
@@ -197,6 +250,7 @@ contract LendingBoard is ReentrancyGuard{
         uint256 availableLiquidity;
         uint256 reserveDecimals;
         uint256 finalUserBorrowRate;
+        CoreLibrary.InterestRateMode rateMode;
         bool healthFactorBelowThreshold;
     }
 
@@ -316,7 +370,8 @@ contract LendingBoard is ReentrancyGuard{
         );
 
         //if we reached this point, we can transfer
-        core.transferToUser(_reserve, msg.sender, _amount);
+        address payable senderPayable = payable(msg.sender);
+        core.transferToUser(_reserve, senderPayable, _amount);
 
         emit Borrow(
             _reserve,
@@ -378,7 +433,8 @@ contract LendingBoard is ReentrancyGuard{
         );
 
         //default to max amount
-        vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
+        // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
+        vars.paybackAmount = vars.compoundedBorrowBalance + (vars.originationFee);
 
         if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
             vars.paybackAmount = _amount;
@@ -400,8 +456,13 @@ contract LendingBoard is ReentrancyGuard{
                 false
             );
 
-            core.transferToFeeCollectionAddress.value(vars.isETH ? vars.paybackAmount : 0)(
-                _reserve,
+            // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.paybackAmount : 0)(
+            //     _reserve,
+            //     _onBehalfOf,
+            //     vars.paybackAmount,
+            //     addressesProvider.getTokenDistributor()
+            // );
+            core.transferToFeeCollectionAddress{value:vars.isETH ? vars.paybackAmount : 0}(_reserve,
                 _onBehalfOf,
                 vars.paybackAmount,
                 addressesProvider.getTokenDistributor()
@@ -420,7 +481,8 @@ contract LendingBoard is ReentrancyGuard{
             return;
         }
 
-        vars.paybackAmountMinusFees = vars.paybackAmount.sub(vars.originationFee);
+        // vars.paybackAmountMinusFees = vars.paybackAmount.sub(vars.originationFee);
+        vars.paybackAmountMinusFees = vars.paybackAmount - (vars.originationFee);
 
         core.updateStateOnRepay(
             _reserve,
@@ -431,11 +493,19 @@ contract LendingBoard is ReentrancyGuard{
             vars.compoundedBorrowBalance == vars.paybackAmountMinusFees
         );
 
+        address payable senderPayable = payable(msg.sender);
+
         //if the user didn't repay the origination fee, transfer the fee to the fee collection address
         if(vars.originationFee > 0) {
-            core.transferToFeeCollectionAddress.value(vars.isETH ? vars.originationFee : 0)(
+            // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.originationFee : 0)(
+            //     _reserve,
+            //     msg.sender,
+            //     vars.originationFee,
+            //     addressesProvider.getTokenDistributor()
+            // );
+            core.transferToFeeCollectionAddress{value :vars.isETH ? vars.originationFee : 0}(
                 _reserve,
-                msg.sender,
+                senderPayable,
                 vars.originationFee,
                 addressesProvider.getTokenDistributor()
             );
@@ -444,9 +514,14 @@ contract LendingBoard is ReentrancyGuard{
         //sending the total msg.value if the transfer is ETH.
         //the transferToReserve() function will take care of sending the
         //excess ETH back to the caller
-        core.transferToReserve.value(vars.isETH ? msg.value.sub(vars.originationFee) : 0)(
+        // core.transferToReserve.value(vars.isETH ? msg.value.sub(vars.originationFee) : 0)(
+        //     _reserve,
+        //     msg.sender,
+        //     vars.paybackAmountMinusFees
+        // );
+        core.transferToReserve{value:vars.isETH ? msg.value.sub(vars.originationFee) : 0}(
             _reserve,
-            msg.sender,
+            senderPayable,
             vars.paybackAmountMinusFees
         );
 
@@ -507,7 +582,7 @@ contract LendingBoard is ReentrancyGuard{
         uint256 _purchaseAmount,
         bool _receiveAToken
     ) external payable nonReentrant onlyActiveReserve(_reserve) onlyActiveReserve(_collateral) {
-        address liquidationManager = addressesProvider.getLendingPoolLiquidationManager();
+        address liquidationManager = addressesProvider.getLendingBoardLiquidationManager();
 
         //solium-disable-next-line
         (bool success, bytes memory result) = liquidationManager.delegatecall(
