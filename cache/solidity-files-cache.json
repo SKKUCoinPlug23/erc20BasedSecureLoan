@@ -306,8 +306,8 @@
       ]
     },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/lendingboard/LendingBoard.sol": {
-      "lastModificationDate": 1687939552893,
-      "contentHash": "6771058ef4dabb05f2d0080ed2fa054f",
+      "lastModificationDate": 1688001071083,
+      "contentHash": "b1fd904dd597da9f9bd1ff1be625b3a0",
       "sourceName": "contracts/lendingboard/LendingBoard.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -750,8 +750,8 @@
       ]
     },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/lendingboard/LendingBoardLiquidationManager.sol": {
-      "lastModificationDate": 1687824342144,
-      "contentHash": "f6a9ade9cf3598f0ec4b30a9def66258",
+      "lastModificationDate": 1688006564007,
+      "contentHash": "066f4ca55cd910321beb73e77e6a1a59",
       "sourceName": "contracts/lendingboard/LendingBoardLiquidationManager.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -777,11 +777,28 @@
           }
         }
       },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.5.0"
+      "imports": [
+        "@openzeppelin/contracts/utils/math/SafeMath.sol",
+        "@openzeppelin/contracts/security/ReentrancyGuard.sol",
+        "@openzeppelin/contracts/utils/Address.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "../libraries/openzeppelin-upgradeability/VersionedInitializable.sol",
+        "../configuration/LendingBoardAddressesProvider.sol",
+        "../configuration/LendingBoardParametersProvider.sol",
+        "../tokenization/AToken.sol",
+        "../libraries/CoreLibrary.sol",
+        "../libraries/WadRayMath.sol",
+        "../interfaces/IFeeProvider.sol",
+        "./LendingBoardCore.sol",
+        "./LendingBoardDataProvider.sol",
+        "../interfaces/IPriceOracleGetter.sol"
       ],
-      "artifacts": []
+      "versionPragmas": [
+        ">=0.8.0"
+      ],
+      "artifacts": [
+        "LendingBoardLiquidationManager"
+      ]
     },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol": {
       "lastModificationDate": 1687769095582,
