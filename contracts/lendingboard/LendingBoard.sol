@@ -173,6 +173,7 @@ contract LendingBoard is ReentrancyGuard,VersionedInitializable{
     * @param _amount the amount to be deposited
     * @param _referralCode integrators are assigned a referral code and can potentially receive rewards.
     **/
+    // WIP : Metamask와 같은 외부 Wallet에서 버튼을 통해 approve를 하게 되면 user는 deposit()을 통해 msg.value를 service에 deposit하게 된다.
     function deposit(address _reserve, uint256 _amount, uint16 _referralCode)
         external
         payable
