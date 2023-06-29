@@ -2,7 +2,7 @@
 const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
-describe("LendingBoard Contract Test Implementation", function () {
+describe("<LendingBoard Contract Test Implementation>", function () {
   // We define a fixture to reuse the same setup in every test.
   async function deployLendingBoardFixture() {
     // Get the ContractFactory and Signers here.
@@ -21,12 +21,12 @@ describe("LendingBoard Contract Test Implementation", function () {
         CoreLibrary : hardhatCoreLibrary.address,
       },
     });
-
     const LendingBoardConfigurator = await ethers.getContractFactory("LendingBoardConfigurator");
     const LendingBoardDataProvider = await ethers.getContractFactory("LendingBoardDataProvider");
     const LendingBoardParametersProvider = await ethers.getContractFactory("LendingBoardParametersProvider");
     const LendingBoardFeeProvider = await ethers.getContractFactory("FeeProvider");
     const LendingBoardLiquidationManager = await ethers.getContractFactory("LendingBoardLiquidationManager");
+    const LendingBoardAddressesProvider = await ethers.getContractFactory("LendingBoardAddressesProvider");
 
     const hardhatLendingBoard = await LendingBoard.deploy();
     await hardhatLendingBoard.deployed()
@@ -51,20 +51,64 @@ describe("LendingBoard Contract Test Implementation", function () {
 
     console.log("Lending Board Base Contracts Deployment Successful");
 
+    const hardhatLendingBoardAddressesProvider = await LendingBoardAddressesProvider.deploy();
+    await hardhatLendingBoardAddressesProvider.deployed();
+
+    // Using LendingBoardAddressesProvider set the deployed Smart Contract address to the appropriate location
+    await hardhatLendingBoardAddressesProvider.setLendingBoardImpl(hardhatLendingBoard.address);
+    await hardhatLendingBoardAddressesProvider.setLendingBoardCoreImpl(hardhatLendingBoardCore.address);
+    await hardhatLendingBoardAddressesProvider.setLendingBoardConfiguratorImpl(hardhatLendingBoardConfigurator.address);
+    await hardhatLendingBoardAddressesProvider.setLendingboardDataProviderImpl(hardhatLendingBoardDataProvider.address);
+    await hardhatLendingBoardAddressesProvider.setLendingBoardParametersProviderImpl(hardhatLendingBoardParametersProvider.address);
+    await hardhatLendingBoardAddressesProvider.setFeeProviderImpl(hardhatLendingBoardFeeProvider.address);
+    await hardhatLendingBoardAddressesProvider.setLendingBoardLiquidationManager(hardhatLendingBoardLiquidationManager.address);
+
+    // Setting address for contracts that are outside the context of the protocol
+    // await hardhatLendingBoardAddressesProvider.setLendingBoardManager();
+    // await hardhatLendingBoardAddressesProvider.setPriceOracle();
+    // await hardhatLendingBoardAddressesProvider.setLendingRateOracle();
+    // await hardhatLendingBoardAddressesProvider.setTokenDistributor();
+
+    const addressStoredInAddressesProvider = await hardhatLendingBoardAddressesProvider.getLendingBoard();
+    console.log("LendingBoard address set : ",addressStoredInAddressesProvider);
+    // check if the address setting is done.
+    expect(addressStoredInAddressesProvider).to.equal(hardhatLendingBoard.address);
+
+    await hardhatLendingBoard.initialize(hardhatLendingBoardAddressesProvider.address);
+    await hardhatLendingBoardCore.initialize(hardhatLendingBoardAddressesProvider.address);
+    // await hardhatLendingBoardConfigurator.initialize(hardhatLendingBoardAddressesProvider.address);
+    await hardhatLendingBoardDataProvider.initialize(hardhatLendingBoardAddressesProvider.address);
+    await hardhatLendingBoardParametersProvider.initialize(hardhatLendingBoardAddressesProvider.address);
+    await hardhatLendingBoardFeeProvider.initialize(hardhatLendingBoardAddressesProvider.address);
+    // await hardhatLendingBoardLiquidationManager.initialize(hardhatLendingBoardAddressesProvider.address);
+    
+
+
+
     // Fixtures can return anything you consider useful for your tests
-    return { LendingBoard, hardhatLendingBoard, owner, addr1, addr2 };
+    return { owner, addr1, addr2, LendingBoard, hardhatLendingBoard,};
   }
 
-  // You can nest describe calls to create subsections.
-  describe("Deployment", function () {
+  describe("<Initializations>", function () {
 
-    it("Should Deploy Successfully", async function () {
+    it("Should Deploy Successfully and Set the proper address", async function () {
       const { hardhatLendingBoard, owner } = await loadFixture(deployLendingBoardFixture);
-
+      
 
       // expect(await hardhatLendingBoard.owner()).to.equal(owner.address);
     });
-
   });
+
+  // You can nest describe calls to create subsections.
+  describe("<Lending Board Interaction>", function () {
+
+    it("Depositing DAI Token to Service", async function () {
+      const { hardhatLendingBoard, owner } = await loadFixture(deployLendingBoardFixture);
+      const DAIaddress = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+      await hardhatLendingBoard.deposit(DAIaddress,100,0);
+      
+    });
+  });
+
 
 });
