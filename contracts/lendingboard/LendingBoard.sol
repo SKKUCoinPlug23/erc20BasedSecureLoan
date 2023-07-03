@@ -23,6 +23,9 @@ import "./LendingBoardDataProvider.sol";
 import "./LendingBoardLiquidationManager.sol";
 import "../libraries/EthAddressLib.sol";
 
+// We import this library to be able to use console.log
+import "hardhat/console.sol";
+
 contract LendingBoard is ReentrancyGuard,VersionedInitializable{
     using SafeMath for uint256;
     using WadRayMath for uint256;
@@ -180,14 +183,20 @@ contract LendingBoard is ReentrancyGuard,VersionedInitializable{
         nonReentrant
         onlyAmountGreaterThanZero(_amount)
     {
+    
+        console.log("---Deposit Started---");
         AToken aToken = AToken(core.getReserveATokenAddress(_reserve));
 
-        bool isFirstDeposit = aToken.balanceOf(msg.sender) == 0;
+        bool isFirstDeposit = aToken.balanceOf(msg.sender) == 0; 
+        // bool isFirstDeposit = true;
+        console.log("First Deposit Checked");
 
         core.updateStateOnDeposit(_reserve, msg.sender, _amount, isFirstDeposit);
+        console.log("LendingBoardCore state updated on Deposit");
 
         //minting AToken to user 1:1 with the specific exchange rate
         aToken.mintOnDeposit(msg.sender, _amount);
+        console.log("aToken Minted on Deposit");
 
         // transfer to the core contract
         // core.transferToReserve.value(msg.value)(_reserve, msg.sender, _amount);
