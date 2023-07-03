@@ -19,6 +19,9 @@ import "../libraries/WadRayMath.sol";
 import "../tokenization/AToken.sol";
 import "../libraries/EthAddressLib.sol";
 
+// We import this library to be able to use console.log
+import "hardhat/console.sol";
+
 /**
 * @title LendingBoardCore contract
 * @author Aave
@@ -115,9 +118,10 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _amount,
         bool _isFirstDeposit
     ) external onlyLendingPool {
+        console.log("From LendingBoardCore updateCumulativeIndexes Start");
         reserves[_reserve].updateCumulativeIndexes();
+        console.log("From LendingBoardCore updateCumulativeIndexes Done");
         updateReserveInterestRatesAndTimestampInternal(_reserve, _amount, 0);
-
         if (_isFirstDeposit) {
             //if this is the first deposit of the user, we configure the deposit as enabled to be used as collateral
             setUserUseReserveAsCollateral(_reserve, _user, true);
@@ -485,12 +489,16 @@ contract LendingBoardCore is VersionedInitializable {
         onlyLendingPool
     {
         if (_reserve != EthAddressLib.ethAddress()) {
+            console.log("if true case Started");
             require(msg.value == 0, "User is sending ETH along with the ERC20 transfer.");
+            console.log("Reserve Address : ",_reserve);
+            console.log("From Address : ", address(this));
             ERC20(_reserve).safeTransferFrom(_user, address(this), _amount);
+            console.log("if true case Done");
 
         } else {
             require(msg.value >= _amount, "The amount and the value sent to deposit do not match");
-
+            console.log("if false case Started");
             if (msg.value > _amount) {
                 //send back excess ETH
                 uint256 excessAmount = msg.value.sub(_amount);
@@ -499,7 +507,9 @@ contract LendingBoardCore is VersionedInitializable {
                 (bool result, ) = _user.call{value: _amount}("");
                 require(result, "Transfer of ETH failed");
             }
+            console.log("if false case Done");
         }
+        console.log("   => LBCore : insufficient allowance done");
     }
 
     /**
@@ -593,6 +603,7 @@ contract LendingBoardCore is VersionedInitializable {
     **/
 
     function getReserveATokenAddress(address _reserve) public view returns (address) {
+        console.log("LBCore : getReserveATokenAddress Reached");
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
         return reserve.aTokenAddress;
     }
@@ -610,6 +621,7 @@ contract LendingBoardCore is VersionedInitializable {
         } else {
             balance = IERC20(_reserve).balanceOf(address(this));
         }
+        console.log("   => LBCore : getReserveAvailableLiquidity done");
         return balance;
     }
 
@@ -1068,7 +1080,6 @@ contract LendingBoardCore is VersionedInitializable {
     ) external onlyLendingPoolConfigurator {
         reserves[_reserve].init(_aTokenAddress, _decimals, _interestRateStrategyAddress);
         addReserveToListInternal(_reserve);
-
     }
 
 
@@ -1717,6 +1728,7 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _liquidityTaken
     ) internal {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
+        console.log("Interest-Rate Strategy Address : ",reserve.interestRateStrategyAddress); // pass
         (uint256 newLiquidityRate, uint256 newStableRate, uint256 newVariableRate) = IReserveInterestRateStrategy(
             reserve
                 .interestRateStrategyAddress
@@ -1728,11 +1740,12 @@ contract LendingBoardCore is VersionedInitializable {
             reserve.totalBorrowsVariable,
             reserve.currentAverageStableBorrowRate
         );
-
+        // 여기 이전에서 막힘
+        console.log("newLiquidityRate : ",newLiquidityRate);
         reserve.currentLiquidityRate = newLiquidityRate;
         reserve.currentStableBorrowRate = newStableRate;
         reserve.currentVariableBorrowRate = newVariableRate;
-
+        console.log("Reserve Variable Set");
         //solium-disable-next-line
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
 

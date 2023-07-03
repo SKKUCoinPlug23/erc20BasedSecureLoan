@@ -12,6 +12,9 @@ import "../lendingboard/LendingBoardDataProvider.sol";
 import "../lendingboard/LendingBoardCore.sol";
 import "../libraries/WadRayMath.sol";
 
+// We import this library to be able to use console.log
+import "hardhat/console.sol";
+
 /**
  * @title Aave ERC20 AToken
  *
@@ -345,6 +348,7 @@ contract AToken is ERC20 {
 
         //current principal balance of the user
         uint256 currentPrincipalBalance = super.balanceOf(_user);
+        console.log("User AToken Balance",currentPrincipalBalance);
         //balance redirected by other users to _user for interest rate accrual
         uint256 redirectedBalance = redirectedBalances[_user];
 
