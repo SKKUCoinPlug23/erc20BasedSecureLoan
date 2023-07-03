@@ -124,7 +124,6 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
             uint256 currentVariableBorrowRate
         )
     {   
-        console.log("   => interestRateStrategy function calculateInterestRates activated");
         uint256 totalBorrows = _totalBorrowsStable.add(_totalBorrowsVariable);
 
         uint256 utilizationRate = (totalBorrows == 0 && _availableLiquidity == 0)
@@ -163,7 +162,6 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
             );
         }
 
-        console.log("   => getOverallBorrowRateInternal Start");
         currentLiquidityRate = getOverallBorrowRateInternal(
             _totalBorrowsStable,
             _totalBorrowsVariable,

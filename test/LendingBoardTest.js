@@ -13,7 +13,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     const hardhatCoreLibrary = await CoreLibrary.deploy();
     await hardhatCoreLibrary.deployed();
 
-    // Main Contracts
+    // Main Contracts 객체 생성 
     const LendingBoard = await ethers.getContractFactory("LendingBoard");
     const LendingBoardCore = await ethers.getContractFactory("LendingBoardCore", {
       signer : owner,
@@ -28,42 +28,33 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     const LendingBoardLiquidationManager = await ethers.getContractFactory("LendingBoardLiquidationManager");
     const LendingBoardAddressesProvider = await ethers.getContractFactory("LendingBoardAddressesProvider");
 
+    // Main Contracts Deployment
     const hardhatLendingBoard = await LendingBoard.deploy();
     await hardhatLendingBoard.deployed()
-
     const hardhatLendingBoardCore = await LendingBoardCore.deploy();
     await hardhatLendingBoardCore.deployed()
-
     const hardhatLendingBoardConfigurator = await LendingBoardConfigurator.deploy();
     await hardhatLendingBoardConfigurator.deployed()
-
     const hardhatLendingBoardDataProvider= await LendingBoardDataProvider.deploy();
     await hardhatLendingBoardDataProvider.deployed()
-
     const hardhatLendingBoardParametersProvider = await LendingBoardParametersProvider.deploy();
     await hardhatLendingBoardParametersProvider.deployed()
-
     const hardhatLendingBoardFeeProvider = await LendingBoardFeeProvider.deploy();
     await hardhatLendingBoardFeeProvider.deployed()
-    
     const hardhatLendingBoardLiquidationManager = await LendingBoardLiquidationManager.deploy();
     await hardhatLendingBoardLiquidationManager.deployed()
-
-    console.log("Lending Board Base Contracts Deployment Successful");
-
     const hardhatLendingBoardAddressesProvider = await LendingBoardAddressesProvider.deploy();
     await hardhatLendingBoardAddressesProvider.deployed();
 
-    // Using LendingBoardAddressesProvider set the deployed Smart Contract address to the appropriate location
+    // Using LendingBoardAddressesProvider(LBAP) set the deployed Smart Contract address to the appropriate location
     await hardhatLendingBoardAddressesProvider.setLendingBoardImpl(hardhatLendingBoard.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardCoreImpl(hardhatLendingBoardCore.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardConfiguratorImpl(hardhatLendingBoardConfigurator.address);
-    await hardhatLendingBoardAddressesProvider.setLendingboardDataProviderImpl(hardhatLendingBoardDataProvider.address);
+    await hardhatLendingBoardAddressesProvider.setLendingBoardDataProviderImpl(hardhatLendingBoardDataProvider.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardParametersProviderImpl(hardhatLendingBoardParametersProvider.address);
     await hardhatLendingBoardAddressesProvider.setFeeProviderImpl(hardhatLendingBoardFeeProvider.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardLiquidationManager(hardhatLendingBoardLiquidationManager.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardManager(owner.address);
-    // 
     // await hardhatLendingBoardAddressesProvider.setPriceOracle();
     // await hardhatLendingBoardAddressesProvider.setLendingRateOracle();
     // await hardhatLendingBoardAddressesProvider.setTokenDistributor();
@@ -74,11 +65,11 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     // await hardhatLendingBoardAddressesProvider.setLendingRateOracle();
     // await hardhatLendingBoardAddressesProvider.setTokenDistributor();
 
+    // LBAP 이용한 setter가 정상작동했는지 expect를 이용하여 확인
     const addressStoredInAddressesProvider = await hardhatLendingBoardAddressesProvider.getLendingBoard();
-    console.log("LendingBoard address set : ",addressStoredInAddressesProvider);
-    // check if the address setting is done.
     expect(addressStoredInAddressesProvider).to.equal(hardhatLendingBoard.address);
 
+    // 각 Main Contract의 initialize()를 이용하여 initialization 수행
     await hardhatLendingBoard.initialize(hardhatLendingBoardAddressesProvider.address);
     await hardhatLendingBoardCore.initialize(hardhatLendingBoardAddressesProvider.address); 
     await hardhatLendingBoardConfigurator.initialize(hardhatLendingBoardAddressesProvider.address);
@@ -87,86 +78,82 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     await hardhatLendingBoardFeeProvider.initialize(hardhatLendingBoardAddressesProvider.address);
     // await hardhatLendingBoardLiquidationManager.initialize(hardhatLendingBoardAddressesProvider.address);
 
-    // SampleToken Deployment for Testing
+    // SampleToken(STKN) Deployment for Testing. SampleToken.sol에서 가져옴
     const SampleToken = await ethers.getContractFactory("SampleToken");
     const hardhatSampleToken = await SampleToken.deploy();
     await hardhatSampleToken.deployed();
     
+    const STKNaddress = hardhatSampleToken.address;
+    console.log("STKNaddress : ",STKNaddress);
 
+    // Default Reserve Interest-Rate Strategy Contract Setting
+    const DefaultReserveInterestRateStrategy = await ethers.getContractFactory("DefaultReserveInterestRateStrategy");
+    const hardhatDefaultReserveInterestRateStrategy = await DefaultReserveInterestRateStrategy.deploy(STKNaddress,hardhatLendingBoardAddressesProvider.address,1,1,1,1,1);
+    await hardhatDefaultReserveInterestRateStrategy.deployed();
+    const strategyAddress = hardhatDefaultReserveInterestRateStrategy.address;
 
+    // 생성한 STKN의 Reserve를 initialization 해준다.
+    await hardhatLendingBoardConfigurator.initReserve(STKNaddress,18,strategyAddress);
 
+    // Approve LendingBoard contract to spend tokens
+    const approveAmount = ethers.utils.parseEther('1000');
+    // Send the approval transaction. The address should be LBCore not LB itself.
+    const approvalResult = await hardhatSampleToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
+    // Wait for the transaction to be mined
+    await approvalResult.wait();
+
+    const balanceOfOwner = await hardhatSampleToken.connect(owner).balanceOf(owner.address);
+    console.log("Balance of Owner : ",balanceOfOwner.toString());
+
+    // const balanceOfAddr1 = await hardhatSampleToken.connect(addr1).balanceOf(addr1.address);
+    // console.log("Balance of Address1 User : ",balanceOfAddr1.toString());
+
+    // Retrieve and log the allowance
+    // const allowance = await hardhatSampleToken.allowance(owner.address, hardhatLendingBoardCore.address);
+    // console.log("Allowance after approval: ", allowance.toString()); // allowance는 정상적으로 incremented
+    // console.log("Reserve Address : ",STKNaddress);
+    // console.log("LB Address : ",hardhatLendingBoard.address);
+    // console.log("LBCore Address : ",hardhatLendingBoardCore.address);
+
+    // console.log("STKN Approval for LendingBoard Contract Done");
+    
     // Fixtures can return anything you consider useful for your tests
-    return { owner, addr1, addr2, LendingBoard, hardhatLendingBoard,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator, hardhatSampleToken};
+    return { owner, addr1, addr2, LendingBoard, hardhatLendingBoard,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatSampleToken,STKNaddress};
   }
 
   describe("<Initializations>", function () {
 
     it("Should Deploy Successfully and Set the proper address", async function () {
       const { hardhatLendingBoard, owner } = await loadFixture(deployLendingBoardFixture);
-      
-
       // expect(await hardhatLendingBoard.owner()).to.equal(owner.address);
     });
   });
 
-  // You can nest describe calls to create subsections.
   describe("<Lending Board Interaction>", function () {
 
-    it("Depositing DAI Token to Service For the First Time", async function () {
-      // const DAIaddress = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; // Testing with DAI(Stable Token)
-      const { owner,addr1, hardhatLendingBoard, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken } = await loadFixture(deployLendingBoardFixture);
+    it("Depositing Sample Token to Service For the First Time", async function () {
+      // loadFixture 이용해서 필요한 객체들을 가져온다.
+      const { owner,addr1, hardhatLendingBoard, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,STKNaddress } = await loadFixture(deployLendingBoardFixture);
 
-      const STKNaddress = hardhatSampleToken.address;
-
-      // // AToken deploy with Matching Input Token
-      // const AToken = await ethers.getContractFactory("AToken");
-      // const hardhatAToken = await AToken.deploy(hardhatLendingBoardAddressesProvider.address,STKNaddress,18,"SampleToken","aSTKN");
-      // await hardhatAToken.deployed();
-      // const aSTKNaddress = hardhatAToken.address;
-
-      console.log("STKNaddress : ",STKNaddress);
-      // console.log("aSTKNaddress : ",aSTKNaddress);
-
-      // Default Reserve Interest-Rate Strategy Contract
-      const DefaultReserveInterestRateStrategy = await ethers.getContractFactory("DefaultReserveInterestRateStrategy");
-      const hardhatDefaultReserveInterestRateStrategy = await DefaultReserveInterestRateStrategy.deploy(STKNaddress,hardhatLendingBoardAddressesProvider.address,1,1,1,1,1);
-      await hardhatDefaultReserveInterestRateStrategy.deployed();
-      const strategyAddress = hardhatDefaultReserveInterestRateStrategy.address;
-
-      console.log("Initializing Reserve for STKN");
-      await hardhatLendingBoardConfigurator.initReserve(STKNaddress,18,strategyAddress);
-
-      console.log("AToken 및 LendingBoardCore reserve Initialization done");
-
-      // Approve LendingBoard contract to spend tokens
-      const approveAmount = ethers.utils.parseEther('1000');
-      // Send the approval transaction. The address should be LBCore not LB itself.
-      const approvalResult = await hardhatSampleToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
-      // Wait for the transaction to be mined
-      await approvalResult.wait();
-
-      const balanceOfOwner = await hardhatSampleToken.connect(owner).balanceOf(owner.address);
-      console.log("Balance of Owner : ",balanceOfOwner.toString());
-
-      // const balanceOfAddr1 = await hardhatSampleToken.connect(addr1).balanceOf(addr1.address);
-      // console.log("Balance of Address1 User : ",balanceOfAddr1.toString());
-
-      // Retrieve and log the allowance
-      const allowance = await hardhatSampleToken.allowance(owner.address, hardhatLendingBoardCore.address);
-      console.log("Allowance after approval: ", allowance.toString()); // allowance는 정상적으로 incremented
-      console.log("Reserve Address : ",STKNaddress);
-      console.log("LB Address : ",hardhatLendingBoard.address);
-      console.log("LBCore Address : ",hardhatLendingBoardCore.address);
-
-      console.log("STKN Approval for LendingBoard Contract Done");
-
-      // WIP : Make a deposit => Error 발생
+      // deposit() 이용하여 서비스에 STKN 예치
       const depositAmount = ethers.utils.parseEther('10');
       console.log("Deposit Amount : ",depositAmount.toString());
       await hardhatLendingBoard.connect(owner).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
-
-
     });
+
+    it("Getting Reserve Configuration Data",async function(){
+      const { owner,addr1, hardhatLendingBoard, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,STKNaddress } = await loadFixture(deployLendingBoardFixture);
+      // STKN의 Reserve getter function test
+      const reserveData = await hardhatLendingBoard.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data : ",reserveData);
+    });
+    
+    it("Borrowing",async function(){
+      const { owner,addr1, hardhatLendingBoard, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,STKNaddress } = await loadFixture(deployLendingBoardFixture);
+      await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(STKNaddress,true);
+      await hardhatLendingBoard.connect(owner).borrow(STKNaddress,10,1);
+    });
+    
   });
 
 
