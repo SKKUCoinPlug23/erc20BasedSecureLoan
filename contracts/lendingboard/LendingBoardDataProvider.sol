@@ -14,6 +14,9 @@ import "../tokenization/AToken.sol";
 
 import "./LendingBoardCore.sol";
 
+// We import this library to be able to use console.log
+import "hardhat/console.sol";
+
 /**
 * @title LendingBoardDataProvider contract
 * @author Aave
