@@ -37,44 +37,6 @@
         "console"
       ]
     },
-    "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/SampleToken.sol": {
-      "lastModificationDate": 1687926993819,
-      "contentHash": "f73cb23e309923187267a8b9daa72622",
-      "sourceName": "contracts/SampleToken.sol",
-      "solcConfig": {
-        "version": "0.8.13",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "viaIR": true,
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "hardhat/console.sol"
-      ],
-      "versionPragmas": [
-        ">=0.5.0"
-      ],
-      "artifacts": [
-        "SampleToken"
-      ]
-    },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/configuration/AddressStorage.sol": {
       "lastModificationDate": 1687842216209,
       "contentHash": "0c18222b68e8490c0e393083ef86e68f",
@@ -262,8 +224,8 @@
       ]
     },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/tokenization/AToken.sol": {
-      "lastModificationDate": 1687920637622,
-      "contentHash": "b8800e400bc04dd35bdab6363766003c",
+      "lastModificationDate": 1688091399728,
+      "contentHash": "8d8517d94c57b14a081fa79eb8a78807",
       "sourceName": "contracts/tokenization/AToken.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -296,7 +258,8 @@
         "../lendingboard/LendingBoard.sol",
         "../lendingboard/LendingBoardDataProvider.sol",
         "../lendingboard/LendingBoardCore.sol",
-        "../libraries/WadRayMath.sol"
+        "../libraries/WadRayMath.sol",
+        "hardhat/console.sol"
       ],
       "versionPragmas": [
         ">= 0.8.0"
@@ -306,8 +269,8 @@
       ]
     },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/lendingboard/LendingBoard.sol": {
-      "lastModificationDate": 1688001071083,
-      "contentHash": "b1fd904dd597da9f9bd1ff1be625b3a0",
+      "lastModificationDate": 1688110735904,
+      "contentHash": "80ab6d0a9cebe6fcfc6db062c85a0cca",
       "sourceName": "contracts/lendingboard/LendingBoard.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -348,7 +311,8 @@
         "./LendingBoardCore.sol",
         "./LendingBoardDataProvider.sol",
         "./LendingBoardLiquidationManager.sol",
-        "../libraries/EthAddressLib.sol"
+        "../libraries/EthAddressLib.sol",
+        "hardhat/console.sol"
       ],
       "versionPragmas": [
         ">=0.8.0"
@@ -358,8 +322,8 @@
       ]
     },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/lendingboard/LendingBoardDataProvider.sol": {
-      "lastModificationDate": 1687918381341,
-      "contentHash": "1c2dabfe842e7f4752474e593dbd8308",
+      "lastModificationDate": 1688086111772,
+      "contentHash": "1d1504233ee1e21f13d2f012c0789ec0",
       "sourceName": "contracts/lendingboard/LendingBoardDataProvider.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -404,8 +368,8 @@
       ]
     },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/lendingboard/LendingBoardCore.sol": {
-      "lastModificationDate": 1687918073056,
-      "contentHash": "367f16a9976d00fd93e65e50eab21214",
+      "lastModificationDate": 1688350983674,
+      "contentHash": "7848384030e999206aaf40599bc5e982",
       "sourceName": "contracts/lendingboard/LendingBoardCore.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -443,7 +407,8 @@
         "../interfaces/IReserveInterestRateStrategy.sol",
         "../libraries/WadRayMath.sol",
         "../tokenization/AToken.sol",
-        "../libraries/EthAddressLib.sol"
+        "../libraries/EthAddressLib.sol",
+        "hardhat/console.sol"
       ],
       "versionPragmas": [
         ">=0.8.0"
@@ -1237,8 +1202,8 @@
       "artifacts": []
     },
     "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/lendingboard/LendingBoardConfigurator.sol": {
-      "lastModificationDate": 1687935281804,
-      "contentHash": "e063fdf6ce23449278d68a11b4933a48",
+      "lastModificationDate": 1688100043672,
+      "contentHash": "d8abe20d37569898ee80b6d7ee6a23f7",
       "sourceName": "contracts/lendingboard/LendingBoardConfigurator.sol",
       "solcConfig": {
         "version": "0.8.13",
@@ -1317,6 +1282,126 @@
       ],
       "artifacts": [
         "FeeProvider"
+      ]
+    },
+    "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/BoilerPlateToken.sol": {
+      "lastModificationDate": 1688025159686,
+      "contentHash": "51c5210a173003b9631917b3301585cd",
+      "sourceName": "contracts/BoilerPlateToken.sol",
+      "solcConfig": {
+        "version": "0.8.13",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "hardhat/console.sol"
+      ],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "BoilerPlateToken"
+      ]
+    },
+    "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/SampleToken.sol": {
+      "lastModificationDate": 1688111213730,
+      "contentHash": "a5fc70e73fb6ef65c5ae493e15f00370",
+      "sourceName": "contracts/SampleToken.sol",
+      "solcConfig": {
+        "version": "0.8.13",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/ERC20.sol"
+      ],
+      "versionPragmas": [
+        ">=0.8.3"
+      ],
+      "artifacts": [
+        "SampleToken"
+      ]
+    },
+    "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/lendingboard/DefaultReserveInterestRateStrategy.sol": {
+      "lastModificationDate": 1688110589094,
+      "contentHash": "cc1baba0ae263ee161618f888df3584b",
+      "sourceName": "contracts/lendingboard/DefaultReserveInterestRateStrategy.sol",
+      "solcConfig": {
+        "version": "0.8.13",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IReserveInterestRateStrategy.sol",
+        "../libraries/WadRayMath.sol",
+        "../configuration/LendingBoardAddressesProvider.sol",
+        "./LendingBoardCore.sol",
+        "../interfaces/ILendingRateOracle.sol",
+        "@openzeppelin/contracts/utils/math/SafeMath.sol",
+        "hardhat/console.sol"
+      ],
+      "versionPragmas": [
+        ">=0.8.0"
+      ],
+      "artifacts": [
+        "DefaultReserveInterestRateStrategy"
       ]
     }
   }

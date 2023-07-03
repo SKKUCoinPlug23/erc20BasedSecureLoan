@@ -84,7 +84,7 @@ contract LendingBoardDataProvider is VersionedInitializable {
             bool healthFactorBelowThreshold
         )
     {
-        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle()); // WIP : Oracle 이용하여 price 정보 가져옴
 
         // Usage of a memory struct of vars to avoid "Stack too deep" errors due to local variables
         UserGlobalDataLocalVars memory vars;
