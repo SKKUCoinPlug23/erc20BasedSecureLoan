@@ -116,7 +116,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     * @dev updates the implementation of the lending board data provider
     * @param _provider the new lending board data provider implementation
     **/
-    function setLendingboardDataProviderImpl(address _provider) public onlyOwner {
+    function setLendingBoardDataProviderImpl(address _provider) public onlyOwner {
         // updateImplInternal(DATA_PROVIDER, _provider);
         _setAddress(DATA_PROVIDER, _provider); // 일단 바로 setAddress하게끔 설정
         emit LendingBoardDataProviderUpdated(_provider);

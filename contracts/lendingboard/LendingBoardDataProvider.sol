@@ -14,6 +14,9 @@ import "../tokenization/AToken.sol";
 
 import "./LendingBoardCore.sol";
 
+// We import this library to be able to use console.log
+import "hardhat/console.sol";
+
 /**
 * @title LendingBoardDataProvider contract
 * @author Aave
@@ -390,19 +393,33 @@ contract LendingBoardDataProvider is VersionedInitializable {
             uint40 lastUpdateTimestamp
         )
     {
+        console.log("   => LBDP getReserveData");
         totalLiquidity = core.getReserveTotalLiquidity(_reserve);
+        console.log("   => 1 ");
         availableLiquidity = core.getReserveAvailableLiquidity(_reserve);
+        console.log("   => 2 ");
         totalBorrowsStable = core.getReserveTotalBorrowsStable(_reserve);
+        console.log("   => 3 ");
         totalBorrowsVariable = core.getReserveTotalBorrowsVariable(_reserve);
+        console.log("   => 4 ");
         liquidityRate = core.getReserveCurrentLiquidityRate(_reserve);
+        console.log("   => 5 ");
         variableBorrowRate = core.getReserveCurrentVariableBorrowRate(_reserve);
+        console.log("   => 6 ");
         stableBorrowRate = core.getReserveCurrentStableBorrowRate(_reserve);
+        console.log("   => 7 ");
         averageStableBorrowRate = core.getReserveCurrentAverageStableBorrowRate(_reserve);
+        console.log("   => 8 ");
         utilizationRate = core.getReserveUtilizationRate(_reserve);
+        console.log("   => 9 ");
         liquidityIndex = core.getReserveLiquidityCumulativeIndex(_reserve);
+        console.log("   => 10 ");
         variableBorrowIndex = core.getReserveVariableBorrowsCumulativeIndex(_reserve);
+        console.log("   => 11 ");
         aTokenAddress = core.getReserveATokenAddress(_reserve);
+        console.log("   => 12 ");
         lastUpdateTimestamp = core.getReserveLastUpdate(_reserve);
+        console.log("   => 13 ");
     }
 
     function getUserAccountData(address _user)
