@@ -175,7 +175,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
       // Check borrowfee
       // const borrowfee = await hardhatLendingBoardFeeProvider.calculateLoanOriginationFee(owner.address,borrowAmount);
       // console.log("BorrowFee : ",borrowfee);
-      await hardhatLendingBoard.connect(owner).borrow(STKNaddress,borrowAmount,1);
+      await hardhatLendingBoard.connect(owner).borrow(STKNaddress,borrowAmount,2); // InterestRateMode 1 == stable, 2 == variable
     });
     
   });
