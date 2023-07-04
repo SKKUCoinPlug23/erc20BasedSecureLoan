@@ -432,6 +432,7 @@ contract LendingBoard is ReentrancyGuard,VersionedInitializable{
 
         require(vars.compoundedBorrowBalance > 0, "The user does not have any borrow pending");
 
+        // 아래의 require문은 다른 사람이 대출인의 빚을 다 갚아주는 accidental repayment를 방지함
         require(
             _amount != UINT_MAX_VALUE || msg.sender == _onBehalfOf,
             "To repay on behalf of an user an explicit amount to repay is needed."
@@ -441,6 +442,7 @@ contract LendingBoard is ReentrancyGuard,VersionedInitializable{
         // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
         vars.paybackAmount = vars.compoundedBorrowBalance + (vars.originationFee);
 
+        // User is trying to repay a specific amount less than their total debt.
         if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
             vars.paybackAmount = _amount;
         }
