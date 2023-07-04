@@ -27,6 +27,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     const LendingBoardFeeProvider = await ethers.getContractFactory("FeeProvider");
     const LendingBoardLiquidationManager = await ethers.getContractFactory("LendingBoardLiquidationManager");
     const LendingBoardAddressesProvider = await ethers.getContractFactory("LendingBoardAddressesProvider");
+    const TestOracle = await ethers.getContractFactory("TestOracle");
 
     // Main Contracts Deployment
     const hardhatLendingBoard = await LendingBoard.deploy();
@@ -45,6 +46,8 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     await hardhatLendingBoardLiquidationManager.deployed()
     const hardhatLendingBoardAddressesProvider = await LendingBoardAddressesProvider.deploy();
     await hardhatLendingBoardAddressesProvider.deployed();
+    const hardhatTestOracle = await TestOracle.deploy();
+    await hardhatTestOracle.deployed();
 
     // Using LendingBoardAddressesProvider(LBAP) set the deployed Smart Contract address to the appropriate location
     await hardhatLendingBoardAddressesProvider.setLendingBoardImpl(hardhatLendingBoard.address);
@@ -61,7 +64,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
 
     // Setting address for contracts that are outside the context of the protocol
     // await hardhatLendingBoardAddressesProvider.setLendingBoardManager();
-    // await hardhatLendingBoardAddressesProvider.setPriceOracle();
+    await hardhatLendingBoardAddressesProvider.setPriceOracle(hardhatTestOracle.address);
     // await hardhatLendingBoardAddressesProvider.setLendingRateOracle();
     // await hardhatLendingBoardAddressesProvider.setTokenDistributor();
 
@@ -85,6 +88,9 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     
     const STKNaddress = hardhatSampleToken.address;
     console.log("STKNaddress : ",STKNaddress);
+    const STKNPrice = ethers.utils.parseEther('2');
+    console.log("STKN Price : ",STKNPrice);
+    await hardhatTestOracle.setAssetPrice(STKNaddress,STKNPrice);
 
     // Default Reserve Interest-Rate Strategy Contract Setting
     const DefaultReserveInterestRateStrategy = await ethers.getContractFactory("DefaultReserveInterestRateStrategy");
@@ -118,7 +124,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     // console.log("STKN Approval for LendingBoard Contract Done");
     
     // Fixtures can return anything you consider useful for your tests
-    return { owner, addr1, addr2, LendingBoard, hardhatLendingBoard,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatSampleToken,STKNaddress};
+    return { owner, addr1, addr2, LendingBoard, hardhatLendingBoard,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress};
   }
 
   describe("<Initializations>", function () {
@@ -149,9 +155,27 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     });
     
     it("Borrowing",async function(){
-      const { owner,addr1, hardhatLendingBoard, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,STKNaddress } = await loadFixture(deployLendingBoardFixture);
+      const { owner,addr1, hardhatLendingBoard, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
+      // deposit() 이용하여 서비스에 STKN 예치
+      const depositAmount = ethers.utils.parseEther('10');
+      console.log("Deposit Amount : ",depositAmount.toString());
+      await hardhatLendingBoard.connect(owner).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
+      // borrow()
       await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(STKNaddress,true);
-      await hardhatLendingBoard.connect(owner).borrow(STKNaddress,10,1);
+      const baseLTVasCollateral = ethers.utils.parseEther('0.45');
+      const liquidationThreshold = ethers.utils.parseEther('0.70');
+      const liquidationBonus = ethers.utils.parseEther('0.01');
+      await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(STKNaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
+      await hardhatLendingBoard.connect(owner).setUserUseReserveAsCollateral(STKNaddress,1); // 1 : enable, 0 : disable
+      console.log("set STKN as Collateral enabled");
+      const reserveData = await hardhatLendingBoard.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data : ",reserveData);
+
+      const borrowAmount = ethers.utils.parseEther('10');
+      // Check borrowfee
+      // const borrowfee = await hardhatLendingBoardFeeProvider.calculateLoanOriginationFee(owner.address,borrowAmount);
+      // console.log("BorrowFee : ",borrowfee);
+      await hardhatLendingBoard.connect(owner).borrow(STKNaddress,borrowAmount,1);
     });
     
   });

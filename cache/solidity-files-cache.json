@@ -1404,6 +1404,44 @@
       "artifacts": [
         "DefaultReserveInterestRateStrategy"
       ]
+    },
+    "/Users/seojune/Desktop/nft_bond_project/erc20BasedSecureLoan/contracts/oracle/TestOracle.sol": {
+      "lastModificationDate": 1688370810710,
+      "contentHash": "f15ed9e1b2d56531e2611ec2d746abd7",
+      "sourceName": "contracts/oracle/TestOracle.sol",
+      "solcConfig": {
+        "version": "0.8.13",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IPriceOracle.sol"
+      ],
+      "versionPragmas": [
+        ">=0.8.0"
+      ],
+      "artifacts": [
+        "TestOracle"
+      ]
     }
   }
 }
