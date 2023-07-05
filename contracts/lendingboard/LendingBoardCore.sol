@@ -712,15 +712,15 @@ contract LendingBoardCore is VersionedInitializable {
 
     function getReserveCurrentStableBorrowRate(address _reserve) public view returns (uint256) {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
-        console.log("   => LBC : Oracle Currently Disabled ");
-        // ILendingRateOracle oracle = ILendingRateOracle(addressesProvider.getLendingRateOracle());
+        ILendingRateOracle oracle = ILendingRateOracle(addressesProvider.getLendingRateOracle());
 
-        console.log("Current Stable Borrow Rate : ",reserve.currentStableBorrowRate);
+        console.log("   => LBC : Current Stable Borrow Rate : ",reserve.currentStableBorrowRate);
 
-        // if (reserve.currentStableBorrowRate == 0) {
-        //     //no stable rate borrows yet
-        //     return oracle.getMarketBorrowRate(_reserve);
-        // }
+        if (reserve.currentStableBorrowRate == 0) {
+            console.log("   => LBC : Oracle Lending Rate Applied");
+            //no stable rate borrows yet
+            return oracle.getMarketBorrowRate(_reserve);
+        }
 
         return reserve.currentStableBorrowRate;
     }
@@ -1720,7 +1720,6 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _liquidityTaken
     ) internal {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
-        console.log("Interest-Rate Strategy Address : ",reserve.interestRateStrategyAddress); // pass
         (uint256 newLiquidityRate, uint256 newStableRate, uint256 newVariableRate) = IReserveInterestRateStrategy(
             reserve
                 .interestRateStrategyAddress
