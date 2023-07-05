@@ -6,7 +6,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
   // We define a fixture to reuse the same setup in every test.
   async function deployLendingBoardFixture() {
     // Get the ContractFactory and Signers here.
-    const [owner, addr1, addr2] = await ethers.getSigners();
+    const [owner, user1, user2,] = await ethers.getSigners();
 
     // Libraries
     const CoreLibrary = await ethers.getContractFactory("CoreLibrary");
@@ -28,6 +28,8 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     const LendingBoardLiquidationManager = await ethers.getContractFactory("LendingBoardLiquidationManager");
     const LendingBoardAddressesProvider = await ethers.getContractFactory("LendingBoardAddressesProvider");
     const TestOracle = await ethers.getContractFactory("TestOracle");
+    const TestLendingRateOracle = await ethers.getContractFactory("TestLendingRateOracle");
+    const TokenDistributor = await ethers.getContractFactory("TokenDistributor");
 
     // Main Contracts Deployment
     const hardhatLendingBoardProposeMode = await LendingBoardProposeMode.deploy();
@@ -48,6 +50,10 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatLendingBoardAddressesProvider.deployed();
     const hardhatTestOracle = await TestOracle.deploy();
     await hardhatTestOracle.deployed();
+    const hardhatTestLendingRateOracle = await TestLendingRateOracle.deploy();
+    await hardhatTestLendingRateOracle.deployed();
+    const hardhatTokenDistributor = await TokenDistributor.deploy();
+    await hardhatTokenDistributor.deployed();
 
     // Using LendingBoardAddressesProvider(LBAP) set the deployed Smart Contract address to the appropriate location
     await hardhatLendingBoardAddressesProvider.setLendingBoardImpl(hardhatLendingBoardProposeMode.address);
@@ -56,17 +62,14 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatLendingBoardAddressesProvider.setLendingBoardDataProviderImpl(hardhatLendingBoardDataProvider.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardParametersProviderImpl(hardhatLendingBoardParametersProvider.address);
     await hardhatLendingBoardAddressesProvider.setFeeProviderImpl(hardhatLendingBoardFeeProvider.address);
-    await hardhatLendingBoardAddressesProvider.setLendingBoardLiquidationManager(hardhatLendingBoardLiquidationManager.address);
-    await hardhatLendingBoardAddressesProvider.setLendingBoardManager(owner.address);
-    // await hardhatLendingBoardAddressesProvider.setPriceOracle();
-    // await hardhatLendingBoardAddressesProvider.setLendingRateOracle();
-    // await hardhatLendingBoardAddressesProvider.setTokenDistributor();
 
     // Setting address for contracts that are outside the context of the protocol
-    // await hardhatLendingBoardAddressesProvider.setLendingBoardManager();
+    await hardhatLendingBoardAddressesProvider.setLendingBoardLiquidationManager(hardhatLendingBoardLiquidationManager.address);
+    await hardhatLendingBoardAddressesProvider.setLendingBoardManager(owner.address);
     await hardhatLendingBoardAddressesProvider.setPriceOracle(hardhatTestOracle.address);
+    await hardhatLendingBoardAddressesProvider.setLendingRateOracle(hardhatTestLendingRateOracle.address);
+    await hardhatLendingBoardAddressesProvider.setTokenDistributor(hardhatTokenDistributor.address);
     // await hardhatLendingBoardAddressesProvider.setLendingRateOracle();
-    // await hardhatLendingBoardAddressesProvider.setTokenDistributor();
 
     // LBAP 이용한 setter가 정상작동했는지 expect를 이용하여 확인
     const addressStoredInAddressesProvider = await hardhatLendingBoardAddressesProvider.getLendingBoard();
@@ -79,6 +82,8 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatLendingBoardDataProvider.initialize(hardhatLendingBoardAddressesProvider.address);
     await hardhatLendingBoardParametersProvider.initialize(hardhatLendingBoardAddressesProvider.address);
     await hardhatLendingBoardFeeProvider.initialize(hardhatLendingBoardAddressesProvider.address);
+    // since DISTRIBUTION_BASE = 10000; set in TokenDistributor.sol dummy data for percentages set like below
+    await hardhatTokenDistributor.initialize([owner.address,user1.address,user2.address],[4000,3000,2000]);
     // await hardhatLendingBoardLiquidationManager.initialize(hardhatLendingBoardAddressesProvider.address);
 
     // SampleToken(STKN) Deployment for Testing. SampleToken.sol에서 가져옴
@@ -86,11 +91,17 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     const hardhatSampleToken = await SampleToken.deploy();
     await hardhatSampleToken.deployed();
     
+    // Sample Token Address 확인
     const STKNaddress = hardhatSampleToken.address;
     console.log("STKNaddress : ",STKNaddress);
+
+    // 임의로 TestOracle AssetPrice 및 TestLendingRateOracle의 LendingRate 설정
     const STKNPrice = ethers.utils.parseEther('2');
     console.log("STKN Price : ",STKNPrice);
     await hardhatTestOracle.setAssetPrice(STKNaddress,STKNPrice);
+
+    const STKNLendingRate = ethers.utils.parseEther('0.05');
+    await hardhatTestLendingRateOracle.setMarketBorrowRate(STKNaddress,STKNLendingRate);
 
     // Default Reserve Interest-Rate Strategy Contract Setting
     const DefaultReserveInterestRateStrategy = await ethers.getContractFactory("DefaultReserveInterestRateStrategy");
@@ -111,27 +122,28 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     const balanceOfOwner = await hardhatSampleToken.connect(owner).balanceOf(owner.address);
     console.log("Balance of Owner : ",balanceOfOwner.toString());
 
-    // const balanceOfAddr1 = await hardhatSampleToken.connect(addr1).balanceOf(addr1.address);
-    // console.log("Balance of Address1 User : ",balanceOfAddr1.toString());
+    // deposit() 이용하여 서비스에 STKN 예치
+    const depositAmount = ethers.utils.parseEther('10');
+    await hardhatLendingBoardProposeMode.connect(owner).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
 
-    // Retrieve and log the allowance
-    // const allowance = await hardhatSampleToken.allowance(owner.address, hardhatLendingBoardCore.address);
-    // console.log("Allowance after approval: ", allowance.toString()); // allowance는 정상적으로 incremented
-    // console.log("Reserve Address : ",STKNaddress);
-    // console.log("LB Address : ",hardhatLendingBoard.address);
-    // console.log("LBCore Address : ",hardhatLendingBoardCore.address);
-
-    // console.log("STKN Approval for LendingBoard Contract Done");
+    // configuring STKN Reserve for Borrowing and Collateral
+    await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(STKNaddress,true);
+    const baseLTVasCollateral = ethers.utils.parseEther('0.45');
+    const liquidationThreshold = ethers.utils.parseEther('0.70');
+    const liquidationBonus = ethers.utils.parseEther('0.01');
+    await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(STKNaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
+    await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(STKNaddress,1); // 1 : enable, 0 : disable
+    console.log("set STKN as Collateral enabled");
     
     // Fixtures can return anything you consider useful for your tests
-    return { owner, addr1, addr2, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress};
+    return { owner, user1, user2, LendingBoardProposeMode, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress};
   }
 
   describe("<Initializations>", function () {
 
     it("Should Deploy Successfully and Set the proper address", async function () {
       const { hardhatLendingBoardProposeMode, owner } = await loadFixture(deployLendingBoardFixture);
-      // expect(await hardhatLendingBoard.owner()).to.equal(owner.address);
+      // expect(await hardhatLendingBoardProposeMode.owner()).to.equal(owner.address);
     });
   });
 
@@ -156,26 +168,64 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     
     it("Borrowing",async function(){
       const { owner,addr1, hardhatLendingBoardProposeMode, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
-      // deposit() 이용하여 서비스에 STKN 예치
-      const depositAmount = ethers.utils.parseEther('10');
-      console.log("Deposit Amount : ",depositAmount.toString());
-      await hardhatLendingBoardProposeMode.connect(owner).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
       // borrow()
-      await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(STKNaddress,true);
-      const baseLTVasCollateral = ethers.utils.parseEther('0.45');
-      const liquidationThreshold = ethers.utils.parseEther('0.70');
-      const liquidationBonus = ethers.utils.parseEther('0.01');
-      await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(STKNaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
-      await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(STKNaddress,1); // 1 : enable, 0 : disable
-      console.log("set STKN as Collateral enabled");
-      const reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data : ",reserveData);
+      var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+
+      const borrowAmount = ethers.utils.parseEther('1');
+      await hardhatLendingBoardProposeMode.connect(owner).borrow(STKNaddress,borrowAmount,2); // InterestRateMode 1 == stable, 2 == variable
+      
+      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+    });
+
+    it("Borrow and Repay less than the borrow amount",async function(){
+      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
+     
+      // borrow()
+      var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+
+      const borrowAmount = ethers.utils.parseEther('1');
+      await hardhatLendingBoardProposeMode.connect(owner).borrow(STKNaddress,borrowAmount,2); // InterestRateMode 1 == stable, 2 == variable
+      
+      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+
+      // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
+      await expect(hardhatLendingBoardProposeMode.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
+      // owner가 repay하는 경우
+      const repayAmount = ethers.utils.parseEther('0.5'); // 대출한 값보다 적은 금액을 repayAmount로 책정
+      await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress,repayAmount,owner.address);
+      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+
+    });
+
+    it("Borrow and Repay more than the borrow amount",async function(){
+      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
+     
+      // borrow()
+      var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
 
       const borrowAmount = ethers.utils.parseEther('10');
-      // Check borrowfee
-      // const borrowfee = await hardhatLendingBoardFeeProvider.calculateLoanOriginationFee(owner.address,borrowAmount);
-      // console.log("BorrowFee : ",borrowfee);
       await hardhatLendingBoardProposeMode.connect(owner).borrow(STKNaddress,borrowAmount,2); // InterestRateMode 1 == stable, 2 == variable
+      
+      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
+
+      // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
+      await expect(hardhatLendingBoardProposeMode.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
+      // owner가 repay하는 경우
+      const repayAmount = ethers.utils.parseEther('21'); // 대출한 값보다 적은 금액을 repayAmount로 책정
+      await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress,repayAmount,owner.address);
+      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
+
     });
     
   });
