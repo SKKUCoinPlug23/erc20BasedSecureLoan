@@ -28,6 +28,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     const LendingBoardLiquidationManager = await ethers.getContractFactory("LendingBoardLiquidationManager");
     const LendingBoardAddressesProvider = await ethers.getContractFactory("LendingBoardAddressesProvider");
     const TestOracle = await ethers.getContractFactory("TestOracle");
+    const TestLendingRateOracle = await ethers.getContractFactory("TestLendingRateOracle");
     const TokenDistributor = await ethers.getContractFactory("TokenDistributor");
 
     // Main Contracts Deployment
@@ -49,6 +50,8 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     await hardhatLendingBoardAddressesProvider.deployed();
     const hardhatTestOracle = await TestOracle.deploy();
     await hardhatTestOracle.deployed();
+    const hardhatTestLendingRateOracle = await TestLendingRateOracle.deploy();
+    await hardhatTestLendingRateOracle.deployed();
     const hardhatTokenDistributor = await TokenDistributor.deploy();
     await hardhatTokenDistributor.deployed();
 
@@ -64,6 +67,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     await hardhatLendingBoardAddressesProvider.setLendingBoardLiquidationManager(hardhatLendingBoardLiquidationManager.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardManager(owner.address);
     await hardhatLendingBoardAddressesProvider.setPriceOracle(hardhatTestOracle.address);
+    await hardhatLendingBoardAddressesProvider.setLendingRateOracle(hardhatTestLendingRateOracle.address);
     await hardhatLendingBoardAddressesProvider.setTokenDistributor(hardhatTokenDistributor.address);
     // await hardhatLendingBoardAddressesProvider.setLendingRateOracle();
 
@@ -87,11 +91,17 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     const hardhatSampleToken = await SampleToken.deploy();
     await hardhatSampleToken.deployed();
     
+    // Sample Token Address 확인
     const STKNaddress = hardhatSampleToken.address;
     console.log("STKNaddress : ",STKNaddress);
+
+    // 임의로 TestOracle AssetPrice 및 TestLendingRateOracle의 LendingRate 설정
     const STKNPrice = ethers.utils.parseEther('2');
     console.log("STKN Price : ",STKNPrice);
     await hardhatTestOracle.setAssetPrice(STKNaddress,STKNPrice);
+
+    const STKNLendingRate = ethers.utils.parseEther('0.05');
+    await hardhatTestLendingRateOracle.setMarketBorrowRate(STKNaddress,STKNLendingRate);
 
     // Default Reserve Interest-Rate Strategy Contract Setting
     const DefaultReserveInterestRateStrategy = await ethers.getContractFactory("DefaultReserveInterestRateStrategy");
@@ -111,18 +121,6 @@ describe("<LendingBoard Contract Test Implementation>", function () {
 
     const balanceOfOwner = await hardhatSampleToken.connect(owner).balanceOf(owner.address);
     console.log("Balance of Owner : ",balanceOfOwner.toString());
-
-    // const balanceOfAddr1 = await hardhatSampleToken.connect(user1).balanceOf(user1.address);
-    // console.log("Balance of Address1 User : ",balanceOfAddr1.toString());
-
-    // Retrieve and log the allowance
-    // const allowance = await hardhatSampleToken.allowance(owner.address, hardhatLendingBoardCore.address);
-    // console.log("Allowance after approval: ", allowance.toString()); // allowance는 정상적으로 incremented
-    // console.log("Reserve Address : ",STKNaddress);
-    // console.log("LB Address : ",hardhatLendingBoard.address);
-    // console.log("LBCore Address : ",hardhatLendingBoardCore.address);
-
-    // console.log("STKN Approval for LendingBoard Contract Done");
 
     // deposit() 이용하여 서비스에 STKN 예치
     const depositAmount = ethers.utils.parseEther('10');
@@ -183,7 +181,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
 
     });
 
-    it("Borrow and Repay",async function(){
+    it("Borrow and Repay less than the borrow amount",async function(){
       const { owner,user1, hardhatLendingBoard, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
      
       // borrow()
@@ -199,10 +197,36 @@ describe("<LendingBoard Contract Test Implementation>", function () {
       // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
       await expect(hardhatLendingBoard.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
       // owner가 repay하는 경우
-      const repayAmount = ethers.utils.parseEther('0.5'); // 대출한 값보다 많은 금액을 repayAmount로 책정
+      const repayAmount = ethers.utils.parseEther('0.5'); // 대출한 값보다 적은 금액을 repayAmount로 책정
       await hardhatLendingBoard.connect(owner).repay(STKNaddress,repayAmount,owner.address);
       reserveData = await hardhatLendingBoard.getReserveData(STKNaddress);
       console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+
+    });
+
+    it("Borrow and Repay more than the borrow amount",async function(){
+      const { owner,user1, hardhatLendingBoard, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
+     
+      // borrow()
+      var reserveData = await hardhatLendingBoard.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
+
+      const borrowAmount = ethers.utils.parseEther('10');
+      await hardhatLendingBoard.connect(owner).borrow(STKNaddress,borrowAmount,2); // InterestRateMode 1 == stable, 2 == variable
+      
+      reserveData = await hardhatLendingBoard.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
+
+      // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
+      await expect(hardhatLendingBoard.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
+      // owner가 repay하는 경우
+      const repayAmount = ethers.utils.parseEther('21'); // 대출한 값보다 적은 금액을 repayAmount로 책정
+      await hardhatLendingBoard.connect(owner).repay(STKNaddress,repayAmount,owner.address);
+      reserveData = await hardhatLendingBoard.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
 
     });
     
