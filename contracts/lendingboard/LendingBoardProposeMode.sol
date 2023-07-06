@@ -610,6 +610,214 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         }
     }
 
+
+    // WIP : borrowProposal, borrowProposalAccept, getBorrowProposal, lendProposal, lendProposalAccept, getLendProposal
+    struct BorrowProposal {
+        bool active;
+        address borrower;
+        address reserveToBorrow;
+        uint256 amount;
+        address reserveForCollateral;
+        uint256 interestRate;
+        uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
+        uint256 proposalDate;
+        uint256 ltv;
+    }
+
+    event BorrowProposed (
+        address indexed _reserveToBorrow,
+        address indexed _user,
+        uint256 _amount,
+        address _reserveForCollateral,
+        uint256 _interestRate,
+        uint256 _originationFee,
+        uint _dueDate,
+        uint256 _timestamp
+    );
+
+    // List for borrowProposal structures
+    mapping(uint256 => BorrowProposal) internal borrowProposalList;
+    // Counting length for Iteration
+    uint256 public borrowProposalListCount = 0;
+
+    function borrowProposal(
+        address _reserveToBorrow, uint256 _amount, address _reserveForCollateral, uint256 _interestRate, uint256 _dueDate
+    )
+        external
+        nonReentrant
+        onlyActiveReserve(_reserveToBorrow)
+        onlyUnfreezedReserve(_reserveToBorrow) //추후 _reserveForCollateral도 확인하여 진행
+        onlyAmountGreaterThanZero(_amount)
+    {
+        BorrowProposal memory borrowProposalVars;
+        BorrowLocalVars memory borrowLocalVars;
+
+        borrowProposalVars.active = true;
+        borrowProposalVars.borrower = msg.sender;
+        require(core.isReserveBorrowingEnabled(_reserveToBorrow), "Reserve is not enabled for borrowing");
+        //check that the amount is available in the reserve
+        borrowLocalVars.availableLiquidity = core.getReserveAvailableLiquidity(_reserveToBorrow);
+
+        require(
+            borrowLocalVars.availableLiquidity >= _amount,
+            "There is not enough liquidity available in the reserve"
+        );
+
+        // Check User's _reserveForCollateral amount is enough for Lending
+        // 아래 과정은 User의 전체 자산을 기반으로 한 Collateral을 check하고 있다. 
+        // 우리의 서비스는 User가 _reserveForCollateral의 양이 충분한지만 확인하면 된다.
+        // 해당 수치는 dataProvider.getUserReserveData 의 currentATokenBalance - currentBorrowBalance 으로 구하면 될듯하나 이부분은 Check을 받아야 함
+        // 일단은 해당 과정을 생략한채 테스트 진행 23.07.06
+        
+        uint256 userCurrentATokenBalance;
+        uint256 userCurrentBorrowBalance;
+        uint256 userCurrentAvailableCollateralBalance;
+
+        (
+            userCurrentATokenBalance,
+            userCurrentBorrowBalance,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+        ) = dataProvider.getUserReserveData(_reserveForCollateral,msg.sender);
+        
+        // 아래의 userCurrentAvailableCollateralBalance 값과 LTV를 고려하여 Borrow Proposal의 validity를 확인해야 한다.
+        userCurrentAvailableCollateralBalance = userCurrentATokenBalance - 
+        userCurrentBorrowBalance;
+
+
+            // (
+            //     ,
+            //     borrowLocalVars.userCollateralBalanceETH,
+            //     borrowLocalVars.userBorrowBalanceETH,
+            //     borrowLocalVars.userTotalFeesETH,
+            //     borrowLocalVars.currentLtv,
+            //     borrowLocalVars.currentLiquidationThreshold,
+            //     ,
+            //     borrowLocalVars.healthFactorBelowThreshold
+            // ) = dataProvider.calculateUserGlobalData(msg.sender);
+
+            // require(borrowLocalVars.userCollateralBalanceETH > 0, "The collateral balance is 0");
+
+            // require(
+            //     !borrowLocalVars.healthFactorBelowThreshold,
+            //     "The borrower can already be liquidated so he cannot borrow more"
+            // );
+
+
+            // borrowLocalVars.amountOfCollateralNeededETH = dataProvider.calculateCollateralNeededInETH(
+            //     _reserveToBorrow,
+            //     _amount,
+            //     borrowLocalVars.borrowFee,
+            //     borrowLocalVars.userBorrowBalanceETH,
+            //     borrowLocalVars.userTotalFeesETH,
+            //     borrowLocalVars.currentLtv
+            // );
+
+            // require(
+            //     borrowLocalVars.amountOfCollateralNeededETH <= borrowLocalVars.userCollateralBalanceETH,
+            //     "There is not enough collateral to cover a new borrow"
+            // );
+
+        //calculating fees
+        borrowLocalVars.borrowFee = feeProvider.calculateLoanOriginationFee(msg.sender, _amount);
+        require(borrowLocalVars.borrowFee > 0, "The amount to borrow is too small");
+
+        // If all conditions passed - Borrow Proposal Generated
+        borrowProposalVars.reserveToBorrow = _reserveToBorrow;
+        // borrower의 collateral이 ltv를 고려했을 때 충분한 양을 가지고 있는지 확인 => 부족하면 _amount를 줄이라는 메세지 emit => 위에서 확인
+        borrowProposalVars.amount = _amount;
+        // valid한 reserveForCollateral인지 확인 => 위에서 확인
+        borrowProposalVars.reserveForCollateral = _reserveForCollateral;
+        // interestRate이 0 이상 100 이하(or 서비스 책정 최대 이자율 이하인지) 확인
+        require(_interestRate > 0 && _interestRate < 100,"Invalid Interest Rate Input");
+        borrowProposalVars.interestRate = _interestRate;
+        require(_dueDate > block.timestamp, "Invalid Due Date Set");
+        borrowProposalVars.dueDate = _dueDate;
+        borrowProposalVars.proposalDate = block.timestamp;
+        // LTV는 System Set
+        borrowProposalVars.ltv = borrowLocalVars.currentLtv;
+
+        // borrowProposalList에 borrowProposal을 추가해준다.
+        borrowProposalList[borrowProposalListCount] = borrowProposalVars;
+        borrowProposalListCount++;
+
+        emit BorrowProposed(
+            _reserveToBorrow,
+            msg.sender,
+            _amount,
+            _reserveForCollateral,
+            _interestRate,
+            borrowLocalVars.borrowFee,
+            _dueDate,
+            //solium-disable-next-line
+            block.timestamp
+        );
+    }
+
+    // Lender의 입장에서 Borrower의 proposal을 Accept한 경우
+    function borrowProposalAccept(uint256 proposalId) external {
+        BorrowProposal memory borrowProposalVars;
+        borrowProposalVars = borrowProposalList[proposalId];
+        // Lender의 소유 reserve(토큰)이 borrowProposalList[proposalId].reserveToBorrow 보다 많거나 같은지 확인
+        // vars.reserveToBorrow & vars.amount 이용하여
+        // resereToBorrow * amount 만큼 Borrower에게 transfer
+        // Borrower의 Collateral은 Service에게 transfer
+        // NFT 채권 발행하여 Lender에게 transfer @김주헌
+        borrowProposalList[proposalId].active = false; // 수락한 Proposal은 false로 상태변경
+        
+    }
+    
+    function getBorrowProposal(uint256 proposalId) 
+        public
+        view 
+        returns(
+            bool active,
+            address borrower,
+            address reserveToBorrow,
+            uint256 amount,
+            address reserveForCollateral,
+            uint256 interestRate,
+            uint256 dueDate,
+            uint256 proposalDate,
+            uint256 ltv
+        )
+    {   
+            require(proposalId >= 0 && proposalId <= borrowProposalListCount, "Invalid proposalId");
+            active = borrowProposalList[proposalId].active;
+            borrower = borrowProposalList[proposalId].borrower;
+            reserveToBorrow = borrowProposalList[proposalId].reserveToBorrow;
+            amount = borrowProposalList[proposalId].amount;
+            reserveForCollateral = borrowProposalList[proposalId].reserveForCollateral;
+            interestRate = borrowProposalList[proposalId].interestRate;
+            dueDate = borrowProposalList[proposalId].dueDate;
+            proposalDate = borrowProposalList[proposalId].proposalDate;
+            ltv = borrowProposalList[proposalId].ltv;
+    }
+
+    function getBorrowProposalList(uint256 startIdx, uint256 endIdx) 
+        public
+        view
+        returns(
+            BorrowProposal[] memory result // struct BorrowProposal array
+        )
+    {
+        require(startIdx >= 0,"Start Index should be larger than 0");
+        require(endIdx < borrowProposalListCount,"End Index over borrowProposalListCount");
+        uint256 resultLength = endIdx - startIdx + 1;
+        require(resultLength < 2000,"Maximum 2000 iteration per request");
+        result = new BorrowProposal[](resultLength);
+        uint256 resultIndex = 0;
+        for(uint256 i = startIdx; i <= endIdx; i++){
+            result[resultIndex++] = borrowProposalList[i];
+        }
+        return result;
+    }
+
     /**
     * @dev accessory functions to fetch data from the core contract
     **/
