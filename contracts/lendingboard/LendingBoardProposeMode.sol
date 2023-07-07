@@ -653,6 +653,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         BorrowProposal memory borrowProposalVars;
         BorrowLocalVars memory borrowLocalVars;
 
+        uint256 reserveDecimals = core.getReserveDecimals(_reserveToBorrow);
+
+        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+
         borrowProposalVars.active = true;
         borrowProposalVars.borrower = msg.sender;
         require(core.isReserveBorrowingEnabled(_reserveToBorrow), "Reserve is not enabled for borrowing");
@@ -689,6 +693,42 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // 아래의 userCurrentAvailableCollateralBalance 값과 LTV를 고려하여 Borrow Proposal의 validity를 확인해야 한다.
         userCurrentAvailableCollateralBalance = userCurrentATokenBalance - 
         userCurrentBorrowBalance;
+
+        uint256 borrowLTV;
+
+        (
+            borrowLTV,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+        ) = dataProvider.getReserveConfigurationData(_reserveToBorrow);
+
+        uint256 requestedBorrowAmountETH = oracle
+            .getAssetPrice(_reserveToBorrow)
+            .mul(_amount)
+            .div(10 ** reserveDecimals); 
+
+        // 추후에 _fee 를 추가하여 계산한다.
+        // uint256 requestedBorrowAmountETH = oracle
+        //     .getAssetPrice(_reserveToBorrow)
+        //     .mul(_amount.add(_fee))
+        //     .div(10 ** reserveDecimals); 
+            
+        uint256 collateralNeededInETH = _amount
+            .mul(requestedBorrowAmountETH)
+            .mul(100)
+            .div(borrowLTV);
+        
+        uint256 collateralNeeded = collateralNeededInETH
+            .div(oracle.getAssetPrice(_reserveForCollateral));
+        
+        console.log("   => LBPM : User Available Collateral : ",userCurrentAvailableCollateralBalance);
+        console.log("   => LBPM : Collateral Needed for Borrow Proposal : ",collateralNeeded);
+        require(userCurrentAvailableCollateralBalance >= collateralNeeded,"There is not enough collateral to cover a new borrow proposal");
+        
 
             // 기존 LendingBoard.sol 코드 부분
             // (

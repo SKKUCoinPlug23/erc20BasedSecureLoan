@@ -5,6 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract SampleToken is ERC20 {
     constructor() ERC20("SampleToken", "STKN") {
-        _mint(msg.sender, 1000000 * 18**decimals());
+        _mint(msg.sender, 2000000 * 18**decimals());
     }
 }
