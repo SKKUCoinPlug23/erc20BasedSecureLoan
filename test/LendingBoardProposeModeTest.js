@@ -6,7 +6,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
   // We define a fixture to reuse the same setup in every test.
   async function deployLendingBoardFixture() {
     // Get the ContractFactory and Signers here.
-    const [owner, user1, user2,] = await ethers.getSigners();
+    const [owner, user1, user2, borrower1, borrower2] = await ethers.getSigners();
 
     // Libraries
     const CoreLibrary = await ethers.getContractFactory("CoreLibrary");
@@ -103,40 +103,77 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     const STKNLendingRate = ethers.utils.parseEther('0.05');
     await hardhatTestLendingRateOracle.setMarketBorrowRate(STKNaddress,STKNLendingRate);
 
+    // PlugToken(PLUG) Deployment
+    const PlugToken = await ethers.getContractFactory("PlugToken");
+    const hardhatPlugToken = await PlugToken.deploy();
+    await hardhatPlugToken.deployed();
+    
+    const PLUGaddress = hardhatPlugToken.address;
+
+    const PLUGPrice = ethers.utils.parseEther('5');
+    await hardhatTestOracle.setAssetPrice(PLUGaddress,PLUGPrice);
+
+    const PLUGLendingRate = ethers.utils.parseEther('0.1');
+    await hardhatTestLendingRateOracle.setMarketBorrowRate(PLUGaddress,PLUGLendingRate);
+
     // Default Reserve Interest-Rate Strategy Contract Setting
     const DefaultReserveInterestRateStrategy = await ethers.getContractFactory("DefaultReserveInterestRateStrategy");
-    const hardhatDefaultReserveInterestRateStrategy = await DefaultReserveInterestRateStrategy.deploy(STKNaddress,hardhatLendingBoardAddressesProvider.address,1,1,1,1,1);
-    await hardhatDefaultReserveInterestRateStrategy.deployed();
-    const strategyAddress = hardhatDefaultReserveInterestRateStrategy.address;
 
+    // STKN Interest Rate Strategy setting
+    const STKNhardhatDefaultReserveInterestRateStrategy = await DefaultReserveInterestRateStrategy.deploy(STKNaddress,hardhatLendingBoardAddressesProvider.address,1,1,1,1,1);
+    await STKNhardhatDefaultReserveInterestRateStrategy.deployed();
+    const STKNstrategyAddress = STKNhardhatDefaultReserveInterestRateStrategy.address;
     // 생성한 STKN의 Reserve를 initialization 해준다.
-    await hardhatLendingBoardConfigurator.initReserve(STKNaddress,18,strategyAddress);
+    await hardhatLendingBoardConfigurator.initReserve(STKNaddress,18,STKNstrategyAddress);
+
+    // PLUG Interest Rate Strategy setting
+    const PLUGhardhatDefaultReserveInterestRateStrategy = await DefaultReserveInterestRateStrategy.deploy(PLUGaddress,hardhatLendingBoardAddressesProvider.address,1,1,1,1,1);
+    await PLUGhardhatDefaultReserveInterestRateStrategy.deployed();
+    const PLUGstrategyAddress = PLUGhardhatDefaultReserveInterestRateStrategy.address;
+    // 생성한 STKN의 Reserve를 initialization 해준다.
+    await hardhatLendingBoardConfigurator.initReserve(PLUGaddress,18,PLUGstrategyAddress);
 
     // Approve LendingBoard contract to spend tokens
     const approveAmount = ethers.utils.parseEther('1000');
     // Send the approval transaction. The address should be LBCore not LB itself.
-    const approvalResult = await hardhatSampleToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
+    let approvalResult = await hardhatSampleToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
     // Wait for the transaction to be mined
     await approvalResult.wait();
 
+    // STKN Balance Check
     const balanceOfOwner = await hardhatSampleToken.connect(owner).balanceOf(owner.address);
     console.log("Balance of Owner : ",balanceOfOwner.toString());
-
+    
     // deposit() 이용하여 서비스에 STKN 예치
     const depositAmount = ethers.utils.parseEther('10');
     await hardhatLendingBoardProposeMode.connect(owner).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
 
+    approvalResult = await hardhatPlugToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
+    // Wait for the transaction to be mined
+    await approvalResult.wait();
+    await hardhatLendingBoardProposeMode.connect(owner).deposit(PLUGaddress, depositAmount, 0); // Set Referral Code = 0
+
+    let baseLTVasCollateral,liquidationThreshold,liquidationBonus
     // configuring STKN Reserve for Borrowing and Collateral
     await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(STKNaddress,true);
-    const baseLTVasCollateral = ethers.utils.parseEther('0.45');
-    const liquidationThreshold = ethers.utils.parseEther('0.70');
-    const liquidationBonus = ethers.utils.parseEther('0.01');
+    baseLTVasCollateral = ethers.utils.parseEther('0.45');
+    liquidationThreshold = ethers.utils.parseEther('0.70');
+    liquidationBonus = ethers.utils.parseEther('0.01');
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(STKNaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
     await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(STKNaddress,1); // 1 : enable, 0 : disable
     console.log("set STKN as Collateral enabled");
+
+    // configuring PLUG Reserve for Borrowing and Collateral
+    await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(PLUGaddress,true);
+    baseLTVasCollateral = ethers.utils.parseEther('0.45');
+    liquidationThreshold = ethers.utils.parseEther('0.70');
+    liquidationBonus = ethers.utils.parseEther('0.01');
+    await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(PLUGaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
+    await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(PLUGaddress,1); // 1 : enable, 0 : disable
+    console.log("set PLUG as Collateral enabled");
     
     // Fixtures can return anything you consider useful for your tests
-    return { owner, user1, user2, LendingBoardProposeMode, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress};
+    return { owner, user1, user2, borrower1, borrower2, LendingBoardProposeMode, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress,PLUGaddress};
   }
 
   describe("<Initializations>", function () {
