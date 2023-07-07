@@ -6,7 +6,7 @@ describe("<LendingBoard Contract Test Implementation>", function () {
   // We define a fixture to reuse the same setup in every test.
   async function deployLendingBoardFixture() {
     // Get the ContractFactory and Signers here.
-    const [owner, user1, user2,] = await ethers.getSigners();
+    const [owner, user1, user2] = await ethers.getSigners();
 
     // Libraries
     const CoreLibrary = await ethers.getContractFactory("CoreLibrary");
