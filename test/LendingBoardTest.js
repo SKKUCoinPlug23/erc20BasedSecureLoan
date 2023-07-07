@@ -103,6 +103,19 @@ describe("<LendingBoard Contract Test Implementation>", function () {
     const STKNLendingRate = ethers.utils.parseEther('0.05');
     await hardhatTestLendingRateOracle.setMarketBorrowRate(STKNaddress,STKNLendingRate);
 
+    // PlugToken(PLUG) Deployment
+    const PlugToken = await ethers.getContractFactory("PlugToken");
+    const hardhatPlugToken = await PlugToken.deploy();
+    await hardhatPlugToken.deployed();
+    
+    const PLUGaddress = hardhatPlugToken.address;
+
+    const PLUGPrice = ethers.utils.parseEther('5');
+    await hardhatTestOracle.setAssetPrice(PLUGaddress,PLUGPrice);
+
+    const PLUGLendingRate = ethers.utils.parseEther('0.1');
+    await hardhatTestLendingRateOracle.setMarketBorrowRate(PLUGaddress,PLUGLendingRate);
+
     // Default Reserve Interest-Rate Strategy Contract Setting
     const DefaultReserveInterestRateStrategy = await ethers.getContractFactory("DefaultReserveInterestRateStrategy");
     const hardhatDefaultReserveInterestRateStrategy = await DefaultReserveInterestRateStrategy.deploy(STKNaddress,hardhatLendingBoardAddressesProvider.address,1,1,1,1,1);

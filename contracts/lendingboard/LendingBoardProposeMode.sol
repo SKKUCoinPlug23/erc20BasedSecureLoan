@@ -627,6 +627,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
     event BorrowProposed (
         address indexed _reserveToBorrow,
         address indexed _user,
+        uint256 indexed _proposalId,
         uint256 _amount,
         address _reserveForCollateral,
         uint256 _interestRate,
@@ -689,7 +690,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         userCurrentAvailableCollateralBalance = userCurrentATokenBalance - 
         userCurrentBorrowBalance;
 
-
+            // 기존 LendingBoard.sol 코드 부분
             // (
             //     ,
             //     borrowLocalVars.userCollateralBalanceETH,
@@ -742,13 +743,14 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // LTV는 System Set
         borrowProposalVars.ltv = borrowLocalVars.currentLtv;
 
-        // borrowProposalList에 borrowProposal을 추가해준다.
-        borrowProposalList[borrowProposalListCount] = borrowProposalVars;
-        borrowProposalListCount++;
+        // borrowProposalList에 borrowProposal을 추가해준다. -> 해당 부분은 추후에 LendingBoardCore.sol에서 implement해야
+        uint256 proposalId = borrowProposalListCount++;
+        borrowProposalList[proposalId] = borrowProposalVars;
 
         emit BorrowProposed(
             _reserveToBorrow,
             msg.sender,
+            proposalId,
             _amount,
             _reserveForCollateral,
             _interestRate,
