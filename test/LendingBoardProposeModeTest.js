@@ -38,7 +38,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatLendingBoardCore.deployed()
     const hardhatLendingBoardConfigurator = await LendingBoardConfigurator.deploy();
     await hardhatLendingBoardConfigurator.deployed()
-    const hardhatLendingBoardDataProvider= await LendingBoardDataProvider.deploy();
+    const hardhatLendingBoardDataProvider = await LendingBoardDataProvider.deploy();
     await hardhatLendingBoardDataProvider.deployed()
     const hardhatLendingBoardParametersProvider = await LendingBoardParametersProvider.deploy();
     await hardhatLendingBoardParametersProvider.deployed()
@@ -93,7 +93,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     
     // Sample Token Address 확인
     const STKNaddress = hardhatSampleToken.address;
-    console.log("STKNaddress : ",STKNaddress);
+    // console.log("STKNaddress : ",STKNaddress);
 
     // 임의로 TestOracle AssetPrice 및 TestLendingRateOracle의 LendingRate 설정
     const STKNPrice = ethers.utils.parseEther('2');
@@ -125,6 +125,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     const STKNstrategyAddress = STKNhardhatDefaultReserveInterestRateStrategy.address;
     // 생성한 STKN의 Reserve를 initialization 해준다.
     await hardhatLendingBoardConfigurator.initReserve(STKNaddress,18,STKNstrategyAddress);
+    // await hardhatLendingBoardConfigurator.setReserveInterestRateStrategyAddress(STKNaddress,STKNstrategyAddress)
 
     // PLUG Interest Rate Strategy setting
     const PLUGhardhatDefaultReserveInterestRateStrategy = await DefaultReserveInterestRateStrategy.deploy(PLUGaddress,hardhatLendingBoardAddressesProvider.address,1,1,1,1,1);
@@ -142,35 +143,34 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
 
     // STKN Balance Check
     const balanceOfOwner = await hardhatSampleToken.connect(owner).balanceOf(owner.address);
-    console.log("Balance of Owner : ",balanceOfOwner.toString());
+    // console.log("Balance of Owner : ",balanceOfOwner.toString());
     
     // deposit() 이용하여 서비스에 STKN 예치
-    const depositAmount = ethers.utils.parseEther('10');
+    const depositAmount = ethers.utils.parseEther('100');
+    // STKN 100개 예치
     await hardhatLendingBoardProposeMode.connect(owner).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
-
     approvalResult = await hardhatPlugToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
-    // Wait for the transaction to be mined
-    await approvalResult.wait();
+    // PLUG 100개 예치
     await hardhatLendingBoardProposeMode.connect(owner).deposit(PLUGaddress, depositAmount, 0); // Set Referral Code = 0
 
     let baseLTVasCollateral,liquidationThreshold,liquidationBonus
     // configuring STKN Reserve for Borrowing and Collateral
     await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(STKNaddress,true);
-    baseLTVasCollateral = ethers.utils.parseEther('0.45');
+    baseLTVasCollateral = ethers.utils.parseEther('0.5');
     liquidationThreshold = ethers.utils.parseEther('0.70');
     liquidationBonus = ethers.utils.parseEther('0.01');
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(STKNaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
     await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(STKNaddress,1); // 1 : enable, 0 : disable
-    console.log("set STKN as Collateral enabled");
+    // console.log("set STKN as Collateral enabled");
 
     // configuring PLUG Reserve for Borrowing and Collateral
     await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(PLUGaddress,true);
-    baseLTVasCollateral = ethers.utils.parseEther('0.45');
+    baseLTVasCollateral = ethers.utils.parseEther('0.5');
     liquidationThreshold = ethers.utils.parseEther('0.70');
     liquidationBonus = ethers.utils.parseEther('0.01');
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(PLUGaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
     await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(PLUGaddress,1); // 1 : enable, 0 : disable
-    console.log("set PLUG as Collateral enabled");
+    // console.log("set PLUG as Collateral enabled");
     
     // Fixtures can return anything you consider useful for your tests
     return { owner, user1, user2, borrower1, borrower2, LendingBoardProposeMode, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress,PLUGaddress};
@@ -200,7 +200,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       const { owner,addr1, hardhatLendingBoardProposeMode, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,STKNaddress } = await loadFixture(deployLendingBoardFixture);
       // STKN의 Reserve getter function test
       const reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data : ",reserveData);
+      // console.log("STKN Reserve Data : ",reserveData);
     });
     
     it("Borrowing",async function(){
@@ -262,6 +262,31 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
       console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
       console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
+
+    });
+
+    it("Borrow Proposal Test Case",async function(){
+      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
+     
+      // borrow()
+      var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
+
+      const borrowAmount = ethers.utils.parseEther('10');
+      const interestRate = 10; // 일단은 parseEther 고려하지 않고 10으로 설정
+      const dueDate = Date.now() + 100000;
+      console.log("dueDate from JS : ",dueDate);
+      // Borrowing STKN( = 2ETH) using PLUG( = 5ETH) as a collateral
+      await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
+
+      const generatedBorrowProposal = await hardhatLendingBoardProposeMode.connect(owner).getBorrowProposal(0);
+      // Data from borowProposal needs to have a borrower's id matching that of owner.address.
+      expect(owner.address).to.equal(generatedBorrowProposal.borrower);
+      console.log("Generated Borrow Proposal check : ",generatedBorrowProposal);
+
+      await hardhatLendingBoardProposeMode.connect(owner).borrowProposalAccept(0);
+
 
     });
     
