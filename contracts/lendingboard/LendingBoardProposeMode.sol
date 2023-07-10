@@ -640,6 +640,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
     event BorrowAccepted (
         address indexed _reserveToLend,
         address indexed _lender,
+        address  _borrower,
         uint256 indexed _proposalId,
         uint256 _amount,
         uint256 _originationFee,
@@ -862,6 +863,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         
         emit BorrowAccepted(
             _reserve,
+            borrower,
             msg.sender,
             _proposalId,
             _amount,
@@ -916,6 +918,45 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         }
         return result;
     }
+
+    event LendProposed (
+        address indexed _reserveToLend,
+        address indexed _lendProposer,
+        uint256 indexed _proposalId,
+        uint256 _amount,
+        uint256 _interestRate,
+        uint256 _originationFee,
+        uint256 _dueDate,
+        uint256 _proposalTimeStamp
+    );
+
+    event LendAccepted (
+        address indexed _reserveToLend,
+        address indexed _lender,
+        uint256 indexed _proposalId,
+        uint256 _amount,
+        uint256 _originationFee,
+        uint256 _timestamp
+    );
+
+    // // List for borrowProposal structures
+    // mapping(uint256 => BorrowProposal) internal borrowProposalList;
+    // // Counting length for Iteration
+    // uint256 public borrowProposalListCount = 0;
+
+    function lendProposal(
+        address _reserveToBorrow, uint256 _amount, address _reserveForCollateral, uint256 _interestRate, uint256 _dueDate
+    )  
+        external
+        nonReentrant
+        onlyActiveReserve(_reserveToBorrow)
+        onlyUnfreezedReserve(_reserveToBorrow) //추후 _reserveForCollateral도 확인하여 진행
+        onlyAmountGreaterThanZero(_amount)
+    {
+
+    }
+
+
 
     /**
     * @dev accessory functions to fetch data from the core contract
