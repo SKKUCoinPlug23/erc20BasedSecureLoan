@@ -134,24 +134,35 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     // 생성한 STKN의 Reserve를 initialization 해준다.
     await hardhatLendingBoardConfigurator.initReserve(PLUGaddress,18,PLUGstrategyAddress);
 
-    // Approve LendingBoard contract to spend tokens
-    const approveAmount = ethers.utils.parseEther('1000');
-    // Send the approval transaction. The address should be LBCore not LB itself.
-    let approvalResult = await hardhatSampleToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
-    // Wait for the transaction to be mined
-    await approvalResult.wait();
+    // user1에게 STKN과 PLUG를 전송해준다.
+    const transferAmount = ethers.utils.parseEther('3000');
+    await hardhatSampleToken.connect(owner).transfer(user1.address,transferAmount);
+    await hardhatPlugToken.connect(owner).transfer(user1.address,transferAmount);
 
-    // STKN Balance Check
-    const balanceOfOwner = await hardhatSampleToken.connect(owner).balanceOf(owner.address);
-    // console.log("Balance of Owner : ",balanceOfOwner.toString());
+    // Approve LendingBoard contract to spend tokens
+    const approveAmount = ethers.utils.parseEther('2000');
+
+    // Send the approval transaction. The address should be LBCore not LB itself.
+    // Owner의 approval 및 deposit
+    let approvalResult = await hardhatSampleToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
+    approvalResult = await hardhatPlugToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
     
     // deposit() 이용하여 서비스에 STKN 예치
-    const depositAmount = ethers.utils.parseEther('100');
+    const depositAmount = ethers.utils.parseEther('1000');
+
     // STKN 100개 예치
     await hardhatLendingBoardProposeMode.connect(owner).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
-    approvalResult = await hardhatPlugToken.connect(owner).approve(hardhatLendingBoardCore.address, approveAmount);
     // PLUG 100개 예치
     await hardhatLendingBoardProposeMode.connect(owner).deposit(PLUGaddress, depositAmount, 0); // Set Referral Code = 0
+
+    // User1의 approval 및 Deposit
+    approvalResult = await hardhatSampleToken.connect(user1).approve(hardhatLendingBoardCore.address, approveAmount);
+    approvalResult = await hardhatPlugToken.connect(user1).approve(hardhatLendingBoardCore.address, approveAmount);
+
+    // STKN 100개 예치
+    await hardhatLendingBoardProposeMode.connect(user1).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
+    // PLUG 100개 예치
+    await hardhatLendingBoardProposeMode.connect(user1).deposit(PLUGaddress, depositAmount, 0); // Set Referral Code = 0
 
     let baseLTVasCollateral,liquidationThreshold,liquidationBonus
     // configuring STKN Reserve for Borrowing and Collateral
@@ -273,19 +284,36 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
       console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
 
-      const borrowAmount = ethers.utils.parseEther('10');
+      const borrowAmount1 = ethers.utils.parseEther('10');
+      const borrowAmount2 = ethers.utils.parseEther('20');
+
       const interestRate = 10; // 일단은 parseEther 고려하지 않고 10으로 설정
+      // dueDate의 경우 임의로 현재시간의 + 100000 으로 설정한다.
       const dueDate = Date.now() + 100000;
       console.log("dueDate from JS : ",dueDate);
       // Borrowing STKN( = 2ETH) using PLUG( = 5ETH) as a collateral
-      await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
+      await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount1,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
+
+      await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount2,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
 
       const generatedBorrowProposal = await hardhatLendingBoardProposeMode.connect(owner).getBorrowProposal(0);
       // Data from borowProposal needs to have a borrower's id matching that of owner.address.
       expect(owner.address).to.equal(generatedBorrowProposal.borrower);
-      console.log("Generated Borrow Proposal check : ",generatedBorrowProposal);
 
-      await hardhatLendingBoardProposeMode.connect(owner).borrowProposalAccept(0);
+      // User1's STKN Reserve Data before Borrow Proposal Accept
+      let user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
+      console.log("User1's STKN Reserve Data : ",user1STKNReserveData);
+
+      await hardhatLendingBoardProposeMode.connect(user1).borrowProposalAccept(0);
+      console.log("Lender's Account Balance after BorrowProposal Accepted");
+  
+      // User1's STKN Reserve Data after Borrow Proposal Accept
+      // WIP : 현재 User1의 currentBorrowBalance(대출량)이 증가하지 않는 문제 발생 
+      user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
+      console.log("User1's STKN Reserve Data After Proposal Accepted : ",user1STKNReserveData);
+
+      const borrowProposalList = await hardhatLendingBoardProposeMode.getBorrowProposalList(0,1);
+      console.log("Borrow Proposal List : ",borrowProposalList);
 
 
     });
