@@ -621,18 +621,28 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 interestRate;
         uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
         uint256 proposalDate;
+        uint256 borrowFee;
         uint256 ltv;
     }
 
     event BorrowProposed (
         address indexed _reserveToBorrow,
-        address indexed _user,
+        address indexed _borrowProposer,
         uint256 indexed _proposalId,
         uint256 _amount,
         address _reserveForCollateral,
         uint256 _interestRate,
         uint256 _originationFee,
-        uint _dueDate,
+        uint256 _dueDate,
+        uint256 _timestamp
+    );
+
+    event BorrowAccepted (
+        address indexed _reserveToLend,
+        address indexed _lender,
+        uint256 indexed _proposalId,
+        uint256 _amount,
+        uint256 _originationFee,
         uint256 _timestamp
     );
 
@@ -676,6 +686,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         
         uint256 userCurrentATokenBalance;
         uint256 userCurrentBorrowBalance;
+        uint256 userCurrentAvailableCollateralBalanceInWei;
         uint256 userCurrentAvailableCollateralBalance;
 
         (
@@ -691,8 +702,9 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         ) = dataProvider.getUserReserveData(_reserveForCollateral,msg.sender);
         
         // 아래의 userCurrentAvailableCollateralBalance 값과 LTV를 고려하여 Borrow Proposal의 validity를 확인해야 한다.
-        userCurrentAvailableCollateralBalance = userCurrentATokenBalance - 
+        userCurrentAvailableCollateralBalanceInWei = userCurrentATokenBalance - 
         userCurrentBorrowBalance;
+        userCurrentAvailableCollateralBalance = userCurrentAvailableCollateralBalanceInWei.div(10 ** 18);
 
         uint256 borrowLTV;
 
@@ -706,63 +718,32 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             ,
         ) = dataProvider.getReserveConfigurationData(_reserveToBorrow);
 
-        uint256 requestedBorrowAmountETH = oracle
+        uint256 requestedBorrowAmountInWei = oracle
             .getAssetPrice(_reserveToBorrow)
             .mul(_amount)
             .div(10 ** reserveDecimals); 
+    
+        console.log("   => LBPM :reserveDecimals for _reserveToBorrow : ",reserveDecimals);
 
         // 추후에 _fee 를 추가하여 계산한다.
         // uint256 requestedBorrowAmountETH = oracle
         //     .getAssetPrice(_reserveToBorrow)
         //     .mul(_amount.add(_fee))
         //     .div(10 ** reserveDecimals); 
-            
-        uint256 collateralNeededInETH = _amount
-            .mul(requestedBorrowAmountETH)
-            .mul(100)
+        
+
+        uint256 collateralNeededInWei = _amount
+            .mul(requestedBorrowAmountInWei)
             .div(borrowLTV);
         
-        uint256 collateralNeeded = collateralNeededInETH
+        uint256 collateralNeeded = collateralNeededInWei
             .div(oracle.getAssetPrice(_reserveForCollateral));
         
         console.log("   => LBPM : User Available Collateral : ",userCurrentAvailableCollateralBalance);
+        console.log("   => LBPM : _amount, requestedBorrowAmountETH, borrowLTV ",_amount,requestedBorrowAmountInWei,borrowLTV);
+        console.log("   => LBPM : ETH Needed for Borrow Proposal : ",collateralNeededInWei);
         console.log("   => LBPM : Collateral Needed for Borrow Proposal : ",collateralNeeded);
         require(userCurrentAvailableCollateralBalance >= collateralNeeded,"There is not enough collateral to cover a new borrow proposal");
-        
-
-            // 기존 LendingBoard.sol 코드 부분
-            // (
-            //     ,
-            //     borrowLocalVars.userCollateralBalanceETH,
-            //     borrowLocalVars.userBorrowBalanceETH,
-            //     borrowLocalVars.userTotalFeesETH,
-            //     borrowLocalVars.currentLtv,
-            //     borrowLocalVars.currentLiquidationThreshold,
-            //     ,
-            //     borrowLocalVars.healthFactorBelowThreshold
-            // ) = dataProvider.calculateUserGlobalData(msg.sender);
-
-            // require(borrowLocalVars.userCollateralBalanceETH > 0, "The collateral balance is 0");
-
-            // require(
-            //     !borrowLocalVars.healthFactorBelowThreshold,
-            //     "The borrower can already be liquidated so he cannot borrow more"
-            // );
-
-
-            // borrowLocalVars.amountOfCollateralNeededETH = dataProvider.calculateCollateralNeededInETH(
-            //     _reserveToBorrow,
-            //     _amount,
-            //     borrowLocalVars.borrowFee,
-            //     borrowLocalVars.userBorrowBalanceETH,
-            //     borrowLocalVars.userTotalFeesETH,
-            //     borrowLocalVars.currentLtv
-            // );
-
-            // require(
-            //     borrowLocalVars.amountOfCollateralNeededETH <= borrowLocalVars.userCollateralBalanceETH,
-            //     "There is not enough collateral to cover a new borrow"
-            // );
 
         //calculating fees
         borrowLocalVars.borrowFee = feeProvider.calculateLoanOriginationFee(msg.sender, _amount);
@@ -780,8 +761,9 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         require(_dueDate > block.timestamp, "Invalid Due Date Set");
         borrowProposalVars.dueDate = _dueDate;
         borrowProposalVars.proposalDate = block.timestamp;
+        borrowProposalVars.borrowFee = borrowLocalVars.borrowFee;
         // LTV는 System Set
-        borrowProposalVars.ltv = borrowLocalVars.currentLtv;
+        borrowProposalVars.ltv = borrowLTV;
 
         // borrowProposalList에 borrowProposal을 추가해준다. -> 해당 부분은 추후에 LendingBoardCore.sol에서 implement해야
         uint256 proposalId = borrowProposalListCount++;
@@ -806,12 +788,87 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         BorrowProposal memory borrowProposalVars;
         borrowProposalVars = borrowProposalList[proposalId];
         // Lender의 소유 reserve(토큰)이 borrowProposalList[proposalId].reserveToBorrow 보다 많거나 같은지 확인
-        // vars.reserveToBorrow & vars.amount 이용하여
-        // resereToBorrow * amount 만큼 Borrower에게 transfer
-        // Borrower의 Collateral은 Service에게 transfer
-        // NFT 채권 발행하여 Lender에게 transfer @김주헌
-        borrowProposalList[proposalId].active = false; // 수락한 Proposal은 false로 상태변경
+        require(borrowProposalVars.active == true, "Only Active Borrow Proposal can be Accepted");
+        address reserveToBorrow = borrowProposalVars.reserveToBorrow;
+        uint256 amount = borrowProposalVars.amount;
+        borrowProposalAcceptInternal(reserveToBorrow,amount,proposalId);
+    }
+    
+    // event BorrowAccepted (
+    //     address indexed _reserveToLend,
+    //     address indexed _lender,
+    //     uint256 indexed _proposalId,
+    //     uint256 _amount,
+    //     uint256 _interestRate,
+    //     uint256 _originationFee,
+    //     uint256 _timestamp
+    // );
+
+    function borrowProposalAcceptInternal(
+        address _reserve,
+        uint256 _amount,
+        uint256 _proposalId
+    )
+        internal
+        nonReentrant
+        onlyActiveReserve(_reserve)
+        onlyUnfreezedReserve(_reserve)
+        onlyAmountGreaterThanZero(_amount)
+    {
+        uint256 userCurrentATokenBalance;
+        uint256 userCurrentBorrowBalance;
+        uint256 userCurrentAvailableReserveBalanceInWei;
+        uint256 userCurrentAvailableReserveBalance;
+        (
+            userCurrentATokenBalance,
+            userCurrentBorrowBalance,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+        ) = dataProvider.getUserReserveData(_reserve,msg.sender);
         
+        // 아래의 userCurrentAvailableReserveBalance 값과 LTV를 고려하여 Borrow Proposal의 validity를 확인해야 한다.
+        userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - 
+        userCurrentBorrowBalance;
+        userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
+
+        require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
+
+        uint256 borrowBalanceIncreased;
+        address borrower = borrowProposalList[_proposalId].borrower;
+
+        (,borrowBalanceIncreased) = core.updateStateOnBorrow(
+            _reserve,
+            borrower,
+            _amount,
+            borrowProposalList[_proposalId].borrowFee,
+            CoreLibrary.InterestRateMode.STABLE
+        );
+        console.log("   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
+
+        // Transfering the Token Borrow Proposer Desired
+        address payable senderPayable = payable(borrower);
+        core.transferToUser(_reserve, senderPayable, _amount);
+
+        // Borrower의 Collateral Service에게 transfer
+        // NFT 채권 발행하여 Lender에게 transfer @김주헌
+
+        // borrowProposalList[proposalId].active = false; // 수락한 Proposal은 false로 상태변경
+        borrowProposalList[_proposalId].active = false; // 수락한 Proposal은 false로 상태변경
+        
+        emit BorrowAccepted(
+            _reserve,
+            msg.sender,
+            _proposalId,
+            _amount,
+            borrowProposalList[_proposalId].borrowFee,
+            block.timestamp
+        );
+
     }
     
     function getBorrowProposal(uint256 proposalId) 
