@@ -30,7 +30,7 @@ import "hardhat/console.sol";
 // Import for NFT Minting
 import "./LendingBoardNFT.sol";
 
-contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializable{
+contract LendingBoardProposeModeTemporal is ReentrancyGuard, VersionedInitializable {
     using SafeMath for uint256;
     using WadRayMath for uint256;
     using Address for address;
@@ -42,12 +42,12 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     IFeeProvider feeProvider;
     LendingBoardNFT public nft;
 
-    // Constructor Only for NFT Minting
-    constructor(
-        LendingBoardNFT _nft
-    ) {
-        nft = _nft; 
-    }
+    // // Constructor Only for NFT Minting
+    // constructor(
+    //     LendingBoardNFT _nft
+    // ) {
+    //     nft = _nft; 
+    // }
 
     //'indexed' : 하나의 event에 최대 3개의 indexed를 붙일 수 있다. indexed attr를 통해 fast filtering 가능해짐
     event Deposit(
@@ -179,6 +179,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             addressesProvider.getLendingBoardParametersProvider()
         );
         feeProvider = IFeeProvider(addressesProvider.getFeeProvider());
+        nft = LendingBoardNFT(addressesProvider.getLendingBoardNFT());
     }
 
     /**
@@ -883,10 +884,10 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             "{ \"trait_type\": \"Borrower\", \"value\": \"", Strings.toHexString(uint256(uint160(address(borrower)))), "\" },",
             "{ \"trait_type\": \"Payback Amount\", \"value\": ", Strings.toString(_amount), " },",
             "{ \"trait_type\": \"Due Date\", \"value\": ", Strings.toString(dueDate), " }",
+            "{ \"trait_type\": \"Contract Timestamp\", \"value\": ", Strings.toString(block.timestamp), " }",
             "]",
             "}"
         ));
-        // 1. 체결 시점
         // 2. 이자율
         // 3. paybackamount
 

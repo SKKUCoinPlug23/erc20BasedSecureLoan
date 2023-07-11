@@ -31,14 +31,9 @@ describe("<LendingBoardProposeModeTemporal Contract Test Implementation>", funct
     const TestLendingRateOracle = await ethers.getContractFactory("TestLendingRateOracle");
     const TokenDistributor = await ethers.getContractFactory("TokenDistributor");
     const LendingBoardNFT = await ethers.getContractFactory("LendingBoardNFT");
-
-    // NFT Minting Contracts Deployment
-    const hardhatLendingBoardNFT = await LendingBoardNFT.deploy();
-    await hardhatLendingBoardNFT.deployed();
-    console.log("NFT Token Deployed to : ", hardhatLendingBoardNFT.address);
-
+    
     // Main Contracts Deployment
-    const hardhatLendingBoardProposeModeTemporal = await LendingBoardProposeModeTemporal.deploy(hardhatLendingBoardNFT.address);
+    const hardhatLendingBoardProposeModeTemporal = await LendingBoardProposeModeTemporal.deploy();
     await hardhatLendingBoardProposeModeTemporal.deployed()
     const hardhatLendingBoardCore = await LendingBoardCore.deploy();
     await hardhatLendingBoardCore.deployed()
@@ -60,6 +55,10 @@ describe("<LendingBoardProposeModeTemporal Contract Test Implementation>", funct
     await hardhatTestLendingRateOracle.deployed();
     const hardhatTokenDistributor = await TokenDistributor.deploy();
     await hardhatTokenDistributor.deployed();
+    const hardhatLendingBoardNFT = await LendingBoardNFT.deploy(); // NFT Minting Contracts Deployment
+    await hardhatLendingBoardNFT.deployed();
+    // Test -> might be erased
+    console.log("NFT Token Deployed to : ", hardhatLendingBoardNFT.address);
 
     // Using LendingBoardAddressesProvider(LBAP) set the deployed Smart Contract address to the appropriate location
     await hardhatLendingBoardAddressesProvider.setLendingBoardImpl(hardhatLendingBoardProposeModeTemporal.address);
@@ -67,6 +66,7 @@ describe("<LendingBoardProposeModeTemporal Contract Test Implementation>", funct
     await hardhatLendingBoardAddressesProvider.setLendingBoardConfiguratorImpl(hardhatLendingBoardConfigurator.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardDataProviderImpl(hardhatLendingBoardDataProvider.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardParametersProviderImpl(hardhatLendingBoardParametersProvider.address);
+    await hardhatLendingBoardAddressesProvider.setLendingBoardNFTImpl(hardhatLendingBoardNFT.address); // Newly updated for NFT
     await hardhatLendingBoardAddressesProvider.setFeeProviderImpl(hardhatLendingBoardFeeProvider.address);
 
     // Setting address for contracts that are outside the context of the protocol
