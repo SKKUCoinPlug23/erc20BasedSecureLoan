@@ -868,9 +868,10 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard, VersionedInitializa
         // require(msg.sender == Owner, "[!] Loan: Only owner can mint NFT Bond");
 
         // Construct the metadata JSON manually
-        uint256 dueDate = borrowProposalList[_proposalId].dueDate;
-        // uint256 interestRate = borrowProposalList[_proposalId].interestRate;
-        // uint256 paybackAmount = _amount + (_amount * interestRate / 100);
+    
+        uint256 _dueDate = borrowProposalList[_proposalId].dueDate;
+        uint256 _interestRate = borrowProposalList[_proposalId].interestRate;
+        uint256 _paybackAmount = _amount + (_amount * _interestRate / 100);
         string memory metadata = string(abi.encodePacked(
             "{",
             "\"name\": \"Bond Token\",",
@@ -879,15 +880,13 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard, VersionedInitializa
             "\"attributes\": [",
             "{ \"trait_type\": \"Borrower\", \"value\": \"", Strings.toHexString(uint256(uint160(address(borrower)))), "\" },",
             "{ \"trait_type\": \"Borrow Amount\", \"value\": ", Strings.toString(_amount), " },",
-            "{ \"trait_type\": \"Due Date\", \"value\": ", Strings.toString(dueDate), " }",
+            "{ \"trait_type\": \"Due Date\", \"value\": ", Strings.toString(_dueDate), " }",
             "{ \"trait_type\": \"Contract Timestamp\", \"value\": ", Strings.toString(block.timestamp), " }",
-            // "{ \"trait_type\": \"Interest Rate\", \"value\": ", Strings.toString(block.timestamp), " }",
-            // "{ \"trait_type\": \"Payback Amount\", \"value\": ", Strings.toString(block.timestamp), " }",
+            "{ \"trait_type\": \"Interest Rate\", \"value\": ", Strings.toString(_interestRate), " }",
+            "{ \"trait_type\": \"Payback Amount\", \"value\": ", Strings.toString(_paybackAmount), " }",
             "]",
             "}"
         ));
-        // 2. 이자율
-        // 3. paybackamount
 
 
         // Mint NFT Bond
@@ -988,10 +987,10 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard, VersionedInitializa
         );
 
     }
-    
+
     function getBorrowProposal(uint256 proposalId) 
         public
-        view 
+        view
         returns(
             bool active,
             address borrower,
