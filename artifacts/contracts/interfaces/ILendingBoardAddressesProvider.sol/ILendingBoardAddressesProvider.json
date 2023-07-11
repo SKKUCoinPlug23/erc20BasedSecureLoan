@@ -96,6 +96,19 @@
     },
     {
       "inputs": [],
+      "name": "getLendingBoardNFT",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getLendingBoardParametersProvider",
       "outputs": [
         {

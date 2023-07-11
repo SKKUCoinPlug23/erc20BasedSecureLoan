@@ -24,6 +24,9 @@ interface ILendingBoardAddressesProvider { // WIP : Proxy Contract 관련 함수
     function getLendingBoardParametersProvider() external view returns (address);
     // function setLendingBoardParametersProviderImpl(address _parametersProvider) external;
 
+    function getLendingBoardNFT() external view returns (address);
+    // function setLendingBoardNFTImpl(address _lendingBoardNFT) external;
+    
     function getTokenDistributor() external view returns (address);
     function setTokenDistributor(address _tokenDistributor) external;
 
@@ -42,5 +45,6 @@ interface ILendingBoardAddressesProvider { // WIP : Proxy Contract 관련 함수
 
     function getLendingRateOracle() external view returns (address);
     function setLendingRateOracle(address _lendingRateOracle) external;
+
 
 }
