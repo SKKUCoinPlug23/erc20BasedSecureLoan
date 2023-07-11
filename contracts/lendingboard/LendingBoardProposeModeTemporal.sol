@@ -880,7 +880,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             "\"description\": \"A unique bond token\",",
             // "\"image\": \"https://example.com/path/to/image.png\",",
             "\"attributes\": [",
-            "{ \"trait_type\": \"Borrower\", \"value\": \"", borrower, "\" },",
+            "{ \"trait_type\": \"Borrower\", \"value\": \"", Strings.toHexString(uint256(uint160(address(borrower)))), "\" },",
             "{ \"trait_type\": \"Payback Amount\", \"value\": ", Strings.toString(_amount), " },",
             "{ \"trait_type\": \"Due Date\", \"value\": ", Strings.toString(dueDate), " }",
             "]",
