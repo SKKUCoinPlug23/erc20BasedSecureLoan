@@ -866,15 +866,11 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard, VersionedInitializa
         // Check #1. for isCallerOwner
         // require(block.timestamp <= dueDate, "[!] Loan: Loan is expired");
         // require(msg.sender == Owner, "[!] Loan: Only owner can mint NFT Bond");
-        
-        // string memory metadata = string(abi.encodePacked(
-        //     "Borrower: ", Strings.toString(uint256(uint160(address(msg.sender)))),
-        //     "Payback Amount: ", Strings.toString(_paybackAmount), 
-        //     "Due Date: ", Strings.toString(_dueDate)
-        // ));
 
         // Construct the metadata JSON manually
         uint256 dueDate = borrowProposalList[_proposalId].dueDate;
+        // uint256 interestRate = borrowProposalList[_proposalId].interestRate;
+        // uint256 paybackAmount = _amount + (_amount * interestRate / 100);
         string memory metadata = string(abi.encodePacked(
             "{",
             "\"name\": \"Bond Token\",",
@@ -882,9 +878,11 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard, VersionedInitializa
             // "\"image\": \"https://example.com/path/to/image.png\",",
             "\"attributes\": [",
             "{ \"trait_type\": \"Borrower\", \"value\": \"", Strings.toHexString(uint256(uint160(address(borrower)))), "\" },",
-            "{ \"trait_type\": \"Payback Amount\", \"value\": ", Strings.toString(_amount), " },",
+            "{ \"trait_type\": \"Borrow Amount\", \"value\": ", Strings.toString(_amount), " },",
             "{ \"trait_type\": \"Due Date\", \"value\": ", Strings.toString(dueDate), " }",
             "{ \"trait_type\": \"Contract Timestamp\", \"value\": ", Strings.toString(block.timestamp), " }",
+            // "{ \"trait_type\": \"Interest Rate\", \"value\": ", Strings.toString(block.timestamp), " }",
+            // "{ \"trait_type\": \"Payback Amount\", \"value\": ", Strings.toString(block.timestamp), " }",
             "]",
             "}"
         ));
