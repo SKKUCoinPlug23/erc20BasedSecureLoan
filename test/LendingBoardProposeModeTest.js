@@ -182,7 +182,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(PLUGaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
     await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(PLUGaddress,1); // 1 : enable, 0 : disable
     // console.log("set PLUG as Collateral enabled");
-    
+
     // Fixtures can return anything you consider useful for your tests
     return { owner, user1, user2, borrower1, borrower2, LendingBoardProposeMode, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress,PLUGaddress};
   }
@@ -268,7 +268,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
       await expect(hardhatLendingBoardProposeMode.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
       // owner가 repay하는 경우
-      const repayAmount = ethers.utils.parseEther('21'); // 대출한 값보다 적은 금액을 repayAmount로 책정
+      const repayAmount = ethers.utils.parseEther('21'); // 대출한 값보다 많은 금액을 repayAmount로 책정
       await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress,repayAmount,owner.address);
       reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
       console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());

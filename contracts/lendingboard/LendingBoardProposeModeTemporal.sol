@@ -406,7 +406,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     **/
 
     struct RepayLocalVars {
-        uint256 principalBorrowBalance;
+        uint256 principalBorrowBalance; // 
         uint256 compoundedBorrowBalance;
         uint256 borrowBalanceIncrease;
         bool isETH;
@@ -416,6 +416,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         uint256 originationFee;
     }
 
+    // added _tokenId in parameter list
     function repay(address _reserve, uint256 _amount, address payable _onBehalfOf)
         external
         payable
@@ -425,7 +426,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     {
         // Usage of a memory struct of vars to avoid "Stack too deep" errors due to local variables
         RepayLocalVars memory vars;
-
         (
             vars.principalBorrowBalance,
             vars.compoundedBorrowBalance,
@@ -442,7 +442,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             "To repay on behalf of an user an explicit amount to repay is needed."
         );
 
-        //default to max amount
+        // default to max amount
         // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
         vars.paybackAmount = vars.compoundedBorrowBalance + (vars.originationFee);
 
@@ -455,7 +455,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             "Invalid msg.value sent for the repayment"
         );
 
-        //if the amount is smaller than the origination fee, just transfer the amount to the fee destination address
+        // if the amount is smaller than the origination fee, just transfer the amount to the fee destination address
         if (vars.paybackAmount <= vars.originationFee) {
             core.updateStateOnRepay(
                 _reserve,
@@ -472,11 +472,28 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             //     vars.paybackAmount,
             //     addressesProvider.getTokenDistributor()
             // );
-            core.transferToFeeCollectionAddress{value:vars.isETH ? vars.paybackAmount : 0}(_reserve,
+            core.transferToFeeCollectionAddress{value:vars.isETH ? vars.paybackAmount : 0}(
+                _reserve,
                 _onBehalfOf,
                 vars.paybackAmount,
                 addressesProvider.getTokenDistributor()
             );
+
+            // Burn NFT if the user repays the whole debt
+            // 우선 NFT는 mint 이후에 lender에게 가므로
+            // 해당 토큰에 대하여 service가 approve를 받아야 함
+            // 이후에 특정 borrower가 metadata로 포함된 토큰ID를 찾아서
+            // 해당 토큰을 burn
+            // require(현재 NFT Owner balance = repay 이전 owner balance + paybackAmount)
+
+            // 1. Check NFT owner
+            // address ownerOfNFT = nft.ownerOf(1); // get owner of NFT
+            // // 2. repay to redirected lender
+            // // transferFrom(borrower, ownerOfNFT, vars.paybackAmount);
+            // // 3. check Conditions
+            // // require(currBorrowerBalance = prevBorrowerBalance - paybackAmount)
+            // // 4. burn NFT
+            // nft.burnNFT(1);
 
             emit Repay(
                 _reserve,
@@ -505,7 +522,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
 
         address payable senderPayable = payable(msg.sender);
 
-        //if the user didn't repay the origination fee, transfer the fee to the fee collection address
+        // if the user didn't repay the origination fee, transfer the fee to the fee collection address
         if(vars.originationFee > 0) {
             // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.originationFee : 0)(
             //     _reserve,
@@ -521,9 +538,9 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             );
         }
 
-        //sending the total msg.value if the transfer is ETH.
-        //the transferToReserve() function will take care of sending the
-        //excess ETH back to the caller
+        // sending the total msg.value if the transfer is ETH.
+        // the transferToReserve() function will take care of sending the
+        // excess ETH back to the caller
         // core.transferToReserve.value(vars.isETH ? msg.value.sub(vars.originationFee) : 0)(
         //     _reserve,
         //     msg.sender,
@@ -940,6 +957,15 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         uint256 _timestamp
     );
 
+    // event NFTMinted (
+    //     address _borrower, 
+    //     uint256 _amount, 
+    //     uint256 _dueDate, 
+    //     uint256 _contractTimestamp, 
+    //     uint256 _interestRate, 
+    //     uint256 _paybackAmount
+    // );
+
     // event BorrowAccepted (
     //     address indexed _reserveToLend,
     //     address indexed _lender,
@@ -976,15 +1002,12 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         require(core.isReserveBorrowingEnabled(_reserveToLend), "Reserve is not enabled for borrowing");
         lendLocarVars.availableLiquidity = core.getReserveAvailableLiquidity(_reserveToLend);
 
-
         require(
             lendLocarVars.availableLiquidity >= _amount,
             "There is not enough liquidity available in the reserve to make a lend proposal"
         );
         
-        uint256 userCurrentAvailableLendBalanceInWei = getUserReserveBalance(_reserveToLend,msg.sender).mul(10 ** 18);
-
-
+        uint256 userCurrentAvailableLendBalanceInWei = getUserReserveBalance(_reserveToLend, msg.sender).mul(10 ** 18);
         uint256 collateralLTV;
 
         (
@@ -1009,7 +1032,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
 
         lendLocarVars.lendFee = feeProvider.calculateLoanOriginationFee(msg.sender, _amount);
         require(lendLocarVars.lendFee > 0, "The amount to borrow is too small");
-        console.log("   => LBPM : Lend Fee for this lend proposal : ",lendLocarVars.lendFee);
+        console.log("   => LBPM : Lend Fee for this lend proposal : ", lendLocarVars.lendFee);
 
         proposalVars.active = true;
         proposalVars.proposer = msg.sender;
@@ -1049,7 +1072,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         address lender = lendProposalVars.proposer;
         uint256 lendFee = lendProposalVars.serviceFee;
         // Borrower가 곧 msg.sender이기에 parameter로 전달한다.
-        proposalAcceptInternal(reserveToLend,amount,_proposalId,msg.sender,lender,lendFee,false);
+        proposalAcceptInternal(reserveToLend, amount, _proposalId, msg.sender, lender, lendFee, false);
         lendProposalList[_proposalId].active = false;
     }
 
@@ -1120,7 +1143,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
 
         uint256 borrowBalanceIncreased;
-        (,borrowBalanceIncreased) = core.updateStateOnBorrow(
+        (, borrowBalanceIncreased) = core.updateStateOnBorrow(
             _reserve,
             _borrower,
             _amount,
@@ -1134,19 +1157,45 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         core.transferToUser(_reserve, borrowerPayable, _amount);
 
         // Borrower의 Collateral Service에게 transfer
-        // NFT 채권 발행하여 Lender에게 transfer @김주헌
-        // Input parameter _lender를 이용해서 
-        
-        // 이제 옮겨야 하는데 초기에 변수 설정할 때 lenderList 인지 borowerList인지 구분하는 Logic 필요
 
+
+        /** 
+         * Part of Minting NFT Bond
+         * - mint NFT & send to lender
+         * - metadata : [borrower, amount, dueDate, contract time, interestRate, paybackAmount]
+         */
         address reserveForCollateral;
+        uint256 _dueDate;
+        uint256 _interestRate;
+        uint256 _paybackAmount;
 
-        // Borrow Proposal Accept Case
-        if(isBorrowProposal){
+        if (isBorrowProposal){      // Borrow Proposal Accept Case
+            _dueDate = borrowProposalList[_proposalId].dueDate;
+            _interestRate = borrowProposalList[_proposalId].interestRate;
+            _paybackAmount = _amount + (_amount * _interestRate / 100);
             reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
-        } else { // Lend Proposal Accept Case
+        } else {                    // Lend Proposal Accept Case
+            _dueDate = lendProposalList[_proposalId].dueDate;
+            _interestRate = lendProposalList[_proposalId].interestRate;
+            _paybackAmount = _amount + (_amount * _interestRate / 100);
             reserveForCollateral = lendProposalList[_proposalId].reserveForCollateral;
         }
+
+        uint256 _contractTimestamp = block.timestamp;
+
+        // Mint NFT Bond
+        nft.setNFTmetadatas(
+            _proposalId, 
+            _borrower, 
+            _amount, 
+            _dueDate, 
+            _contractTimestamp, 
+            _interestRate, 
+            _paybackAmount
+        );
+
+        require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
+        require(nft.mintNFT(_lender) != 0, "Fail to mint NFT");
 
         emit ProposalAccepted(
             _reserve,

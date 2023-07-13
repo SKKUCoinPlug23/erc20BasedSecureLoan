@@ -1109,7 +1109,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         onlyUnfreezedReserve(_reserve)
         onlyAmountGreaterThanZero(_amount)    
     {
-         uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
+        uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
         console.log("   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
 
         require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
