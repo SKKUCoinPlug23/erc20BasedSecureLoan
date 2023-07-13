@@ -227,26 +227,46 @@ describe("<LendingBoardProposeModeTemporal Contract Test Implementation>", funct
       const dueDate = Date.now() + 100000;
       console.log("dueDate from JS : ",dueDate);
       // Borrowing STKN( = 2ETH) using PLUG( = 5ETH) as a collateral
-      await expect(hardhatLendingBoardProposeModeTemporal.connect(owner).borrowProposal(STKNaddress,borrowAmount,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeModeTemporal,"BorrowProposed");
+      await expect(hardhatLendingBoardProposeModeTemporal
+        .connect(owner)
+        .borrowProposal(STKNaddress,borrowAmount,PLUGaddress,interestRate,dueDate))
+        .to.emit(hardhatLendingBoardProposeModeTemporal,"BorrowProposed");
 
       const generatedBorrowProposal = await hardhatLendingBoardProposeModeTemporal.connect(owner).getBorrowProposal(0);
       // Data from borowProposal needs to have a borrower's id matching that of owner.address.
       expect(owner.address).to.equal(generatedBorrowProposal.borrower);
-      console.log("Generated Borrow Proposal check : ",generatedBorrowProposal);
+      console.log("Generated Borrow Proposal check : ", generatedBorrowProposal);
 
       // Check the NFT Balance of Owner Before Borrow Proposal Accept
-      console.log("[*] Before NFT Balance of Owner : ", (await hardhatLendingBoardNFT.balanceOf(owner.address)).toString());
+      console.log("[+] Before NFT Balance of Owner : ", (await hardhatLendingBoardNFT.balanceOf(owner.address)).toString());
       
       await hardhatLendingBoardProposeModeTemporal.connect(owner).borrowProposalAccept(0);
+      // expect(await hardhatLendingBoardNFT.balanceOf(owner.address)).to.equal(1);
 
       console.log("[+] Check for NFT Minting Test");
       // Check the NFT Balance of Owner After Borrow Proposal Accept
-      console.log("[*] After NFT Balance of Owner : ", (await hardhatLendingBoardNFT.balanceOf(owner.address)).toString());
-      
-      // Check the URI of NFT
-      const uri = await hardhatLendingBoardNFT.connect(owner).tokenURI(1);
-      console.log("[*] URI of NFT: ", uri);
+      console.log("[+] After NFT Balance of Owner : ", (await hardhatLendingBoardNFT.balanceOf(owner.address)).toString());
 
+      // Get Information of NFT (Get mapping Value)
+      const nftInfo = await hardhatLendingBoardNFT.connect(owner).getNFTmetadatas(1);
+      console.log("[+] NFT Info : ", nftInfo); 
+
+      // Check the owner of NFT
+      const ownerOfNFT = await hardhatLendingBoardNFT.connect(owner).ownerOf(1);
+      console.log("[+] Owner of NFT: ", ownerOfNFT);
+
+      // // Repay
+      // // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
+      // await expect(hardhatLendingBoardProposeModeTemporal.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
+      // // owner가 repay하는 경우
+      // const repayAmount = ethers.utils.parseEther('1'); // 대출한 값보다 적은 금액을 repayAmount로 책정
+      // console.log("===============[+] Check for Repay Test==========");
+      // await hardhatLendingBoardProposeModeTemporal.connect(owner).repay(STKNaddress,repayAmount,owner.address);
+      // reserveData = await hardhatLendingBoardProposeModeTemporal.getReserveData(STKNaddress);
+      // console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
+      // console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
+
+      // console.log("[+] After NFT Balance of Owner : ", (await hardhatLendingBoardNFT.balanceOf(owner.address)).toString());
     });
     
   });
