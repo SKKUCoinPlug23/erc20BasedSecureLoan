@@ -416,7 +416,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         uint256 originationFee;
     }
 
-    // added _tokenId in parameter list
     function repay(address _reserve, uint256 _amount, address payable _onBehalfOf)
         external
         payable
@@ -487,12 +486,16 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             // require(현재 NFT Owner balance = repay 이전 owner balance + paybackAmount)
 
             // 1. Check NFT owner
-            // address ownerOfNFT = nft.ownerOf(1); // get owner of NFT
-            // // 2. repay to redirected lender
-            // // transferFrom(borrower, ownerOfNFT, vars.paybackAmount);
-            // // 3. check Conditions
-            // // require(currBorrowerBalance = prevBorrowerBalance - paybackAmount)
-            // // 4. burn NFT
+            // borrower가 payoff 할 대상은...
+            // nft contract가 enumerable로 바뀌었으니까 _ownedTokens mapping에서 가져오면 될 듯
+
+            // 2. repay to redirected lender
+            // transferFrom(borrower, ownerOfNFT, vars.paybackAmount);
+            
+            // 3. check Conditions
+            // require(currBorrowerBalance = prevBorrowerBalance - paybackAmount)
+            
+            // 4. burn NFT
             // nft.burnNFT(1);
 
             emit Repay(
@@ -956,15 +959,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         uint256 _originationFee,
         uint256 _timestamp
     );
-
-    // event NFTMinted (
-    //     address _borrower, 
-    //     uint256 _amount, 
-    //     uint256 _dueDate, 
-    //     uint256 _contractTimestamp, 
-    //     uint256 _interestRate, 
-    //     uint256 _paybackAmount
-    // );
 
     // event BorrowAccepted (
     //     address indexed _reserveToLend,
