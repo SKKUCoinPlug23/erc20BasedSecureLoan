@@ -1184,18 +1184,8 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         uint256 _contractTimestamp = block.timestamp;
 
         // Mint NFT Bond
-        nft.setNFTmetadatas(
-            _proposalId, 
-            _borrower, 
-            _amount, 
-            _dueDate, 
-            _contractTimestamp, 
-            _interestRate, 
-            _paybackAmount
-        );
-
         require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
-        require(nft.mintNFT(_lender) != 0, "Fail to mint NFT");
+        require(nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount) != 0, "Fail to mint NFT");
 
         emit ProposalAccepted(
             _reserve,
@@ -1209,7 +1199,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         );
         
     }
-
 
     /**
     * @dev accessory functions to fetch data from the core contract
