@@ -42,11 +42,11 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         public
         returns (uint256)
     {
-        _tokenIds.increment();
+        _tokenIds.increment();                      // tokenId starts from 1
         uint256 newItemId = _tokenIds.current();
         
-        _mint(_recipient, newItemId);
-        setMetadataAndmappingNFTWithMetadata(
+        _mint(_recipient, newItemId);               // mint NFT
+        setMetadataAndmappingNFTWithMetadata(       // set metadata and mapping
             newItemId, 
             _proposalId, 
             _borrower, 
@@ -88,8 +88,22 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         );
     }
 
+    function getUserTokenList(address _user) public view returns (uint256[] memory) {
+        uint256 tokenCount = balanceOf(_user);
+        uint256[] memory result = new uint256[](tokenCount);
+
+        for (uint256 i = 0; i < tokenCount; i++) {
+            result[i] = tokenOfOwnerByIndex(_user, i);
+        }
+        return result;
+    }
+
     function getNFTmetadata(uint256 _tokenId) public view returns (Metadata memory) {
         return mappedNFT[_tokenId];
+    }
+
+    function tokenOfOwnerByIndex(address owner, uint256 index) public view virtual override(ERC721Enumerable) returns (uint256) {
+        return super.tokenOfOwnerByIndex(owner, index);
     }
 
     // Overriding ERC721Enumerable
@@ -124,8 +138,16 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
     }
 }
 
-/**
-  * Updates
- */
+// Updates
 // 2023.07.13
 // - ERC721Enumerable 을 사용하기 위하여 Overriding
+// - User의 토큰 리스트를 받아오기 위하여 getUserTokenList 함수 추가
+
+// Enumerable.sol 을 inherit 하였으므로...
+// Token Transfer가 일어날 때 마다 _beforeTokenTransfer, _afterTokenTransfer hook 발동
+// 자동적으로 mapping이 수정되어 소유자를 관리할 수 있음
+// repay에서는 LendingBoardNFT의 받아온 tokenId를 이용하여 ownerOf로써 소유자를 확인하고,
+// 해당 소유자의 주소로 repay를 진행
+
+// 이후에 Service 에서 NFT 거래까지 담당한다면 _transfer 를 이용하여
+// 기존의 _beforeTokenTransfer, _afterTokenTransfer hook을 발동시켜 관리할 수 있음

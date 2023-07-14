@@ -252,6 +252,12 @@ describe("<LendingBoardProposeModeTemporal Contract Test Implementation>", funct
       const nftInfo = await hardhatLendingBoardNFT.connect(owner).getNFTmetadata(1);
       console.log("[+] NFT Info : ", nftInfo);
 
+      // LendingBoardNFT function check
+      const ownerTokenID = await hardhatLendingBoardNFT.connect(owner).tokenOfOwnerByIndex(owner.address, 0);
+      console.log("[+] Owner Token ID : ", ownerTokenID.toString());
+      const ownerOfTokenID = await hardhatLendingBoardNFT.connect(owner).ownerOf(ownerTokenID);
+      console.log("[+] Owner of Token ID : ", ownerOfTokenID.toString());
+
       // // Repay
       // // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
       // await expect(hardhatLendingBoardProposeModeTemporal.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
