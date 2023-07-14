@@ -84,6 +84,20 @@ library CoreLibrary {
         bool isFreezed;
     }
 
+    struct ProposalStructure {
+        bool active;
+        address proposer;
+        address reserveToReceive;
+        uint256 amount;
+        address reserveForCollateral;
+        uint256 interestRate;
+        uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
+        uint256 proposalDate;
+        uint256 serviceFee;
+        uint256 ltv;
+    }
+
+
     /**
     * @dev returns the ongoing normalized income for the reserve.
     * a value of 1e27 means there is no income. As time passes, the income is accrued.
@@ -256,6 +270,15 @@ library CoreLibrary {
         uint256 _proposalInterestRate
     ) public {
         _self.stableBorrowRate = _proposalInterestRate;
+    }
+
+    // Calculating Compounded Borrow Balance for Propose Mode
+    function getProposalBorrowBalances(
+        CoreLibrary.ProposalStructure storage _proposal
+    ) internal view returns (uint256){
+        uint256 compoundedBalance = (1e18 + _proposal.interestRate).mul(_proposal.amount);
+        console.log("   => CL : Propose Mode  _proposal.interestRate and CompoundBalance",_proposal.interestRate, compoundedBalance);
+        return compoundedBalance;
     }
 
 
