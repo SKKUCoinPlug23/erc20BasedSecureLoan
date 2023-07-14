@@ -482,4 +482,5 @@ contract LendingBoardDataProvider is VersionedInitializable {
         lastUpdateTimestamp = core.getUserLastUpdate(_reserve, _user);
         usageAsCollateralEnabled = core.isUserUseReserveAsCollateralEnabled(_reserve, _user);
     }
+    
 }

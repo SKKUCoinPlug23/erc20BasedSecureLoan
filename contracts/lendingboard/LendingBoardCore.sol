@@ -83,6 +83,13 @@ contract LendingBoardCore is VersionedInitializable {
     mapping(address => CoreLibrary.ReserveData) internal reserves;
     mapping(address => mapping(address => CoreLibrary.UserReserveData)) internal usersReserveData;
 
+    // Propose Mode Add-Ons
+    mapping(uint256 => CoreLibrary.ProposalStructure) internal borrowProposalList;
+    mapping(uint256 => CoreLibrary.ProposalStructure) internal lendProposalList;
+
+    uint256 borrowProposalCount = 0;
+    uint256 lendProposalCount = 0;
+
     address[] public reservesList;
 
     uint256 public constant CORE_REVISION = 0x6;
@@ -102,6 +109,49 @@ contract LendingBoardCore is VersionedInitializable {
     function initialize(LendingBoardAddressesProvider _addressesProvider) public initializer {
         addressesProvider = _addressesProvider;
         refreshConfigInternal();
+    }
+
+    // Propose Mode Set Functions
+    function updateBorrowProposal(
+        uint256 _proposalId,
+        CoreLibrary.ProposalStructure memory _inputBorrowProposal
+    ) public {
+        borrowProposalList[_proposalId] = _inputBorrowProposal;
+    }
+
+    function updateLendProposal(
+        uint256 _proposalId,
+        CoreLibrary.ProposalStructure memory _inputBorrowProposal
+    ) public {
+        lendProposalList[_proposalId] = _inputBorrowProposal;
+    }
+
+    function incrementBorrowProposalCount() public { // WIP modifier 추가해야
+        borrowProposalCount++;
+    }
+
+    function incrementLendProposalCount() public { // WIP modifier 추가해야
+        lendProposalCount++;
+    }
+
+    function getBorrowProposalCount() public view returns(uint256){
+        return borrowProposalCount;
+    }
+
+    function getLendProposalCount() public view returns(uint256){
+        return lendProposalCount;
+    }
+
+    function getBorrowProposalFromCore(
+        uint256 _proposalId
+    ) public view returns (CoreLibrary.ProposalStructure memory){
+        return borrowProposalList[_proposalId];
+    }
+
+    function getLendProposalFromCore(
+        uint256 _proposalId
+    ) public view returns (CoreLibrary.ProposalStructure memory){
+        return lendProposalList[_proposalId];
     }
 
     /**
@@ -192,11 +242,6 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _borrowFee,
         CoreLibrary.InterestRateMode _rateMode
     ) external onlyLendingPool returns (uint256, uint256) {
-
-        // 임시로 생성한 CoreLibrary.setInterestRate() 함수 사용
-        CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
-        CoreLibrary.setInterestRate(user,1000000000000000000);
-
         // getting the previous borrow data of the user
         (uint256 principalBorrowBalance, , uint256 balanceIncrease) = getUserBorrowBalances(
             _reserve,
@@ -226,6 +271,51 @@ contract LendingBoardCore is VersionedInitializable {
         return (getUserCurrentBorrowRate(_reserve, _user), balanceIncrease);
     }
 
+    // WIP : update State On Borrow for Propse Mode
+    function updateStateOnBorrowProposeMode(
+        address _reserve,
+        address _user,
+        uint256 _amountBorrowed,
+        uint256 _borrowFee,
+        CoreLibrary.InterestRateMode _rateMode,
+        bool _isBorrowProposal,
+        uint256 _proposalId
+    ) external onlyLendingPool returns (uint256, uint256) {
+
+        // 임시로 생성한 CoreLibrary.setInterestRate() 함수 사용
+        // CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
+        // CoreLibrary.setInterestRate(user,1000000000000000000);
+
+        // getting the previous borrow data of the user
+        (uint256 principalBorrowBalance, , uint256 balanceIncrease) = getUserBorrowBalancesProposeMode(
+            _reserve,
+            _user,
+            _proposalId,
+            _isBorrowProposal
+        );
+
+        updateReserveStateOnBorrowInternal(
+            _reserve,
+            _user,
+            principalBorrowBalance,
+            balanceIncrease,
+            _amountBorrowed,
+            _rateMode
+        );
+
+        updateUserStateOnBorrowInternal(
+            _reserve,
+            _user,
+            _amountBorrowed,
+            balanceIncrease,
+            _borrowFee,
+            _rateMode
+        );
+
+        updateReserveInterestRatesAndTimestampInternal(_reserve, 0, _amountBorrowed);
+
+        return (getUserCurrentBorrowRate(_reserve, _user), balanceIncrease);
+    }
     /**
     * @dev updates the state of the core as a consequence of a repay action.
     * @param _reserve the address of the reserve on which the user is repaying
@@ -1016,12 +1106,42 @@ contract LendingBoardCore is VersionedInitializable {
         }
 
         uint256 principal = user.principalBorrowBalance;
-        console.log("   => LBC : User Principal Borrow Balance : ",principal);
         uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalance(
             user,
             reserves[_reserve]
         );
-        console.log("   => LBC : User Compounded Borrow Balance : ",compoundedBalance);
+        return (principal, compoundedBalance, compoundedBalance.sub(principal));
+    }
+
+    // WIP : getting User Borrow Balance for certain proposalId
+    function getUserBorrowBalancesProposeMode(address _reserve, address _user, uint256 _proposalId, bool _isBorrowProposal)
+        public
+        view
+        returns (uint256, uint256, uint256)
+    {
+        CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
+        CoreLibrary.ProposalStructure storage proposal;
+
+        if(_isBorrowProposal){
+            proposal = borrowProposalList[_proposalId];
+        } else {
+            proposal = lendProposalList[_proposalId];
+        }
+
+        if (user.principalBorrowBalance == 0) {
+            return (0, 0, 0);
+        }
+
+        uint256 principal = user.principalBorrowBalance;
+        // console.log("   => LBC : User Principal Borrow Balance : ",principal);
+        // uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalance(
+        //     user,
+        //     reserves[_reserve]
+        // );
+        // console.log("   => LBC : User Compounded Borrow Balance : ",compoundedBalance);
+        uint256 compoundedBalance = CoreLibrary.getProposalBorrowBalances(proposal);
+
+
         return (principal, compoundedBalance, compoundedBalance.sub(principal));
     }
 
