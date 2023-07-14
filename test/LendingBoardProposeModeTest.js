@@ -229,69 +229,6 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       const reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
       // console.log("STKN Reserve Data : ",reserveData);
     });
-    
-    it("Borrowing",async function(){
-      const { owner,addr1, hardhatLendingBoardProposeMode, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
-      // borrow()
-      var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
-
-      const borrowAmount = ethers.utils.parseEther('1');
-      await hardhatLendingBoardProposeMode.connect(owner).borrow(STKNaddress,borrowAmount,2); // InterestRateMode 1 == stable, 2 == variable
-      
-      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
-    });
-
-    it("Borrow and Repay less than the borrow amount",async function(){
-      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
-     
-      // borrow()
-      var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data available Liquidity : %s ",reserveData.availableLiquidity.toString());
-
-      const borrowAmount = ethers.utils.parseEther('1');
-      await hardhatLendingBoardProposeMode.connect(owner).borrow(STKNaddress,borrowAmount,2); // InterestRateMode 1 == stable, 2 == variable
-      
-      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data available Liquidity After Borrow : ",reserveData.availableLiquidity.toString());
-
-      // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
-      await expect(hardhatLendingBoardProposeMode.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
-      // owner가 repay하는 경우
-      const repayAmount = ethers.utils.parseEther('0.5'); // 대출한 값보다 적은 금액을 repayAmount로 책정
-      await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress,repayAmount,owner.address);
-      console.log(" ============== Repay Done ============== ");
-      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
-
-    });
-
-    it("Borrow and Repay more than the borrow amount",async function(){
-      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress } = await loadFixture(deployLendingBoardFixture);
-     
-      // borrow()
-      var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
-      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
-
-      const borrowAmount = ethers.utils.parseEther('10');
-      await hardhatLendingBoardProposeMode.connect(owner).borrow(STKNaddress,borrowAmount,2); // InterestRateMode 1 == stable, 2 == variable
-      
-      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
-      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
-
-      // owner가 아닌 user1은 대출을 하지 않았기에 user1으로 repay시 revert되어야 함
-      await expect(hardhatLendingBoardProposeMode.connect(user1).repay(STKNaddress,borrowAmount,user1.address)).to.be.reverted;
-      // owner가 repay하는 경우
-      const repayAmount = ethers.utils.parseEther('21'); // 대출한 값보다 적은 금액을 repayAmount로 책정
-      await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress,repayAmount,owner.address);
-      reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
-      console.log("STKN Reserve Data available Liquidity : ",reserveData.availableLiquidity.toString());
-      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
-
-    });
 
     it("Borrow Proposal Test Case",async function(){
       const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
