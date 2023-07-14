@@ -659,6 +659,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         address  _borrower,
         uint256 indexed _proposalId,
         uint256 _amount,
+        bool _isBorrowProposal,
         uint256 _originationFee,
         uint256 _timestamp
     );
@@ -1109,12 +1110,82 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         onlyUnfreezedReserve(_reserve)
         onlyAmountGreaterThanZero(_amount)    
     {
-         uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
-        console.log("   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
+        //  uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
+        // console.log("   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
 
-        require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
+        // require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
 
-        uint256 borrowBalanceIncreased;
+        // uint256 borrowBalanceIncreased;
+        // (,borrowBalanceIncreased) = core.updateStateOnBorrow(
+        //     _reserve,
+        //     _borrower,
+        //     _amount,
+        //     serviceFee,
+        //     CoreLibrary.InterestRateMode.STABLE
+        // );
+        // console.log("   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
+
+        // // Transfering the Token Borrow Proposer Desired
+        // address payable borrowerPayable = payable(_borrower);
+        // core.transferToUser(_reserve, borrowerPayable, _amount);
+
+        // Borrower의 Collateral Service에게 transfer
+        // NFT 채권 발행하여 Lender에게 transfer @김주헌
+        // Input parameter _lender를 이용해서 
+        address reserveForCollateral;
+
+        // // Borrow Proposal Accept Case
+        // if(isBorrowProposal){
+        //     reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
+        // } else { // Lend Proposal Accept Case
+        //     reserveForCollateral = lendProposalList[_proposalId].reserveForCollateral;
+        // }
+
+        // Borrow Proposal Accept Case
+        if(isBorrowProposal){
+            reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
+            uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
+            console.log("   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
+
+            require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
+
+
+        } else { // Lend Proposal Accept Case
+            reserveForCollateral = lendProposalList[_proposalId].reserveForCollateral;
+            uint256 collateralLtv = lendProposalList[_proposalId].ltv;
+            IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+            // amount가 parseEther로 들어가ㅏ기에 10^18로 나눠도 wei 단위로 표시됨
+            uint256 collateralOraclePriceInWei = oracle
+                .getAssetPrice(reserveForCollateral);
+            uint256 userCollateralBalance = getUserReserveBalance(_reserve,msg.sender);
+            uint256 userCollateralLtvAppliedValue = (userCollateralBalance)
+                .mul(collateralLtv)
+                .mul(collateralOraclePriceInWei)
+                .div(10 ** 36);
+
+            console.log("   => LBPM : collateralLtv : ",collateralLtv);
+            console.log("   => LBPM : collateralOraclePriceInWei : ",collateralOraclePriceInWei);
+            console.log("   => LBPM : userCollateralLtvAppliedValue : ",userCollateralLtvAppliedValue);
+
+            uint256 borrowAssetPriceInWei = oracle
+                .getAssetPrice(_reserve)
+                .mul(_amount)
+                .div(10 ** 18); // potential error points
+            uint256 borrowAssetPriceInEth = borrowAssetPriceInWei
+                .div(10 ** 18);
+            console.log("   => LBPM : borrowAssetPriceInEth : ",borrowAssetPriceInEth);
+
+            require(userCollateralLtvAppliedValue >= borrowAssetPriceInEth,"Borrower doesn't have enough collateral to accept Lend Proposal");
+
+        }
+
+        uint256 borrowBalanceIncreased; // Revision mandated
+        console.log("   => LBPM : Service Fee : ", serviceFee);
+
+        // 임시로 생성한 CoreLibrary.setInterestRate() 함수 사용
+        // CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
+        // CoreLibrary.setInterestRate(user,proposalInteresRate);
+
         (,borrowBalanceIncreased) = core.updateStateOnBorrow(
             _reserve,
             _borrower,
@@ -1128,17 +1199,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         address payable borrowerPayable = payable(_borrower);
         core.transferToUser(_reserve, borrowerPayable, _amount);
 
-        // Borrower의 Collateral Service에게 transfer
-        // NFT 채권 발행하여 Lender에게 transfer @김주헌
-        // Input parameter _lender를 이용해서 
-        address reserveForCollateral;
-
-        // Borrow Proposal Accept Case
-        if(isBorrowProposal){
-            reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
-        } else { // Lend Proposal Accept Case
-            reserveForCollateral = lendProposalList[_proposalId].reserveForCollateral;
-        }
+        // @김주헌 transferToUser 이후 Lender에게 채권 전달하는 프로세스 추가
 
         emit ProposalAccepted(
             _reserve,
@@ -1147,6 +1208,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             _borrower,
             _proposalId,
             _amount,
+            isBorrowProposal,
             serviceFee,
             block.timestamp
         );
