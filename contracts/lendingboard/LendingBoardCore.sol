@@ -192,6 +192,11 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _borrowFee,
         CoreLibrary.InterestRateMode _rateMode
     ) external onlyLendingPool returns (uint256, uint256) {
+
+        // 임시로 생성한 CoreLibrary.setInterestRate() 함수 사용
+        CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
+        CoreLibrary.setInterestRate(user,1000000000000000000);
+
         // getting the previous borrow data of the user
         (uint256 principalBorrowBalance, , uint256 balanceIncrease) = getUserBorrowBalances(
             _reserve,
@@ -717,7 +722,7 @@ contract LendingBoardCore is VersionedInitializable {
         console.log("   => LBC : Current Stable Borrow Rate : ",reserve.currentStableBorrowRate);
 
         if (reserve.currentStableBorrowRate == 0) {
-            console.log("   => LBC : Oracle Lending Rate Applied");
+            console.log("   => LBC : Oracle Lending Rate Applied : ",oracle.getMarketBorrowRate(_reserve));
             //no stable rate borrows yet
             return oracle.getMarketBorrowRate(_reserve);
         }
@@ -1011,10 +1016,12 @@ contract LendingBoardCore is VersionedInitializable {
         }
 
         uint256 principal = user.principalBorrowBalance;
+        console.log("   => LBC : User Principal Borrow Balance : ",principal);
         uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalance(
             user,
             reserves[_reserve]
         );
+        console.log("   => LBC : User Compounded Borrow Balance : ",compoundedBalance);
         return (principal, compoundedBalance, compoundedBalance.sub(principal));
     }
 
@@ -1337,6 +1344,7 @@ contract LendingBoardCore is VersionedInitializable {
         CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
 
         if (_rateMode == CoreLibrary.InterestRateMode.STABLE) {
+            console.log("       => LBC : rate mode STABLE, updateUserStateOnBorrowInternal reserve.currentStableBorrowRate : ",reserve.currentStableBorrowRate);
             //stable
             //reset the user variable index, and update the stable rate
             user.stableBorrowRate = reserve.currentStableBorrowRate;
@@ -1731,12 +1739,10 @@ contract LendingBoardCore is VersionedInitializable {
             reserve.totalBorrowsVariable,
             reserve.currentAverageStableBorrowRate
         );
-        // 여기 이전에서 막힘
-        console.log("newLiquidityRate : ",newLiquidityRate);
+        console.log("       => LBC : updateReserveInterestRatesAndTimestampInternal => newStableRate : ",newStableRate);
         reserve.currentLiquidityRate = newLiquidityRate;
         reserve.currentStableBorrowRate = newStableRate;
         reserve.currentVariableBorrowRate = newVariableRate;
-        console.log("Reserve Variable Set");
         //solium-disable-next-line
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
 
