@@ -446,8 +446,8 @@ contract LendingBoardDataProvider is VersionedInitializable {
         view
         returns (
             uint256 currentATokenBalance,
-            uint256 currentBorrowBalance,
-            uint256 principalBorrowBalance,
+            uint256 currentBorrowBalance, // 원금 + accrued interest
+            uint256 principalBorrowBalance, // 원금만
             uint256 borrowRateMode,
             uint256 borrowRate,
             uint256 liquidityRate,
@@ -456,21 +456,25 @@ contract LendingBoardDataProvider is VersionedInitializable {
             uint256 lastUpdateTimestamp,
             bool usageAsCollateralEnabled
         )
-    {
+    {   
+        console.log("       => LBDP : 1");
         currentATokenBalance = AToken(core.getReserveATokenAddress(_reserve)).balanceOf(_user);
+        console.log("       => LBDP : 2");
         CoreLibrary.InterestRateMode mode = core.getUserCurrentBorrowRateMode(_reserve, _user);
+        console.log("       => LBDP : 3");
         (principalBorrowBalance, currentBorrowBalance, ) = core.getUserBorrowBalances(
             _reserve,
             _user
         );
 
+        console.log("       => LBDP : 4");
         //default is 0, if mode == CoreLibrary.InterestRateMode.NONE
         if (mode == CoreLibrary.InterestRateMode.STABLE) {
             borrowRate = core.getUserCurrentStableBorrowRate(_reserve, _user);
         } else if (mode == CoreLibrary.InterestRateMode.VARIABLE) {
             borrowRate = core.getReserveCurrentVariableBorrowRate(_reserve);
         }
-
+        console.log("       => LBDP : 5");
         borrowRateMode = uint256(mode);
         liquidityRate = core.getReserveCurrentLiquidityRate(_reserve);
         originationFee = core.getUserOriginationFee(_reserve, _user);
