@@ -445,6 +445,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
         vars.paybackAmount = vars.compoundedBorrowBalance + (vars.originationFee);
 
+        // amount가 UMAX가 아니고 계산된 paybackAmount보다 작으면 그냥 amount로 set
         if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
             vars.paybackAmount = _amount;
         }
@@ -455,6 +456,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         );
 
         // if the amount is smaller than the origination fee, just transfer the amount to the fee destination address
+        // repayAmount가 service fee보다 작으면 service fee collection으로 이동 
         if (vars.paybackAmount <= vars.originationFee) {
             core.updateStateOnRepay(
                 _reserve,
@@ -477,26 +479,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
                 vars.paybackAmount,
                 addressesProvider.getTokenDistributor()
             );
-
-            // Burn NFT if the user repays the whole debt
-            // 우선 NFT는 mint 이후에 lender에게 가므로
-            // 해당 토큰에 대하여 service가 approve를 받아야 함
-            // 이후에 특정 borrower가 metadata로 포함된 토큰ID를 찾아서
-            // 해당 토큰을 burn
-            // require(현재 NFT Owner balance = repay 이전 owner balance + paybackAmount)
-
-            // 1. Check NFT owner
-            // borrower가 payoff 할 대상은...
-            // nft contract가 enumerable로 바뀌었으니까 _ownedTokens mapping에서 가져오면 될 듯
-
-            // 2. repay to redirected lender
-            // transferFrom(borrower, ownerOfNFT, vars.paybackAmount);
-            
-            // 3. check Conditions
-            // require(currBorrowerBalance = prevBorrowerBalance - paybackAmount)
-            
-            // 4. burn NFT
-            // nft.burnNFT(1);
 
             emit Repay(
                 _reserve,
@@ -526,7 +508,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         address payable senderPayable = payable(msg.sender);
 
         // if the user didn't repay the origination fee, transfer the fee to the fee collection address
-        if(vars.originationFee > 0) {
+        if (vars.originationFee > 0) {
             // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.originationFee : 0)(
             //     _reserve,
             //     msg.sender,
@@ -541,19 +523,154 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             );
         }
 
-        // sending the total msg.value if the transfer is ETH.
-        // the transferToReserve() function will take care of sending the
-        // excess ETH back to the caller
-        // core.transferToReserve.value(vars.isETH ? msg.value.sub(vars.originationFee) : 0)(
-        //     _reserve,
-        //     msg.sender,
-        //     vars.paybackAmountMinusFees
-        // );
+        emit Repay(
+            _reserve,
+            _onBehalfOf,
+            msg.sender,
+            vars.paybackAmountMinusFees,
+            vars.originationFee,
+            vars.borrowBalanceIncrease,
+            //solium-disable-next-line
+            block.timestamp
+        );
+    }
+
+    function repayPropose(address _reserve, uint256 _amount, address payable _onBehalfOf, uint256 _proposalId)
+        external
+        payable
+        nonReentrant
+        onlyActiveReserve(_reserve)
+        onlyAmountGreaterThanZero(_amount)
+    {
+        // Usage of a memory struct of vars to avoid "Stack too deep" errors due to local variables
+        RepayLocalVars memory vars;
+        (
+            vars.principalBorrowBalance,
+            vars.compoundedBorrowBalance,
+            vars.borrowBalanceIncrease
+        ) = core.getUserBorrowBalances(_reserve, _onBehalfOf);
+
+        vars.originationFee = core.getUserOriginationFee(_reserve, _onBehalfOf);
+        vars.isETH = EthAddressLib.ethAddress() == _reserve;
+
+        require(vars.compoundedBorrowBalance > 0, "The user does not have any borrow pending");
+
+        require(
+            _amount != UINT_MAX_VALUE || msg.sender == _onBehalfOf,
+            "To repay on behalf of an user an explicit amount to repay is needed."
+        );
+
+        // default to max amount
+        // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
+        vars.paybackAmount = vars.compoundedBorrowBalance + (vars.originationFee);
+
+        // amount가 UMAX가 아니고 계산된 paybackAmount보다 작으면 그냥 amount로 set
+        if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
+            vars.paybackAmount = _amount;
+        }
+
+        require(
+            !vars.isETH || msg.value >= vars.paybackAmount,
+            "Invalid msg.value sent for the repayment"
+        );
+
+        // if the amount is smaller than the origination fee, just transfer the amount to the fee destination address
+        // repayAmount가 service fee보다 작으면 service fee collection으로 이동
+        // 더 적은 금액을 repay하려는 상황은 고려하지 않고 그냥 한 번에 자신이 빌린 금액 전체를 repay 하는
+        // 방식으로 구현해야 할 듯
+        // (따라서 아래 조건문은 없애는 방향으로)
+        if (vars.paybackAmount <= vars.originationFee) {
+            core.updateStateOnRepay(
+                _reserve,
+                _onBehalfOf,
+                0,
+                vars.paybackAmount,
+                vars.borrowBalanceIncrease,
+                false
+            );
+
+            // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.paybackAmount : 0)(
+            //     _reserve,
+            //     _onBehalfOf,
+            //     vars.paybackAmount,
+            //     addressesProvider.getTokenDistributor()
+            // );
+            core.transferToFeeCollectionAddress{value:vars.isETH ? vars.paybackAmount : 0}(
+                _reserve,
+                _onBehalfOf,
+                vars.paybackAmount,
+                addressesProvider.getTokenDistributor()
+            );
+
+            emit Repay(
+                _reserve,
+                _onBehalfOf,
+                msg.sender,
+                0,
+                vars.paybackAmount,
+                vars.borrowBalanceIncrease,
+                //solium-disable-next-line
+                block.timestamp
+            );
+            return;
+        }
+
+        // vars.paybackAmountMinusFees = vars.paybackAmount.sub(vars.originationFee);
+        vars.paybackAmountMinusFees = vars.paybackAmount - (vars.originationFee);
+
+        core.updateStateOnRepay(
+            _reserve,
+            _onBehalfOf,
+            vars.paybackAmountMinusFees,
+            vars.originationFee,
+            vars.borrowBalanceIncrease,
+            vars.compoundedBorrowBalance == vars.paybackAmountMinusFees
+        );
+
+        address payable senderPayable = payable(msg.sender);
+
+        // if the user didn't repay the origination fee, transfer the fee to the fee collection address
+        // Fee 안 냈으면 fee 부터 냄
+        if (vars.originationFee > 0) {
+            // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.originationFee : 0)(
+            //     _reserve,
+            //     msg.sender,
+            //     vars.originationFee,
+            //     addressesProvider.getTokenDistributor()
+            // );
+            core.transferToFeeCollectionAddress{value :vars.isETH ? vars.originationFee : 0}(
+                _reserve,
+                senderPayable,
+                vars.originationFee,
+                addressesProvider.getTokenDistributor()
+            );
+        }
+
         core.transferToReserve{value:vars.isETH ? msg.value.sub(vars.originationFee) : 0}(
             _reserve,
             senderPayable,
             vars.paybackAmountMinusFees
         );
+
+
+        // 0. Get Tokn ID
+        uint256 _tokenId = proposalIdToTokenId[_proposalId];
+
+        // 1. check Bond(NFT) owner
+        address payable ownerOfBond = payable(nft.ownerOf(_tokenId));
+
+        // 2. send to lender
+        core.transferToUser(
+            _reserve,
+            ownerOfBond,
+            vars.paybackAmountMinusFees
+        );
+        
+        // 3. check Conditions
+        // require(currBorrowerBalance = prevBorrowerBalance - paybackAmount)
+        
+        // 4. burn NFT
+        nft.burnNFT(_tokenId);
 
         emit Repay(
             _reserve,
@@ -634,8 +751,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             revert(string(abi.encodePacked("Liquidation failed: ", returnMessage)));
         }
     }
-
-
 
     // WIP : borrowProposal, borrowProposalAccept, getBorrowProposal, lendProposal, lendProposalAccept, getLendProposal
 
@@ -1116,6 +1231,8 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         return result;
     }
 
+    mapping(uint256 => uint256) public proposalIdToTokenId;
+
     function proposalAcceptInternal(
         address _reserve,
         uint256 _amount,
@@ -1178,8 +1295,10 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         uint256 _contractTimestamp = block.timestamp;
 
         // Mint NFT Bond
+        uint256 tokenId;
         require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
-        require(nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount) != 0, "Fail to mint NFT");
+        tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount);
+        proposalIdToTokenId[_proposalId] = tokenId;
 
         emit ProposalAccepted(
             _reserve,

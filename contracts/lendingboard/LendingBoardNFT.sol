@@ -92,9 +92,9 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         uint256 tokenCount = balanceOf(_user);
         uint256[] memory result = new uint256[](tokenCount);
 
-        for (uint256 i = 0; i < tokenCount; i++) {
+        for (uint256 i = 0; i < tokenCount; i++)
             result[i] = tokenOfOwnerByIndex(_user, i);
-        }
+
         return result;
     }
 
