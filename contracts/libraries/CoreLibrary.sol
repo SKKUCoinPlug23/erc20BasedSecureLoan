@@ -436,10 +436,10 @@ library CoreLibrary {
     * @param _amount the amount to substract to the total borrows variable
     **/
     function decreaseTotalBorrowsVariable(ReserveData storage _reserve, uint256 _amount) internal {
-        require(
-            _reserve.totalBorrowsVariable >= _amount,
-            "The amount that is being subtracted from the variable total borrows is incorrect"
-        );
+        // require(
+        //     _reserve.totalBorrowsVariable >= _amount,
+        //     "The amount that is being subtracted from the variable total borrows is incorrect"
+        // );
         // _reserve.totalBorrowsVariable = _reserve.totalBorrowsVariable.sub(_amount);
         _reserve.totalBorrowsVariable = _reserve.totalBorrowsVariable - (_amount);
     }

@@ -24,6 +24,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     event LendingBoardConfiguratorUpdated(address indexed newAddress);
     event LendingBoardLiquidationManagerUpdated(address indexed newAddress);
     event LendingBoardDataProviderUpdated(address indexed newAddress);
+    event LendingBoardNFTUpdated(address indexed newAddress); // Newly Updated for NFT
     event EthereumAddressUpdated(address indexed newAddress);
     event PriceOracleUpdated(address indexed newAddress);
     event LendingRateOracleUpdated(address indexed newAddress);
@@ -39,6 +40,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
     bytes32 private constant LENDING_BOARD_MANAGER = "LENDING_BOARD_MANAGER";
     bytes32 private constant LENDING_BOARD_LIQUIDATION_MANAGER = "LIQUIDATION_MANAGER";
     bytes32 private constant LENDING_BOARD_FLASHLOAN_PROVIDER = "FLASHLOAN_PROVIDER";
+    bytes32 private constant LENDING_BOARD_NFT = "LENDING_BOARD_NFT"; // Newly Updated for NFT
     bytes32 private constant DATA_PROVIDER = "DATA_PROVIDER";
     bytes32 private constant ETHEREUM_ADDRESS = "ETHEREUM_ADDRESS";
     bytes32 private constant PRICE_ORACLE = "PRICE_ORACLE";
@@ -193,6 +195,23 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
         emit LendingBoardManagerUpdated(_lendingBoardManager);
     }
 
+    /**
+    * @dev returns the address of the Lending Board NFT proxy
+    * @return the lending board nft proxy address
+    **/
+    function getLendingBoardNFT() override public view returns (address) {
+        return getAddress(LENDING_BOARD_NFT);
+    }
+
+    /**
+    * @dev updates the implementation of the lending board NFT
+    * @param _nft the new lending board implementation
+    **/
+    function setLendingBoardNFTImpl(address _nft) public onlyOwner {
+        _setAddress(LENDING_BOARD_NFT, _nft);
+        emit LendingBoardNFTUpdated(_nft);
+    }
+
     function getPriceOracle() override public view returns (address) {
         return getAddress(PRICE_ORACLE);
     }
@@ -220,6 +239,7 @@ contract LendingBoardAddressesProvider is Ownable, ILendingBoardAddressesProvide
         _setAddress(TOKEN_DISTRIBUTOR, _tokenDistributor);
         emit TokenDistributorUpdated(_tokenDistributor);
     }
+    
 
 
     /**

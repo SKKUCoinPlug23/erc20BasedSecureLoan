@@ -156,6 +156,20 @@ contract LendingBoardCore is VersionedInitializable {
         return lendProposalList[_proposalId];
     }
 
+    function setBorrowTokenIdToProposalId(
+        uint256 _proposalId,
+        uint256 _tokenId
+    ) public {
+        borrowProposalList[_proposalId].tokenId = _tokenId;
+    }
+
+    function setLendTokenIdToProposalId(
+        uint256 _proposalId,
+        uint256 _tokenId
+    ) public {
+        lendProposalList[_proposalId].tokenId = _tokenId;
+    }
+
     /**
     * @dev updates the state of the core as a result of a deposit action
     * @param _reserve the address of the reserve in which the deposit is happening
@@ -1533,20 +1547,20 @@ contract LendingBoardCore is VersionedInitializable {
         //update the indexes
         reserves[_reserve].updateCumulativeIndexes();
 
-        //compound the cumulated interest to the borrow balance and then subtracting the payback amount
-        if (borrowRateMode == CoreLibrary.InterestRateMode.STABLE) {
-            reserve.increaseTotalBorrowsStableAndUpdateAverageRate(
-                _balanceIncrease,
-                user.stableBorrowRate
-            );
-            reserve.decreaseTotalBorrowsStableAndUpdateAverageRate(
-                _paybackAmountMinusFees,
-                user.stableBorrowRate
-            );
-        } else {
-            reserve.increaseTotalBorrowsVariable(_balanceIncrease);
-            reserve.decreaseTotalBorrowsVariable(_paybackAmountMinusFees);
-        }
+        // //compound the cumulated interest to the borrow balance and then subtracting the payback amount
+        // if (borrowRateMode == CoreLibrary.InterestRateMode.STABLE) {
+        //     reserve.increaseTotalBorrowsStableAndUpdateAverageRate(
+        //         _balanceIncrease,
+        //         user.stableBorrowRate
+        //     );
+        //     reserve.decreaseTotalBorrowsStableAndUpdateAverageRate(
+        //         _paybackAmountMinusFees,
+        //         user.stableBorrowRate
+        //     );
+        // } else {
+        //     reserve.increaseTotalBorrowsVariable(_balanceIncrease);
+        //     reserve.decreaseTotalBorrowsVariable(_paybackAmountMinusFees);
+        // }
     }
 
     /**

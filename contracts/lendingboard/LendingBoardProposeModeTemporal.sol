@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/openzeppelin-upgradeability/VersionedInitializable.sol";
 
 import "../configuration/LendingBoardAddressesProvider.sol";
@@ -27,7 +26,7 @@ import "../libraries/EthAddressLib.sol";
 // We import this library to be able to use console.log
 import "hardhat/console.sol";
 
-// Import for NFT Minting
+// import for NFT Minting
 import "./LendingBoardNFT.sol";
 
 contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializable{
@@ -41,13 +40,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     LendingBoardParametersProvider public parametersProvider;
     IFeeProvider feeProvider;
     LendingBoardNFT public nft;
-
-    // Constructor Only for NFT Minting
-    constructor(
-        LendingBoardNFT _nft
-    ) {
-        nft = _nft; 
-    }
 
     //'indexed' : 하나의 event에 최대 3개의 indexed를 붙일 수 있다. indexed attr를 통해 fast filtering 가능해짐
     event Deposit(
@@ -179,6 +171,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             addressesProvider.getLendingBoardParametersProvider()
         );
         feeProvider = IFeeProvider(addressesProvider.getFeeProvider());
+        nft = LendingBoardNFT(addressesProvider.getLendingBoardNFT());
     }
 
     /**
@@ -413,7 +406,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     **/
 
     struct RepayLocalVars {
-        uint256 principalBorrowBalance;
+        uint256 principalBorrowBalance; // 
         uint256 compoundedBorrowBalance;
         uint256 borrowBalanceIncrease;
         bool isETH;
@@ -432,7 +425,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     {
         // Usage of a memory struct of vars to avoid "Stack too deep" errors due to local variables
         RepayLocalVars memory vars;
-
         (
             vars.principalBorrowBalance,
             vars.compoundedBorrowBalance,
@@ -449,10 +441,11 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             "To repay on behalf of an user an explicit amount to repay is needed."
         );
 
-        //default to max amount
+        // default to max amount
         // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
         vars.paybackAmount = vars.compoundedBorrowBalance + (vars.originationFee);
 
+        // amount가 UMAX가 아니고 계산된 paybackAmount보다 작으면 그냥 amount로 set
         if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
             vars.paybackAmount = _amount;
         }
@@ -462,7 +455,8 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             "Invalid msg.value sent for the repayment"
         );
 
-        //if the amount is smaller than the origination fee, just transfer the amount to the fee destination address
+        // if the amount is smaller than the origination fee, just transfer the amount to the fee destination address
+        // repayAmount가 service fee보다 작으면 service fee collection으로 이동 
         if (vars.paybackAmount <= vars.originationFee) {
             core.updateStateOnRepay(
                 _reserve,
@@ -479,7 +473,8 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             //     vars.paybackAmount,
             //     addressesProvider.getTokenDistributor()
             // );
-            core.transferToFeeCollectionAddress{value:vars.isETH ? vars.paybackAmount : 0}(_reserve,
+            core.transferToFeeCollectionAddress{value:vars.isETH ? vars.paybackAmount : 0}(
+                _reserve,
                 _onBehalfOf,
                 vars.paybackAmount,
                 addressesProvider.getTokenDistributor()
@@ -512,8 +507,8 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
 
         address payable senderPayable = payable(msg.sender);
 
-        //if the user didn't repay the origination fee, transfer the fee to the fee collection address
-        if(vars.originationFee > 0) {
+        // if the user didn't repay the origination fee, transfer the fee to the fee collection address
+        if (vars.originationFee > 0) {
             // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.originationFee : 0)(
             //     _reserve,
             //     msg.sender,
@@ -528,19 +523,154 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             );
         }
 
-        //sending the total msg.value if the transfer is ETH.
-        //the transferToReserve() function will take care of sending the
-        //excess ETH back to the caller
-        // core.transferToReserve.value(vars.isETH ? msg.value.sub(vars.originationFee) : 0)(
-        //     _reserve,
-        //     msg.sender,
-        //     vars.paybackAmountMinusFees
-        // );
+        emit Repay(
+            _reserve,
+            _onBehalfOf,
+            msg.sender,
+            vars.paybackAmountMinusFees,
+            vars.originationFee,
+            vars.borrowBalanceIncrease,
+            //solium-disable-next-line
+            block.timestamp
+        );
+    }
+
+    function repayPropose(address _reserve, uint256 _amount, address payable _onBehalfOf, uint256 _proposalId)
+        external
+        payable
+        nonReentrant
+        onlyActiveReserve(_reserve)
+        onlyAmountGreaterThanZero(_amount)
+    {
+        // Usage of a memory struct of vars to avoid "Stack too deep" errors due to local variables
+        RepayLocalVars memory vars;
+        (
+            vars.principalBorrowBalance,
+            vars.compoundedBorrowBalance,
+            vars.borrowBalanceIncrease
+        ) = core.getUserBorrowBalances(_reserve, _onBehalfOf);
+
+        vars.originationFee = core.getUserOriginationFee(_reserve, _onBehalfOf);
+        vars.isETH = EthAddressLib.ethAddress() == _reserve;
+
+        require(vars.compoundedBorrowBalance > 0, "The user does not have any borrow pending");
+
+        require(
+            _amount != UINT_MAX_VALUE || msg.sender == _onBehalfOf,
+            "To repay on behalf of an user an explicit amount to repay is needed."
+        );
+
+        // default to max amount
+        // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
+        vars.paybackAmount = vars.compoundedBorrowBalance + (vars.originationFee);
+
+        // amount가 UMAX가 아니고 계산된 paybackAmount보다 작으면 그냥 amount로 set
+        if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
+            vars.paybackAmount = _amount;
+        }
+
+        require(
+            !vars.isETH || msg.value >= vars.paybackAmount,
+            "Invalid msg.value sent for the repayment"
+        );
+
+        // if the amount is smaller than the origination fee, just transfer the amount to the fee destination address
+        // repayAmount가 service fee보다 작으면 service fee collection으로 이동
+        // 더 적은 금액을 repay하려는 상황은 고려하지 않고 그냥 한 번에 자신이 빌린 금액 전체를 repay 하는
+        // 방식으로 구현해야 할 듯
+        // (따라서 아래 조건문은 없애는 방향으로)
+        if (vars.paybackAmount <= vars.originationFee) {
+            core.updateStateOnRepay(
+                _reserve,
+                _onBehalfOf,
+                0,
+                vars.paybackAmount,
+                vars.borrowBalanceIncrease,
+                false
+            );
+
+            // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.paybackAmount : 0)(
+            //     _reserve,
+            //     _onBehalfOf,
+            //     vars.paybackAmount,
+            //     addressesProvider.getTokenDistributor()
+            // );
+            core.transferToFeeCollectionAddress{value:vars.isETH ? vars.paybackAmount : 0}(
+                _reserve,
+                _onBehalfOf,
+                vars.paybackAmount,
+                addressesProvider.getTokenDistributor()
+            );
+
+            emit Repay(
+                _reserve,
+                _onBehalfOf,
+                msg.sender,
+                0,
+                vars.paybackAmount,
+                vars.borrowBalanceIncrease,
+                //solium-disable-next-line
+                block.timestamp
+            );
+            return;
+        }
+
+        // vars.paybackAmountMinusFees = vars.paybackAmount.sub(vars.originationFee);
+        vars.paybackAmountMinusFees = vars.paybackAmount - (vars.originationFee);
+
+        core.updateStateOnRepay(
+            _reserve,
+            _onBehalfOf,
+            vars.paybackAmountMinusFees,
+            vars.originationFee,
+            vars.borrowBalanceIncrease,
+            vars.compoundedBorrowBalance == vars.paybackAmountMinusFees
+        );
+
+        address payable senderPayable = payable(msg.sender);
+
+        // if the user didn't repay the origination fee, transfer the fee to the fee collection address
+        // Fee 안 냈으면 fee 부터 냄
+        if (vars.originationFee > 0) {
+            // core.transferToFeeCollectionAddress.value(vars.isETH ? vars.originationFee : 0)(
+            //     _reserve,
+            //     msg.sender,
+            //     vars.originationFee,
+            //     addressesProvider.getTokenDistributor()
+            // );
+            core.transferToFeeCollectionAddress{value :vars.isETH ? vars.originationFee : 0}(
+                _reserve,
+                senderPayable,
+                vars.originationFee,
+                addressesProvider.getTokenDistributor()
+            );
+        }
+
         core.transferToReserve{value:vars.isETH ? msg.value.sub(vars.originationFee) : 0}(
             _reserve,
             senderPayable,
             vars.paybackAmountMinusFees
         );
+
+
+        // 0. Get Tokn ID
+        uint256 _tokenId = proposalIdToTokenId[_proposalId];
+
+        // 1. check Bond(NFT) owner
+        address payable ownerOfBond = payable(nft.ownerOf(_tokenId));
+
+        // 2. send to lender
+        core.transferToUser(
+            _reserve,
+            ownerOfBond,
+            vars.paybackAmountMinusFees
+        );
+        
+        // 3. check Conditions
+        // require(currBorrowerBalance = prevBorrowerBalance - paybackAmount)
+        
+        // 4. burn NFT
+        nft.burnNFT(_tokenId);
 
         emit Repay(
             _reserve,
@@ -622,8 +752,21 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         }
     }
 
-
     // WIP : borrowProposal, borrowProposalAccept, getBorrowProposal, lendProposal, lendProposalAccept, getLendProposal
+
+    struct ProposalStructure {
+        bool active;
+        address proposer;
+        address reserveToReceive;
+        uint256 amount;
+        address reserveForCollateral;
+        uint256 interestRate;
+        uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
+        uint256 proposalDate;
+        uint256 serviceFee;
+        uint256 ltv;
+    }
+
     struct BorrowProposal {
         bool active;
         address borrower;
@@ -649,9 +792,21 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         uint256 _timestamp
     );
 
+    event ProposalAccepted(
+        address indexed _reserveToReceive,
+        address indexed _lender,
+        address _reserveForCollateral,
+        address  _borrower,
+        uint256 indexed _proposalId,
+        uint256 _amount,
+        uint256 _originationFee,
+        uint256 _timestamp
+    );
+
     event BorrowAccepted (
         address indexed _reserveToLend,
         address indexed _lender,
+        address  _borrower,
         uint256 indexed _proposalId,
         uint256 _amount,
         uint256 _originationFee,
@@ -659,48 +814,18 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     );
 
     // List for borrowProposal structures
-    mapping(uint256 => BorrowProposal) internal borrowProposalList;
+    // mapping(uint256 => BorrowProposal) internal borrowProposalList;
+    mapping(uint256 => ProposalStructure) internal borrowProposalList;
+    
     // Counting length for Iteration
     uint256 public borrowProposalListCount = 0;
 
-    function borrowProposal(
-        address _reserveToBorrow, uint256 _amount, address _reserveForCollateral, uint256 _interestRate, uint256 _dueDate
-    )
-        external
-        nonReentrant
-        onlyActiveReserve(_reserveToBorrow)
-        onlyUnfreezedReserve(_reserveToBorrow) //추후 _reserveForCollateral도 확인하여 진행
-        onlyAmountGreaterThanZero(_amount)
-    {
-        BorrowProposal memory borrowProposalVars;
-        BorrowLocalVars memory borrowLocalVars;
-
-        uint256 reserveDecimals = core.getReserveDecimals(_reserveToBorrow);
-
-        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
-
-        borrowProposalVars.active = true;
-        borrowProposalVars.borrower = msg.sender;
-        require(core.isReserveBorrowingEnabled(_reserveToBorrow), "Reserve is not enabled for borrowing");
-        //check that the amount is available in the reserve
-        borrowLocalVars.availableLiquidity = core.getReserveAvailableLiquidity(_reserveToBorrow);
-
-        require(
-            borrowLocalVars.availableLiquidity >= _amount,
-            "There is not enough liquidity available in the reserve"
-        );
-
-        // Check User's _reserveForCollateral amount is enough for Lending
-        // 아래 과정은 User의 전체 자산을 기반으로 한 Collateral을 check하고 있다. 
-        // 우리의 서비스는 User가 _reserveForCollateral의 양이 충분한지만 확인하면 된다.
-        // 해당 수치는 dataProvider.getUserReserveData 의 currentATokenBalance - currentBorrowBalance 으로 구하면 될듯하나 이부분은 Check을 받아야 함
-        // 일단은 해당 과정을 생략한채 테스트 진행 23.07.06
-        
+    function getUserReserveBalance(address _reserve, address _user) public view
+    returns(uint256){
         uint256 userCurrentATokenBalance;
         uint256 userCurrentBorrowBalance;
-        uint256 userCurrentAvailableCollateralBalanceInWei;
-        uint256 userCurrentAvailableCollateralBalance;
-
+        uint256 userCurrentAvailableReserveBalanceInWei;
+        uint256 userCurrentAvailableReserveBalance;
         (
             userCurrentATokenBalance,
             userCurrentBorrowBalance,
@@ -711,12 +836,51 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             ,
             ,
             ,
-        ) = dataProvider.getUserReserveData(_reserveForCollateral,msg.sender);
-        
-        // 아래의 userCurrentAvailableCollateralBalance 값과 LTV를 고려하여 Borrow Proposal의 validity를 확인해야 한다.
-        userCurrentAvailableCollateralBalanceInWei = userCurrentATokenBalance - 
+        ) = dataProvider.getUserReserveData(_reserve,_user);
+
+        userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - 
         userCurrentBorrowBalance;
-        userCurrentAvailableCollateralBalance = userCurrentAvailableCollateralBalanceInWei.div(10 ** 18);
+        
+        userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
+
+        return userCurrentAvailableReserveBalance;
+    }
+
+
+    function borrowProposal(
+        address _reserveToBorrow, uint256 _amount, address _reserveForCollateral, uint256 _interestRate, uint256 _dueDate
+    )
+        external
+        nonReentrant
+        onlyActiveReserve(_reserveToBorrow)
+        onlyUnfreezedReserve(_reserveToBorrow) //추후 _reserveForCollateral도 확인하여 진행
+        onlyAmountGreaterThanZero(_amount)
+    {
+        ProposalStructure memory proposalVars;
+        BorrowLocalVars memory borrowLocalVars;
+        require(_interestRate > 0 && _interestRate < 100,"Invalid Interest Rate Input");
+        require(_dueDate > block.timestamp, "Invalid Due Date Set");
+
+        uint256 reserveDecimals = core.getReserveDecimals(_reserveToBorrow);
+
+        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+
+        require(core.isReserveBorrowingEnabled(_reserveToBorrow), "Reserve is not enabled for borrowing");
+        //check that the amount is available in the reserve
+        borrowLocalVars.availableLiquidity = core.getReserveAvailableLiquidity(_reserveToBorrow);
+
+        require(
+            borrowLocalVars.availableLiquidity >= _amount,
+            "There is not enough liquidity available in the reserve to make a borrow proposal"
+        );
+
+        // Check User's _reserveForCollateral amount is enough for Lending
+        // 아래 과정은 User의 전체 자산을 기반으로 한 Collateral을 check하고 있다. 
+        // 우리의 서비스는 User가 _reserveForCollateral의 양이 충분한지만 확인하면 된다.
+        // 해당 수치는 dataProvider.getUserReserveData 의 currentATokenBalance - currentBorrowBalance 으로 구하면 될듯하나 이부분은 Check을 받아야 함
+        // 일단은 해당 과정을 생략한채 테스트 진행 23.07.06
+        
+        uint256 userCurrentAvailableCollateralBalance = getUserReserveBalance(_reserveToBorrow,msg.sender);
 
         uint256 borrowLTV;
 
@@ -730,6 +894,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             ,
         ) = dataProvider.getReserveConfigurationData(_reserveToBorrow);
 
+        // amount가 parseEther로 들어가ㅏ기에 10^18로 나눠도 wei 단위로 표시됨
         uint256 requestedBorrowAmountInWei = oracle
             .getAssetPrice(_reserveToBorrow)
             .mul(_amount)
@@ -751,7 +916,6 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         uint256 collateralNeeded = collateralNeededInWei
             .div(oracle.getAssetPrice(_reserveForCollateral));
         
-        console.log("   => LBPM : User Available Collateral : ",userCurrentAvailableCollateralBalance);
         console.log("   => LBPM : _amount, requestedBorrowAmountETH, borrowLTV ",_amount,requestedBorrowAmountInWei,borrowLTV);
         console.log("   => LBPM : ETH Needed for Borrow Proposal : ",collateralNeededInWei);
         console.log("   => LBPM : Collateral Needed for Borrow Proposal : ",collateralNeeded);
@@ -760,26 +924,27 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         //calculating fees
         borrowLocalVars.borrowFee = feeProvider.calculateLoanOriginationFee(msg.sender, _amount);
         require(borrowLocalVars.borrowFee > 0, "The amount to borrow is too small");
+        console.log("   => LBPM : Borrow Fee for this borrow proposal : ",borrowLocalVars.borrowFee);
 
         // If all conditions passed - Borrow Proposal Generated
-        borrowProposalVars.reserveToBorrow = _reserveToBorrow;
+        proposalVars.active = true;
+        proposalVars.proposer = msg.sender;
+        proposalVars.reserveToReceive = _reserveToBorrow;
         // borrower의 collateral이 ltv를 고려했을 때 충분한 양을 가지고 있는지 확인 => 부족하면 _amount를 줄이라는 메세지 emit => 위에서 확인
-        borrowProposalVars.amount = _amount;
+        proposalVars.amount = _amount;
         // valid한 reserveForCollateral인지 확인 => 위에서 확인
-        borrowProposalVars.reserveForCollateral = _reserveForCollateral;
+        proposalVars.reserveForCollateral = _reserveForCollateral;
         // interestRate이 0 이상 100 이하(or 서비스 책정 최대 이자율 이하인지) 확인
-        require(_interestRate > 0 && _interestRate < 100,"Invalid Interest Rate Input");
-        borrowProposalVars.interestRate = _interestRate;
-        require(_dueDate > block.timestamp, "Invalid Due Date Set");
-        borrowProposalVars.dueDate = _dueDate;
-        borrowProposalVars.proposalDate = block.timestamp;
-        borrowProposalVars.borrowFee = borrowLocalVars.borrowFee;
+        proposalVars.interestRate = _interestRate;
+        proposalVars.dueDate = _dueDate;
+        proposalVars.proposalDate = block.timestamp;
+        proposalVars.serviceFee = borrowLocalVars.borrowFee;
         // LTV는 System Set
-        borrowProposalVars.ltv = borrowLTV;
+        proposalVars.ltv = borrowLTV;
 
         // borrowProposalList에 borrowProposal을 추가해준다. -> 해당 부분은 추후에 LendingBoardCore.sol에서 implement해야
         uint256 proposalId = borrowProposalListCount++;
-        borrowProposalList[proposalId] = borrowProposalVars;
+        borrowProposalList[proposalId] = proposalVars;
 
         emit BorrowProposed(
             _reserveToBorrow,
@@ -796,198 +961,20 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     }
 
     // Lender의 입장에서 Borrower의 proposal을 Accept한 경우
-    function borrowProposalAccept(uint256 proposalId) external {
-        BorrowProposal memory borrowProposalVars;
-        borrowProposalVars = borrowProposalList[proposalId];
-        // Lender의 소유 reserve(토큰)이 borrowProposalList[proposalId].reserveToBorrow 보다 많거나 같은지 확인
+    // msg.sender == Lender의 case
+    function borrowProposalAccept(uint256 _proposalId) external {
+        ProposalStructure memory borrowProposalVars;
+        borrowProposalVars = borrowProposalList[_proposalId];
+        // Lender의 소유 reserve(토큰)이 borrowProposalList[_proposalId].reserveToBorrow 보다 많거나 같은지 확인
         require(borrowProposalVars.active == true, "Only Active Borrow Proposal can be Accepted");
-        address reserveToBorrow = borrowProposalVars.reserveToBorrow;
+
+        address reserveToBorrow = borrowProposalVars.reserveToReceive;
         uint256 amount = borrowProposalVars.amount;
-        // borrowProposalAcceptInternal(reserveToBorrow,amount,proposalId);
-        borrowProposalAcceptInternalWithNFT(reserveToBorrow,amount,proposalId);
-    }
+        address borrower = borrowProposalVars.proposer;
+        uint256 borrowFee = borrowProposalVars.serviceFee;
 
-    function borrowProposalAcceptInternalWithNFT(
-        address _reserve,
-        uint256 _amount,
-        uint256 _proposalId
-    )
-        internal
-        nonReentrant
-        onlyActiveReserve(_reserve)
-        onlyUnfreezedReserve(_reserve)
-        onlyAmountGreaterThanZero(_amount)
-    {
-        uint256 userCurrentATokenBalance;
-        uint256 userCurrentBorrowBalance;
-        uint256 userCurrentAvailableReserveBalanceInWei;
-        uint256 userCurrentAvailableReserveBalance;
-        (
-            userCurrentATokenBalance,
-            userCurrentBorrowBalance,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-        ) = dataProvider.getUserReserveData(_reserve,msg.sender);
-        
-        // 아래의 userCurrentAvailableReserveBalance 값과 LTV를 고려하여 Borrow Proposal의 validity를 확인해야 한다.
-        userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - 
-        userCurrentBorrowBalance;
-        userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
-
-        require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
-
-        uint256 borrowBalanceIncreased;
-        address borrower = borrowProposalList[_proposalId].borrower;
-
-        (,borrowBalanceIncreased) = core.updateStateOnBorrow(
-            _reserve,
-            borrower,
-            _amount,
-            borrowProposalList[_proposalId].borrowFee,
-            CoreLibrary.InterestRateMode.STABLE
-        );
-        console.log("   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
-
-        // Transfering the Token Borrow Proposer Desired
-        address payable senderPayable = payable(borrower);
-        core.transferToUser(_reserve, senderPayable, _amount);
-
-        /** Borrower의 Collateral Service에게 transfer
-         *  NFT 채권 발행하여 Lender에게 transfer @김주헌
-         *  @김주헌 두두둥장
-         */
-        // Check #0. for isExpired
-        // Check #1. for isCallerOwner
-        // require(block.timestamp <= dueDate, "[!] Loan: Loan is expired");
-        // require(msg.sender == Owner, "[!] Loan: Only owner can mint NFT Bond");
-        
-        // string memory metadata = string(abi.encodePacked(
-        //     "Borrower: ", Strings.toString(uint256(uint160(address(msg.sender)))),
-        //     "Payback Amount: ", Strings.toString(_paybackAmount), 
-        //     "Due Date: ", Strings.toString(_dueDate)
-        // ));
-
-        // Construct the metadata JSON manually
-        uint256 dueDate = borrowProposalList[_proposalId].dueDate;
-        string memory metadata = string(abi.encodePacked(
-            "{",
-            "\"name\": \"Bond Token\",",
-            "\"description\": \"A unique bond token\",",
-            // "\"image\": \"https://example.com/path/to/image.png\",",
-            "\"attributes\": [",
-            "{ \"trait_type\": \"Borrower\", \"value\": \"", Strings.toHexString(uint256(uint160(address(borrower)))), "\" },",
-            "{ \"trait_type\": \"Payback Amount\", \"value\": ", Strings.toString(_amount), " },",
-            "{ \"trait_type\": \"Due Date\", \"value\": ", Strings.toString(dueDate), " }",
-            "]",
-            "}"
-        ));
-        // 1. 체결 시점
-        // 2. 이자율
-        // 3. paybackamount
-
-
-        // Mint NFT Bond
-        require(nft.mintNFT(msg.sender, metadata) != 0, "Fail to mint NFT");
-
-
-        // borrowProposalList[proposalId].active = false; // 수락한 Proposal은 false로 상태변경
-        borrowProposalList[_proposalId].active = false; // 수락한 Proposal은 false로 상태변경
-        
-        emit BorrowAccepted(
-            _reserve,
-            msg.sender,
-            _proposalId,
-            _amount,
-            borrowProposalList[_proposalId].borrowFee,
-            block.timestamp
-            // NFT Token ID
-        );
-
-    }
-    
-    // event BorrowAccepted (
-    //     address indexed _reserveToLend,
-    //     address indexed _lender,
-    //     uint256 indexed _proposalId,
-    //     uint256 _amount,
-    //     uint256 _interestRate,
-    //     uint256 _originationFee,
-    //     uint256 _timestamp
-    // );
-
-
-    // Temporarily Added for Testing NFT Minting
-    // @ Juheon Kim
-    function borrowProposalAcceptInternal(
-        address _reserve,
-        uint256 _amount,
-        uint256 _proposalId
-    )
-        internal
-        nonReentrant
-        onlyActiveReserve(_reserve)
-        onlyUnfreezedReserve(_reserve)
-        onlyAmountGreaterThanZero(_amount)
-    {
-        uint256 userCurrentATokenBalance;
-        uint256 userCurrentBorrowBalance;
-        uint256 userCurrentAvailableReserveBalanceInWei;
-        uint256 userCurrentAvailableReserveBalance;
-        (
-            userCurrentATokenBalance,
-            userCurrentBorrowBalance,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-        ) = dataProvider.getUserReserveData(_reserve,msg.sender);
-        
-        // 아래의 userCurrentAvailableReserveBalance 값과 LTV를 고려하여 Borrow Proposal의 validity를 확인해야 한다.
-        userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - 
-        userCurrentBorrowBalance;
-        userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
-
-        require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
-
-        uint256 borrowBalanceIncreased;
-        address borrower = borrowProposalList[_proposalId].borrower;
-
-        (,borrowBalanceIncreased) = core.updateStateOnBorrow(
-            _reserve,
-            borrower,
-            _amount,
-            borrowProposalList[_proposalId].borrowFee,
-            CoreLibrary.InterestRateMode.STABLE
-        );
-        console.log("   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
-
-        // Transfering the Token Borrow Proposer Desired
-        address payable senderPayable = payable(borrower);
-        core.transferToUser(_reserve, senderPayable, _amount);
-
-        // Borrower의 Collateral Service에게 transfer
-        // NFT 채권 발행하여 Lender에게 transfer @김주헌
-
-        // borrowProposalList[proposalId].active = false; // 수락한 Proposal은 false로 상태변경
-        borrowProposalList[_proposalId].active = false; // 수락한 Proposal은 false로 상태변경
-        
-        emit BorrowAccepted(
-            _reserve,
-            msg.sender,
-            _proposalId,
-            _amount,
-            borrowProposalList[_proposalId].borrowFee,
-            block.timestamp
-        );
-
+        proposalAcceptInternal(reserveToBorrow,amount,_proposalId,borrower,msg.sender,borrowFee,true);
+        borrowProposalList[_proposalId].active = false;
     }
     
     function getBorrowProposal(uint256 proposalId) 
@@ -1007,8 +994,8 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     {   
             require(proposalId >= 0 && proposalId <= borrowProposalListCount, "Invalid proposalId");
             active = borrowProposalList[proposalId].active;
-            borrower = borrowProposalList[proposalId].borrower;
-            reserveToBorrow = borrowProposalList[proposalId].reserveToBorrow;
+            borrower = borrowProposalList[proposalId].proposer;
+            reserveToBorrow = borrowProposalList[proposalId].reserveToReceive;
             amount = borrowProposalList[proposalId].amount;
             reserveForCollateral = borrowProposalList[proposalId].reserveForCollateral;
             interestRate = borrowProposalList[proposalId].interestRate;
@@ -1021,19 +1008,309 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
         public
         view
         returns(
-            BorrowProposal[] memory result // struct BorrowProposal array
+            ProposalStructure[] memory result // struct BorrowProposal array
         )
     {
         require(startIdx >= 0,"Start Index should be larger than 0");
         require(endIdx < borrowProposalListCount,"End Index over borrowProposalListCount");
         uint256 resultLength = endIdx - startIdx + 1;
         require(resultLength < 2000,"Maximum 2000 iteration per request");
-        result = new BorrowProposal[](resultLength);
+        result = new ProposalStructure[](resultLength);
         uint256 resultIndex = 0;
         for(uint256 i = startIdx; i <= endIdx; i++){
             result[resultIndex++] = borrowProposalList[i];
         }
         return result;
+    }
+
+    struct LendProposal {
+        bool active;
+        address lender;
+        address reserveToLend;
+        uint256 amount;
+        address reserveForCollateral;
+        uint256 interestRate;
+        uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
+        uint256 proposalDate;
+        uint256 lendFee;
+        uint256 ltv;
+    }
+
+    struct LendLocalVars {
+        uint256 principalBorrowBalance;
+        uint256 currentLtv;
+        uint256 currentLiquidationThreshold;
+        uint256 lendFee;
+        uint256 requestedBorrowAmountETH;
+        uint256 amountOfCollateralNeededETH;
+        uint256 userCollateralBalanceETH;
+        uint256 userBorrowBalanceETH;
+        uint256 userTotalFeesETH;
+        uint256 borrowBalanceIncrease;
+        uint256 currentReserveStableRate;
+        uint256 availableLiquidity;
+        uint256 reserveDecimals;
+        bool healthFactorBelowThreshold;
+    }
+
+    event LendProposed (
+        address indexed _reserveToLend,
+        address indexed _lendProposer,
+        uint256 indexed _proposalId,
+        uint256 _amount,
+        uint256 _interestRate,
+        uint256 _originationFee,
+        uint256 _dueDate,
+        uint256 _proposalTimeStamp
+    );
+
+
+    event LendAccepted (
+        address indexed _reserveToLend,
+        address indexed _lender,
+        address _borrower,
+        uint256 indexed _proposalId,
+        uint256 _amount,
+        uint256 _originationFee,
+        uint256 _timestamp
+    );
+
+    // event BorrowAccepted (
+    //     address indexed _reserveToLend,
+    //     address indexed _lender,
+    //     address  _borrower,
+    //     uint256 indexed _proposalId,
+    //     uint256 _amount,
+    //     uint256 _originationFee,
+    //     uint256 _timestamp
+    // );
+
+    // List for borrowProposal structures
+    mapping(uint256 => ProposalStructure) internal lendProposalList;
+    // Counting length for Iteration
+    uint256 public lendProposalListCount = 0;
+
+    function lendProposal(
+        address _reserveToLend, uint256 _amount, address _reserveForCollateral, uint256 _interestRate, uint256 _dueDate
+    )  
+        external
+        nonReentrant
+        onlyActiveReserve(_reserveToLend)
+        onlyUnfreezedReserve(_reserveToLend) //추후 _reserveForCollateral도 확인하여 진행
+        onlyAmountGreaterThanZero(_amount)
+    {
+        ProposalStructure memory proposalVars;
+        LendLocalVars memory lendLocarVars;
+        require(_interestRate > 0 && _interestRate < 100,"Invalid Interest Rate Input");
+        require(_dueDate > block.timestamp, "Invalid Due Date Set");
+
+        uint256 reserveDecimals = core.getReserveDecimals(_reserveToLend);
+
+        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+
+        require(core.isReserveBorrowingEnabled(_reserveToLend), "Reserve is not enabled for borrowing");
+        lendLocarVars.availableLiquidity = core.getReserveAvailableLiquidity(_reserveToLend);
+
+        require(
+            lendLocarVars.availableLiquidity >= _amount,
+            "There is not enough liquidity available in the reserve to make a lend proposal"
+        );
+        
+        uint256 userCurrentAvailableLendBalanceInWei = getUserReserveBalance(_reserveToLend, msg.sender).mul(10 ** 18);
+        uint256 collateralLTV;
+
+        (
+            collateralLTV,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+        ) = dataProvider.getReserveConfigurationData(_reserveForCollateral);
+
+        uint256 requestedLendAmountInWei = oracle
+            .getAssetPrice(_reserveToLend)
+            .mul(_amount)
+            .div(10 ** reserveDecimals); 
+
+        console.log("   => LBPM : _amount, requestedLendAmountInWei, collateralLTV : ",_amount,requestedLendAmountInWei,collateralLTV);
+
+        // Lemd하기에 충분한 balance를 가지고 있는지 확인한다.
+        require(userCurrentAvailableLendBalanceInWei >= _amount,"There is not enough balance to lend in order to cover a new lend proposal");
+
+        lendLocarVars.lendFee = feeProvider.calculateLoanOriginationFee(msg.sender, _amount);
+        require(lendLocarVars.lendFee > 0, "The amount to borrow is too small");
+        console.log("   => LBPM : Lend Fee for this lend proposal : ", lendLocarVars.lendFee);
+
+        proposalVars.active = true;
+        proposalVars.proposer = msg.sender;
+        proposalVars.reserveToReceive = _reserveToLend;
+        proposalVars.amount = _amount;
+        proposalVars.reserveForCollateral = _reserveForCollateral;
+        proposalVars.interestRate = _interestRate;        
+        proposalVars.dueDate = _dueDate;
+        proposalVars.proposalDate = block.timestamp;
+        proposalVars.serviceFee = lendLocarVars.lendFee;
+        proposalVars.ltv = collateralLTV; // LTV는 System Set
+
+        uint proposalId = lendProposalListCount++;
+        lendProposalList[proposalId] = proposalVars;
+
+        emit LendProposed(
+            _reserveToLend,
+            msg.sender,
+            proposalId,
+            _amount,
+            _interestRate,
+            lendLocarVars.lendFee,
+            _dueDate,
+            block.timestamp
+        );
+    }
+
+    // Borrower의 입장에서 Lender의 proposal을 Accept한 경우
+    // msg.sender == Borrower
+    function lendProposalAccept(uint256 _proposalId) external {
+        ProposalStructure memory lendProposalVars;
+        lendProposalVars = lendProposalList[_proposalId];
+        // Lender의 소유 reserve(토큰)이 borrowProposalList[proposalId].reserveToBorrow 보다 많거나 같은지 확인
+        require(lendProposalVars.active == true, "Only Active Borrow Proposal can be Accepted");
+        address reserveToLend = lendProposalVars.reserveToReceive;
+        uint256 amount = lendProposalVars.amount;
+        address lender = lendProposalVars.proposer;
+        uint256 lendFee = lendProposalVars.serviceFee;
+        // Borrower가 곧 msg.sender이기에 parameter로 전달한다.
+        proposalAcceptInternal(reserveToLend, amount, _proposalId, msg.sender, lender, lendFee, false);
+        lendProposalList[_proposalId].active = false;
+    }
+
+    function getLendProposal(uint256 proposalId) 
+        public
+        view 
+        returns(
+            bool active,
+            address lender,
+            address reserveToLend,
+            uint256 amount,
+            address reserveForCollateral,
+            uint256 interestRate,
+            uint256 dueDate,
+            uint256 proposalDate,
+            uint256 ltv
+        )
+    {   
+            require(proposalId >= 0 && proposalId <= lendProposalListCount, "Invalid proposalId");
+            active = lendProposalList[proposalId].active;
+            lender = lendProposalList[proposalId].proposer;
+            reserveToLend = lendProposalList[proposalId].reserveToReceive;
+            amount = lendProposalList[proposalId].amount;
+            reserveForCollateral = lendProposalList[proposalId].reserveForCollateral;
+            interestRate = lendProposalList[proposalId].interestRate;
+            dueDate = lendProposalList[proposalId].dueDate;
+            proposalDate = lendProposalList[proposalId].proposalDate;
+            ltv = lendProposalList[proposalId].ltv;
+    }
+
+    function getLendProposalList(uint256 startIdx, uint256 endIdx) 
+        public
+        view
+        returns(
+            ProposalStructure[] memory result // struct LendProposal array
+        )
+    {
+        require(startIdx >= 0,"Start Index should be larger than 0");
+        require(endIdx < lendProposalListCount,"End Index exceeding LendProposalListCount");
+        uint256 resultLength = endIdx - startIdx + 1;
+        require(resultLength < 2000,"Maximum 2000 iteration per request");
+        result = new ProposalStructure[](resultLength);
+        uint256 resultIndex = 0;
+        for(uint256 i = startIdx; i <= endIdx; i++){
+            result[resultIndex++] = lendProposalList[i];
+        }
+        return result;
+    }
+
+    mapping(uint256 => uint256) public proposalIdToTokenId;
+
+    function proposalAcceptInternal(
+        address _reserve,
+        uint256 _amount,
+        uint256 _proposalId,
+        address _borrower,
+        address _lender,
+        uint256 serviceFee,
+        bool isBorrowProposal
+    )
+        internal
+        nonReentrant
+        onlyActiveReserve(_reserve)
+        onlyUnfreezedReserve(_reserve)
+        onlyAmountGreaterThanZero(_amount)    
+    {
+         uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
+        console.log("   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
+
+        require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
+
+        uint256 borrowBalanceIncreased;
+        (, borrowBalanceIncreased) = core.updateStateOnBorrow(
+            _reserve,
+            _borrower,
+            _amount,
+            serviceFee,
+            CoreLibrary.InterestRateMode.STABLE
+        );
+        console.log("   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
+
+        // Transfering the Token Borrow Proposer Desired
+        address payable borrowerPayable = payable(_borrower);
+        core.transferToUser(_reserve, borrowerPayable, _amount);
+
+        // Borrower의 Collateral Service에게 transfer
+
+
+        /** 
+         * Part of Minting NFT Bond
+         * - mint NFT & send to lender
+         * - metadata : [borrower, amount, dueDate, contract time, interestRate, paybackAmount]
+         */
+        address reserveForCollateral;
+        uint256 _dueDate;
+        uint256 _interestRate;
+        uint256 _paybackAmount;
+
+        if (isBorrowProposal){      // Borrow Proposal Accept Case
+            _dueDate = borrowProposalList[_proposalId].dueDate;
+            _interestRate = borrowProposalList[_proposalId].interestRate;
+            _paybackAmount = _amount + (_amount * _interestRate / 100);
+            reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
+        } else {                    // Lend Proposal Accept Case
+            _dueDate = lendProposalList[_proposalId].dueDate;
+            _interestRate = lendProposalList[_proposalId].interestRate;
+            _paybackAmount = _amount + (_amount * _interestRate / 100);
+            reserveForCollateral = lendProposalList[_proposalId].reserveForCollateral;
+        }
+
+        uint256 _contractTimestamp = block.timestamp;
+
+        // Mint NFT Bond
+        uint256 tokenId;
+        require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
+        tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount);
+        proposalIdToTokenId[_proposalId] = tokenId;
+
+        emit ProposalAccepted(
+            _reserve,
+            _lender,
+            reserveForCollateral,
+            _borrower,
+            _proposalId,
+            _amount,
+            serviceFee,
+            block.timestamp
+        );
+        
     }
 
     /**
@@ -1138,6 +1415,7 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
     **/
     function requireAmountGreaterThanZeroInternal(uint256 _amount) internal pure {
         require(_amount > 0, "Amount must be greater than 0");
-    }
+    }    
+
 
 }
