@@ -272,7 +272,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       await expect(hardhatLendingBoardProposeMode.connect(user1).repay(STKNaddress, borrowAmount, user1.address, 0, true)).to.be.reverted;
 
       // owner가 repay하는 경우
-      //const paybackAmount = ethers.utils.parseEther('11.025'); // principal Borrow Amount
+      // const paybackAmount = ethers.utils.parseEther('11.025'); // principal Borrow Amount
       const paybackAmount = 10; // principal Borrow Amount
       const interest = paybackAmount * interestRate / 100; // interest
       const fee = paybackAmount * 0.0025; // fee

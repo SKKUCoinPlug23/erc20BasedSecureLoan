@@ -440,6 +440,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             proposalStructure = core.getLendProposalFromCore(_proposalId);
         }
         
+        // set repay local variables
         vars.principalBorrowBalance = proposalStructure.amount;
         vars.compoundedBorrowBalance = proposalStructure.amount.add(vars.principalBorrowBalance * proposalStructure.interestRate / 100);
         vars.borrowBalanceIncrease = vars.compoundedBorrowBalance.sub(vars.principalBorrowBalance);
