@@ -4,13 +4,17 @@ pragma solidity >=0.8.0;
 // import "openzeppelin-solidity/contracts/math/SafeMath.sol"; // Compiler Version Compatiblity 
 import "./WadRayMath.sol";
 
+import "@openzeppelin/contracts/utils/math/SafeMath.sol"; // Not necessary in Solidity >=0.8.0
+// We import this library to be able to use console.log
+import "hardhat/console.sol";
+
 /**
 * @title CoreLibrary library
 * @author Aave
 * @notice Defines the data structures of the reserves and the user data
 **/
 library CoreLibrary {
-    // using SafeMath for uint256;
+    using SafeMath for uint256;
     using WadRayMath for uint256;
 
     enum InterestRateMode {NONE, STABLE, VARIABLE}
@@ -79,6 +83,20 @@ library CoreLibrary {
         // isFreezed = true means the reserve only allows repays and redeems, but not deposits, new borrowings or rate swap
         bool isFreezed;
     }
+
+    struct ProposalStructure {
+        bool active;
+        address proposer;
+        address reserveToReceive;
+        uint256 amount;
+        address reserveForCollateral;
+        uint256 interestRate;
+        uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
+        uint256 proposalDate;
+        uint256 serviceFee;
+        uint256 ltv;
+    }
+
 
     /**
     * @dev returns the ongoing normalized income for the reserve.
@@ -246,6 +264,22 @@ library CoreLibrary {
         _self.usageAsCollateralEnabled = false;
     }
 
+    // 23.07.14 WIP : _self.stableBorrowRate 0으로 설정되는 문제 임시로 해결 시도
+    function setInterestRate(
+        CoreLibrary.UserReserveData storage _self,
+        uint256 _proposalInterestRate
+    ) public {
+        _self.stableBorrowRate = _proposalInterestRate;
+    }
+
+    // Calculating Compounded Borrow Balance for Propose Mode
+    function getProposalBorrowBalances(
+        CoreLibrary.ProposalStructure storage _proposal
+    ) internal view returns (uint256){
+        uint256 compoundedBalance = (1e18 + _proposal.interestRate).mul(_proposal.amount);
+        console.log("   => CL : Propose Mode  _proposal.interestRate and CompoundBalance",_proposal.interestRate, compoundedBalance);
+        return compoundedBalance;
+    }
 
 
     /**
@@ -264,23 +298,32 @@ library CoreLibrary {
         uint256 compoundedBalance = 0;
         uint256 cumulatedInterest = 0;
 
+        console.log("   => CL : _self.stableBorrowRate : ",_self.stableBorrowRate);
+
         if (_self.stableBorrowRate > 0) {
+            console.log("   => CL : case of self.stableBorrowRate > 0 : ", _self.stableBorrowRate);
             cumulatedInterest = calculateCompoundedInterest(
                 _self.stableBorrowRate,
                 _self.lastUpdateTimestamp
             );
         } else {
+            console.log("   => CL : case of self.stableBorrowRate <= 0 Borrow Rate : ", _reserve.currentVariableBorrowRate);
+            console.log("   => CL : case of self.stableBorrowRate <= 0 TimeStamp : ", _reserve.lastUpdateTimestamp);
             //variable interest
+            console.log("   => CL :  userReserveData self instance lastVariableBorrowCumulativeIndex : ", _self.lastVariableBorrowCumulativeIndex);
+
             cumulatedInterest = calculateCompoundedInterest(
                 _reserve
                     .currentVariableBorrowRate,
                 _reserve
                     .lastUpdateTimestamp
             );
+                // 일단 아래 Index 고려하지 않고 진행
                 // .rayMul(_reserve.lastVariableBorrowCumulativeIndex)
                 // .rayDiv(_self.lastVariableBorrowCumulativeIndex);
         }
-
+        
+        console.log("   => CL : calculateCompoundedInterest done");
         compoundedBalance = principalBorrowBalanceRay.rayMul(cumulatedInterest).rayToWad();
 
         if (compoundedBalance == _self.principalBorrowBalance) {
@@ -426,16 +469,18 @@ library CoreLibrary {
         internal
         view
         returns (uint256)
-    {
+    {   
+        console.log("   => CL : _rate and _lastUpdateTimestamp: ",_rate,_lastUpdateTimestamp);
         //solium-disable-next-line
         // uint256 timeDifference = block.timestamp.sub(uint256(_lastUpdateTimestamp));
         uint256 timeDifference = block.timestamp - (uint256(_lastUpdateTimestamp));
-
+        console.log("   => CL : timeDifference : ",timeDifference);
         // uint256 ratePerSecond = _rate.div(SECONDS_PER_YEAR);
         uint256 ratePerSecond = _rate / (SECONDS_PER_YEAR);
+        console.log("   => CL : ratePerSecond : ",ratePerSecond);
 
-        // return ratePerSecond.add(WadRayMath.ray()).rayPow(timeDifference);
-        return (ratePerSecond + WadRayMath.ray()).rayPow(timeDifference);
+        return ratePerSecond.add(WadRayMath.ray()).rayPow(timeDifference);
+        // return (ratePerSecond + WadRayMath.ray()).rayPow(timeDifference);
     }
 
     /**
