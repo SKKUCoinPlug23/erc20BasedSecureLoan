@@ -24,6 +24,10 @@ library CoreLibrary {
     struct UserReserveData {
         //principal amount borrowed by the user.
         uint256 principalBorrowBalance;
+
+        // WIP : For ProposeMode
+        uint256 compoundedBorrowBalance;
+
         //cumulated variable borrow index for the user. Expressed in ray
         uint256 lastVariableBorrowCumulativeIndex;
         //origination fee cumulated by the user
@@ -31,6 +35,7 @@ library CoreLibrary {
         // stable borrow rate at which the user has borrowed. Expressed in ray
         uint256 stableBorrowRate;
         uint40 lastUpdateTimestamp;
+
         //defines if a specific deposit should or not be used as a collateral in borrows
         bool useAsCollateral;
     }
