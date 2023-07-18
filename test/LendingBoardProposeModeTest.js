@@ -311,7 +311,8 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
       console.log("========================== User1's STKN Reserve Data After First Proposal Accepted ========================== ");
       console.log(user1STKNReserveData);
-
+      console.log("========================== First Lend Proposal and Accept Done ========================== ");
+      
       // User1's STKKN Reserve Data after accepting Second Lend Proposal
       await hardhatLendingBoardProposeMode.connect(user1).lendProposalAccept(1);
       user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);

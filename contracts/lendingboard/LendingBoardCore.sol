@@ -6,6 +6,8 @@ pragma solidity >=0.8.0;
 // import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 // import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol"; // Not necessary in Solidity >=0.8.0
+
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -286,12 +288,31 @@ contract LendingBoardCore is VersionedInitializable {
         // CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
         // CoreLibrary.setInterestRate(user,1000000000000000000);
 
-        (uint256 principalBorrowBalance, , uint256 balanceIncrease) = getUserBorrowBalancesProposeMode(
-            _reserve,
-            _user,
-            _proposalId,
-            _isBorrowProposal
-        );
+        // (uint256 principalBorrowBalance, , uint256 balanceIncrease) = getUserBorrowBalancesProposeMode(
+        //     _reserve,
+        //     _user,
+        //     _proposalId,
+        //     _isBorrowProposal
+        // );
+
+        uint256 principalBorrowBalance;
+        uint256 compoundInterestRate;
+        uint256 balanceIncrease;
+
+        CoreLibrary.ProposalStructure memory proposalInstance;
+
+        if(_isBorrowProposal){
+            proposalInstance = getBorrowProposalFromCore(_proposalId);
+        } else {
+            proposalInstance = getLendProposalFromCore(_proposalId);
+        }
+
+        principalBorrowBalance = proposalInstance.amount;
+        compoundInterestRate = 100 + proposalInstance.interestRate;
+        balanceIncrease = ((principalBorrowBalance).mul(compoundInterestRate)).div(100) - principalBorrowBalance;
+        console.log("   => LBC : principalBorrowBalance : ",principalBorrowBalance);
+        console.log("   => LBC : compoundInterestRate : ",compoundInterestRate);
+        console.log("   => LBC : balanceIncrease : ",balanceIncrease);
 
         updateReserveStateOnBorrowInternal(
             _reserve,
@@ -1043,10 +1064,13 @@ contract LendingBoardCore is VersionedInitializable {
             return CoreLibrary.InterestRateMode.NONE;
         }
 
-        return
-            user.stableBorrowRate > 0
-            ? CoreLibrary.InterestRateMode.STABLE
-            : CoreLibrary.InterestRateMode.VARIABLE;
+        // return
+        //     user.stableBorrowRate > 0
+        //     ? CoreLibrary.InterestRateMode.STABLE
+        //     : CoreLibrary.InterestRateMode.VARIABLE;
+        
+        // WIP : principalBorrowBalance가 0이 아닌 이상 무조건 Stable mode return하게 설정
+        return CoreLibrary.InterestRateMode.STABLE;
     }
 
     /**
@@ -1804,13 +1828,13 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _amountBorrowed,
         CoreLibrary.InterestRateMode _newBorrowRateMode
     ) internal {
-        // CoreLibrary.InterestRateMode previousRateMode = getUserCurrentBorrowRateMode(
-        //     _reserve,
-        //     _user
-        // );
+        CoreLibrary.InterestRateMode previousRateMode = getUserCurrentBorrowRateMode(
+            _reserve,
+            _user
+        );
 
         // Interest Rate Mode는 Stable로 고정한채 진행한다.
-        CoreLibrary.InterestRateMode previousRateMode = CoreLibrary.InterestRateMode.STABLE;
+        // CoreLibrary.InterestRateMode previousRateMode = CoreLibrary.InterestRateMode.STABLE;
 
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
 
@@ -1823,6 +1847,8 @@ contract LendingBoardCore is VersionedInitializable {
             );
         } else if (previousRateMode == CoreLibrary.InterestRateMode.VARIABLE) {
             reserve.decreaseTotalBorrowsVariable(_principalBalance);
+        } else{
+            console.log("   => LBC : previous Rate Mode is neither Stable nor Variable");
         }
         
         uint256 newPrincipalAmount = _principalBalance.add(_balanceIncrease).add(_amountBorrowed);
