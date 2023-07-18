@@ -1510,20 +1510,20 @@ contract LendingBoardCore is VersionedInitializable {
         //update the indexes
         reserves[_reserve].updateCumulativeIndexes();
 
-        //compound the cumulated interest to the borrow balance and then subtracting the payback amount
-        if (borrowRateMode == CoreLibrary.InterestRateMode.STABLE) {
-            reserve.increaseTotalBorrowsStableAndUpdateAverageRate(
-                _balanceIncrease,
-                user.stableBorrowRate
-            );
-            reserve.decreaseTotalBorrowsStableAndUpdateAverageRate(
-                _paybackAmountMinusFees,
-                user.stableBorrowRate
-            );
-        } else {
-            reserve.increaseTotalBorrowsVariable(_balanceIncrease);
-            reserve.decreaseTotalBorrowsVariable(_paybackAmountMinusFees);
-        }
+        // //compound the cumulated interest to the borrow balance and then subtracting the payback amount
+        // if (borrowRateMode == CoreLibrary.InterestRateMode.STABLE) {
+        //     reserve.increaseTotalBorrowsStableAndUpdateAverageRate(
+        //         _balanceIncrease,
+        //         user.stableBorrowRate
+        //     );
+        //     reserve.decreaseTotalBorrowsStableAndUpdateAverageRate(
+        //         _paybackAmountMinusFees,
+        //         user.stableBorrowRate
+        //     );
+        // } else {
+        //     reserve.increaseTotalBorrowsVariable(_balanceIncrease);
+        //     reserve.decreaseTotalBorrowsVariable(_paybackAmountMinusFees);
+        // }
     }
 
     /**
