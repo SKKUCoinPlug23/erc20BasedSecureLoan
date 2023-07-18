@@ -719,7 +719,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
     {
         CoreLibrary.ProposalStructure memory proposalVars;
         BorrowLocalVars memory borrowLocalVars;
-        require(_interestRate > 0 && _interestRate < 100,"Invalid Interest Rate Input");
+        // require(_interestRate > 0 && _interestRate < 100,"Invalid Interest Rate Input");
         require(_dueDate > block.timestamp, "Invalid Due Date Set");
 
         uint256 reserveDecimals = core.getReserveDecimals(_reserveToBorrow);
@@ -802,6 +802,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         proposalVars.serviceFee = borrowLocalVars.borrowFee;
         // LTV는 System Set
         proposalVars.ltv = borrowLTV;
+        proposalVars.isRepayed = false;
 
         uint256 proposalId = core.getBorrowProposalCount();
         core.incrementBorrowProposalCount(); // Borrow Proposal Count 증가
@@ -851,7 +852,8 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             uint256 interestRate,
             uint256 dueDate,
             uint256 proposalDate,
-            uint256 ltv
+            uint256 ltv,
+            bool isRepayed
         )
     {   
             require(_proposalId >= 0 && _proposalId <= core.getBorrowProposalCount(), "Invalid _proposalId");
@@ -868,6 +870,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             dueDate = borrowProposalVars.dueDate;
             proposalDate = borrowProposalVars.proposalDate;
             ltv = borrowProposalVars.ltv;
+            isRepayed = borrowProposalVars.isRepayed;
     }
 
     function getBorrowProposalList(uint256 _startIdx, uint256 _endIdx) 
@@ -965,7 +968,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
     {
         CoreLibrary.ProposalStructure memory proposalVars;
         LendLocalVars memory lendLocarVars;
-        require(_interestRate > 0 && _interestRate < 100,"Invalid Interest Rate Input");
+        // require(_interestRate > 0 && _interestRate < 100,"Invalid Interest Rate Input");
         require(_dueDate > block.timestamp, "Invalid Due Date Set");
 
         uint256 reserveDecimals = core.getReserveDecimals(_reserveToLend);
@@ -1020,6 +1023,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         proposalVars.proposalDate = block.timestamp;
         proposalVars.serviceFee = lendLocarVars.lendFee;
         proposalVars.ltv = collateralLTV; // LTV는 System Set
+        proposalVars.isRepayed = false;
 
         uint proposalId = core.getLendProposalCount();
         core.incrementLendProposalCount();
@@ -1067,7 +1071,8 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             uint256 interestRate,
             uint256 dueDate,
             uint256 proposalDate,
-            uint256 ltv
+            uint256 ltv,
+            bool isRepayed
         )
     {   
             require(_proposalId >= 0 && _proposalId <= core.getLendProposalCount(), "Invalid _proposalId");
@@ -1084,6 +1089,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             dueDate = lendProposalVars.dueDate;
             proposalDate = lendProposalVars.proposalDate;
             ltv = lendProposalVars.ltv;
+            isRepayed = lendProposalVars.isRepayed;
     }
 
     function getLendProposalList(uint256 startIdx, uint256 endIdx) 
@@ -1142,7 +1148,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
 
         } else { // Lend Proposal Accept Case
-        
+
             // Lend의 경우 Lend Proposer의 Lend Amount가 충분한지 확인
             // reserveForCollateral = lendProposalList[_proposalId].reserveForCollateral;
             // uint256 collateralLtv = lendProposalList[_proposalId].ltv;
