@@ -286,7 +286,6 @@ contract LendingBoardCore is VersionedInitializable {
         // CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
         // CoreLibrary.setInterestRate(user,1000000000000000000);
 
-        // getting the previous borrow data of the user
         (uint256 principalBorrowBalance, , uint256 balanceIncrease) = getUserBorrowBalancesProposeMode(
             _reserve,
             _user,
@@ -1122,14 +1121,14 @@ contract LendingBoardCore is VersionedInitializable {
         CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
         CoreLibrary.ProposalStructure storage proposal;
 
+        if (user.principalBorrowBalance == 0) {
+            return (0, 0, 0);
+        }
+
         if(_isBorrowProposal){
             proposal = borrowProposalList[_proposalId];
         } else {
             proposal = lendProposalList[_proposalId];
-        }
-
-        if (user.principalBorrowBalance == 0) {
-            return (0, 0, 0);
         }
 
         uint256 principal = user.principalBorrowBalance;
@@ -1805,12 +1804,17 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _amountBorrowed,
         CoreLibrary.InterestRateMode _newBorrowRateMode
     ) internal {
-        CoreLibrary.InterestRateMode previousRateMode = getUserCurrentBorrowRateMode(
-            _reserve,
-            _user
-        );
+        // CoreLibrary.InterestRateMode previousRateMode = getUserCurrentBorrowRateMode(
+        //     _reserve,
+        //     _user
+        // );
+
+        // Interest Rate Mode는 Stable로 고정한채 진행한다.
+        CoreLibrary.InterestRateMode previousRateMode = CoreLibrary.InterestRateMode.STABLE;
+
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
 
+        // WIP : Propose Mode에는 Stable과ㅏ Variable의 구분이 없기에 단순한 Borrow Increase만 시행하게끔 CoreLibrary.decreaseTotalBorrowsStableAndUpdateAverageRate 및 increase 수정할 예정
         if (previousRateMode == CoreLibrary.InterestRateMode.STABLE) {
             CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
             reserve.decreaseTotalBorrowsStableAndUpdateAverageRate(
@@ -1820,7 +1824,7 @@ contract LendingBoardCore is VersionedInitializable {
         } else if (previousRateMode == CoreLibrary.InterestRateMode.VARIABLE) {
             reserve.decreaseTotalBorrowsVariable(_principalBalance);
         }
-
+        
         uint256 newPrincipalAmount = _principalBalance.add(_balanceIncrease).add(_amountBorrowed);
         if (_newBorrowRateMode == CoreLibrary.InterestRateMode.STABLE) {
             reserve.increaseTotalBorrowsStableAndUpdateAverageRate(
