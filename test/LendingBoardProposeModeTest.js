@@ -307,9 +307,17 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
   
       // User1's STKN Reserve Data after Borrow Proposal Accept
       // WIP : 현재 User1의 currentBorrowBalance(대출량)이 증가하지 않는 문제 발생 
-      console.log("========================== Lender's Account Balance after lendProposal Accepted ==========================");
+      console.log(" ========================== Lender's Account Balance after lendProposal Accepted ========================== ");
       user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
-      console.log("User1's STKN Reserve Data After Proposal Accepted : ",user1STKNReserveData);
+      console.log("========================== User1's STKN Reserve Data After First Proposal Accepted ========================== ");
+      console.log(user1STKNReserveData);
+      console.log("========================== First Lend Proposal and Accept Done ========================== ");
+      
+      // User1's STKKN Reserve Data after accepting Second Lend Proposal
+      await hardhatLendingBoardProposeMode.connect(user1).lendProposalAccept(1);
+      user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
+      console.log("========================== User1's STKN Reserve Data After Second Proposal Accepted ========================== ");
+      console.log(user1STKNReserveData);
 
       const lendProposalList = await hardhatLendingBoardProposeMode.getLendProposalList(0,1);
       console.log("Lend Proposal List : ", lendProposalList);
