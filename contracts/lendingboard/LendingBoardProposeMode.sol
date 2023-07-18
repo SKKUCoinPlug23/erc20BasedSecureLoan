@@ -802,6 +802,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         proposalVars.serviceFee = borrowLocalVars.borrowFee;
         // LTV는 System Set
         proposalVars.ltv = borrowLTV;
+        proposalVars.tokenId = 0;
         proposalVars.isRepayed = false;
 
         uint256 proposalId = core.getBorrowProposalCount();
@@ -853,6 +854,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             uint256 dueDate,
             uint256 proposalDate,
             uint256 ltv,
+            uint256 tokenId,
             bool isRepayed
         )
     {   
@@ -870,6 +872,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             dueDate = borrowProposalVars.dueDate;
             proposalDate = borrowProposalVars.proposalDate;
             ltv = borrowProposalVars.ltv;
+            tokenId = borrowProposalVars.tokenId;
             isRepayed = borrowProposalVars.isRepayed;
     }
 
@@ -1023,6 +1026,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         proposalVars.proposalDate = block.timestamp;
         proposalVars.serviceFee = lendLocarVars.lendFee;
         proposalVars.ltv = collateralLTV; // LTV는 System Set
+        proposalVars.tokenId = 0; // Nft bond tokenId initialized with 0
         proposalVars.isRepayed = false;
 
         uint proposalId = core.getLendProposalCount();
@@ -1072,6 +1076,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             uint256 dueDate,
             uint256 proposalDate,
             uint256 ltv,
+            uint256 tokenId,
             bool isRepayed
         )
     {   
@@ -1089,6 +1094,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             dueDate = lendProposalVars.dueDate;
             proposalDate = lendProposalVars.proposalDate;
             ltv = lendProposalVars.ltv;
+            tokenId = lendProposalVars.tokenId;
             isRepayed = lendProposalVars.isRepayed;
     }
 
