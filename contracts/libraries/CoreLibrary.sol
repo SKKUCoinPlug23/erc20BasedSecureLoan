@@ -100,6 +100,7 @@ library CoreLibrary {
         uint256 proposalDate;
         uint256 serviceFee;
         uint256 ltv;
+        uint256 tokenId;
         bool isRepayed;
     }
 
