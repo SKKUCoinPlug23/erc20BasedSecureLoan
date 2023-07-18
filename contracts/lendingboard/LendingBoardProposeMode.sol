@@ -26,6 +26,9 @@ import "../libraries/EthAddressLib.sol";
 // We import this library to be able to use console.log
 import "hardhat/console.sol";
 
+// import for NFT Minting
+import "./LendingBoardNFT.sol";
+
 contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
     using SafeMath for uint256;
     using WadRayMath for uint256;
@@ -36,6 +39,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
     LendingBoardDataProvider public dataProvider;
     LendingBoardParametersProvider public parametersProvider;
     IFeeProvider feeProvider;
+    LendingBoardNFT public nft;
 
     //'indexed' : 하나의 event에 최대 3개의 indexed를 붙일 수 있다. indexed attr를 통해 fast filtering 가능해짐
     event Deposit(
@@ -167,6 +171,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             addressesProvider.getLendingBoardParametersProvider()
         );
         feeProvider = IFeeProvider(addressesProvider.getFeeProvider());
+        nft = LendingBoardNFT(addressesProvider.getLendingBoardNFT());
     }
 
     /**
@@ -411,7 +416,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 originationFee;
     }
 
-    function repay(address _reserve, uint256 _amount, address payable _onBehalfOf)
+    function repay(address _reserve, uint256 _amount, address payable _onBehalfOf, uint256 _proposalId)
         external
         payable
         nonReentrant
@@ -529,6 +534,26 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             senderPayable,
             vars.paybackAmountMinusFees
         );
+
+
+        // 0. Get Tokn ID
+        uint256 _tokenId = proposalIdToTokenId[_proposalId];
+
+        // 1. check Bond(NFT) owner
+        address payable ownerOfBond = payable(nft.ownerOf(_tokenId));
+
+        // 2. send to lender
+        core.transferToUser(
+            _reserve,
+            ownerOfBond,
+            vars.paybackAmountMinusFees
+        );
+        
+        // 3. check Conditions
+        // require(currBorrowerBalance = prevBorrowerBalance - paybackAmount)
+        
+        // 4. burn NFT
+        nft.burnNFT(_tokenId);
 
         emit Repay(
             _reserve,
@@ -1105,6 +1130,8 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         return result;
     }
 
+    mapping(uint256 => uint256) public proposalIdToTokenId;
+
     function proposalAcceptInternal(
         address _reserve,
         uint256 _amount,
@@ -1125,20 +1152,42 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // NFT 채권 발행하여 Lender에게 transfer @김주헌
         // Input parameter _lender를 이용해서 
         address reserveForCollateral;
+        uint256 _dueDate;
+        uint256 _interestRate;
+        uint256 _paybackAmount;
 
         // Borrow Proposal Accept Case
         if(_isBorrowProposal){ // Borrow의 경우 Borrow Proposer의 담보가 충분한지 확인
-            reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
+
+            // reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
+
+            CoreLibrary.ProposalStructure memory borrowProposalFromCore = core.getLendProposalFromCore(_proposalId);
+            reserveForCollateral = borrowProposalFromCore.reserveForCollateral;
+            _dueDate = borrowProposalFromCore.dueDate;
+            _interestRate = borrowProposalFromCore.interestRate;
+            _paybackAmount = borrowProposalFromCore.amount + (borrowProposalFromCore.amount * _interestRate / 100);
+
             uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
+
             console.log("   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
 
             require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
 
 
         } else { // Lend Proposal Accept Case
+        
             // Lend의 경우 Lend Proposer의 Lend Amount가 충분한지 확인
-            reserveForCollateral = lendProposalList[_proposalId].reserveForCollateral;
-            uint256 collateralLtv = lendProposalList[_proposalId].ltv;
+            // reserveForCollateral = lendProposalList[_proposalId].reserveForCollateral;
+            // uint256 collateralLtv = lendProposalList[_proposalId].ltv;
+
+            CoreLibrary.ProposalStructure memory lendProposalFromCore = core.getLendProposalFromCore(_proposalId);
+
+            reserveForCollateral = lendProposalFromCore.reserveForCollateral;
+            uint256 collateralLtv = lendProposalFromCore.ltv;
+            _dueDate = lendProposalFromCore.dueDate;
+            _interestRate = lendProposalFromCore.interestRate;
+            _paybackAmount = lendProposalFromCore.amount + (lendProposalFromCore.amount * _interestRate / 100);
+
             IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
             // amount가 parseEther로 들어가ㅏ기에 10^18로 나눠도 wei 단위로 표시됨
             uint256 collateralOraclePriceInWei = oracle
@@ -1187,7 +1236,12 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         address payable borrowerPayable = payable(_borrower);
         core.transferToUser(_reserve, borrowerPayable, _amount);
 
-        // @김주헌 transferToUser 이후 Lender에게 채권 전달하는 프로세스 추가
+        // @김주헌 Added Minting NFT & Send to Lender
+        uint256 tokenId;
+        uint256 _contractTimestamp = block.timestamp;
+        // require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
+        tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount);
+        proposalIdToTokenId[_proposalId] = tokenId;
 
         emit ProposalAccepted(
             _reserve,
