@@ -154,6 +154,20 @@ contract LendingBoardCore is VersionedInitializable {
         return lendProposalList[_proposalId];
     }
 
+    function setBorrowTokenIdToProposalId(
+        uint256 _proposalId,
+        uint256 _tokenId
+    ) public {
+        borrowProposalList[_proposalId].tokenId = _tokenId;
+    }
+
+    function setLendTokenIdToProposalId(
+        uint256 _proposalId,
+        uint256 _tokenId
+    ) public {
+        lendProposalList[_proposalId].tokenId = _tokenId;
+    }
+
     /**
     * @dev updates the state of the core as a result of a deposit action
     * @param _reserve the address of the reserve in which the deposit is happening
