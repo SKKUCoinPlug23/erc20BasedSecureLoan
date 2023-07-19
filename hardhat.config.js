@@ -5,7 +5,6 @@ module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      // gas: 12000000,
       loggingEnabled: true,
       allowUnlimitedContractSize: true,
     },
