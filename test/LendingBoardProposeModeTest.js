@@ -271,16 +271,20 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
   
       // User1's STKN Reserve Data after Borrow Proposal Accept
       // WIP : 현재 User1의 currentBorrowBalance(대출량)이 증가하지 않는 문제 발생 
-      user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
       console.log(" ========================== User1's(Lender) STKN Reserve Data After First Proposal Accepted ========================== ");
+      user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
       console.log(user1STKNReserveData);
+
+      console.log(" ========================== Owner (Borrower) STKN Reserve Data After First Proposal Accepted ========================== ");
+      const ownerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,owner.address);
+      console.log(ownerSTKNReserveData);
 
       const borrowProposalList = await hardhatLendingBoardProposeMode.getBorrowProposalList(0,1);
       // console.log("Borrow Proposal List : ",borrowProposalList);
     });
 
     it("Lend Proposal Test Case",async function(){
-      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
+      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatLendingBoardCore,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
      
       // borrow()
       var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
@@ -329,6 +333,11 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
       console.log("========================== User1's STKN Reserve Data After Second Proposal Accepted ========================== ");
       console.log(user1STKNReserveData);
+      console.log(" ========================== ========================== ========================== ");
+      // const userBorrowBalanceOnProposal = await hardhatLendingBoardCore.connect(user1).getUserBorrowBalancesProposeMode(STKNaddress,user1.address,0,false);
+      // console.log(userBorrowBalanceOnProposal);
+      // console.log(" ========================== ========================== ========================== ");
+
 
       const lendProposalList = await hardhatLendingBoardProposeMode.getLendProposalList(0,1);
       console.log("Lend Proposal List : ", lendProposalList);

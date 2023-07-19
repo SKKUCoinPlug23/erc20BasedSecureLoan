@@ -314,11 +314,7 @@ library CoreLibrary {
                 _self.lastUpdateTimestamp
             );
         } else {
-            console.log("   => CL : case of self.stableBorrowRate <= 0 Borrow Rate : ", _reserve.currentVariableBorrowRate);
-            console.log("   => CL : case of self.stableBorrowRate <= 0 TimeStamp : ", _reserve.lastUpdateTimestamp);
             //variable interest
-            console.log("   => CL :  userReserveData self instance lastVariableBorrowCumulativeIndex : ", _self.lastVariableBorrowCumulativeIndex);
-
             cumulatedInterest = calculateCompoundedInterest(
                 _reserve
                     .currentVariableBorrowRate,
@@ -332,6 +328,7 @@ library CoreLibrary {
         
         console.log("   => CL : calculateCompoundedInterest done");
         compoundedBalance = principalBorrowBalanceRay.rayMul(cumulatedInterest).rayToWad();
+        console.log("   => CL : compoundedBalance : ",compoundedBalance);
 
         if (compoundedBalance == _self.principalBorrowBalance) {
             //solium-disable-next-line
@@ -477,14 +474,11 @@ library CoreLibrary {
         view
         returns (uint256)
     {   
-        console.log("   => CL : _rate and _lastUpdateTimestamp: ",_rate,_lastUpdateTimestamp);
         //solium-disable-next-line
         // uint256 timeDifference = block.timestamp.sub(uint256(_lastUpdateTimestamp));
         uint256 timeDifference = block.timestamp - (uint256(_lastUpdateTimestamp));
-        console.log("   => CL : timeDifference : ",timeDifference);
         // uint256 ratePerSecond = _rate.div(SECONDS_PER_YEAR);
         uint256 ratePerSecond = _rate / (SECONDS_PER_YEAR);
-        console.log("   => CL : ratePerSecond : ",ratePerSecond);
 
         return ratePerSecond.add(WadRayMath.ray()).rayPow(timeDifference);
         // return (ratePerSecond + WadRayMath.ray()).rayPow(timeDifference);
