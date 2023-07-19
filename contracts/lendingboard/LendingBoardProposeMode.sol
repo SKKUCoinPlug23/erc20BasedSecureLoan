@@ -1208,9 +1208,9 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         _tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount);
         
         if (_isBorrowProposal) {
-            core.setBorrowTokenIdToProposalId(_proposalId, _tokenId);
+            core.setTokenIdToBorrowProposalId(_proposalId, _tokenId);
         } else {
-            core.setLendTokenIdToProposalId(_proposalId, _tokenId);
+            core.setTokenIdToLendProposalId(_proposalId, _tokenId);
         }
 
         emit ProposalAccepted(
