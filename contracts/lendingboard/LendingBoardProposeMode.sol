@@ -461,6 +461,11 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             "To repay on behalf of an user an explicit amount to repay is needed."
         );
 
+
+        // Fee Service에 전송하는 부분 추가
+        // UpdateOnRepayState로 repay 완료된 이후에 reserve data update 
+
+        
         //default to max amount
         vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
 
