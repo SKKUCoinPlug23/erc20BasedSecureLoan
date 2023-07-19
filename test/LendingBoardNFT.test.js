@@ -252,8 +252,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       expect(currNFTbalance).to.equal(1);
         
       // Get Information of NFT (Get mapping Value) 
-      const nftInfo = await hardhatLendingBoardNFT.connect(owner).getNFTmetadata(1);
+      const nftInfo = await hardhatLendingBoardNFT.connect(owner).getNFTMetadata(1);
       console.log("[+] NFT Info : ", nftInfo);
+      // pick up specific value of metadata : borrower 
+      // (Could be operated by using getter function of NFT contract)
+      const borrowerFromNFT = await nftInfo.borrower;
+      console.log("[+] Borrower from NFT : ", borrowerFromNFT);
 
       // LendingBoardNFT function check
       const ownerTokenID = await hardhatLendingBoardNFT.connect(owner).tokenOfOwnerByIndex(owner.address, 0);

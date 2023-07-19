@@ -411,9 +411,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 borrowBalanceIncrease;
         bool isETH;
         uint256 paybackAmount;
-        uint256 paybackAmountPlusFees;
+        uint256 paybackAmountMinusFees;
         uint256 currentStableRate;
         uint256 originationFee;
+        address reserve;
     }
 
     /**
@@ -440,12 +441,17 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             proposalStructure = core.getLendProposalFromCore(_proposalId);
         }
         
+        //  Check reserve validity
+        vars.reserve = proposalStructure.reserveToReceive;
+        require(vars.reserve == _reserve, "Invalid reserve address");
+
         // set repay local variables
         vars.principalBorrowBalance = proposalStructure.amount;
         vars.compoundedBorrowBalance = proposalStructure.amount.add(vars.principalBorrowBalance * proposalStructure.interestRate / 100);
         vars.borrowBalanceIncrease = vars.compoundedBorrowBalance.sub(vars.principalBorrowBalance);
 
-        vars.originationFee = core.getUserOriginationFee(_reserve, _onBehalfOf);
+        // vars.originationFee = core.getUserOriginationFee(_reserve, _onBehalfOf);
+        vars.originationFee = proposalStructure.serviceFee;
         vars.isETH = EthAddressLib.ethAddress() == _reserve;
 
         require(vars.compoundedBorrowBalance > 0, "The user does not have any borrow pending");
@@ -456,30 +462,27 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         );
 
         //default to max amount
-        // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
-        vars.paybackAmountPlusFees = vars.compoundedBorrowBalance + (vars.originationFee);
+        vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
 
-        // msg.value(_amount) should be same as paybackAmount + Fees
-        // require(
-        //     !vars.isETH || msg.value == vars.paybackAmountPlusFees,
-        //     "Invalid msg.value sent for the repayment"
-        // );
-
-        console.log("[DEBUG] amount should be: ", vars.paybackAmountPlusFees);
-        console.log("[DEBUG] amount is: ", _amount);
+        if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
+            vars.paybackAmount = _amount;
+        }
+    
         require(
-            _amount == vars.paybackAmountPlusFees, 
+            !vars.isETH || msg.value == vars.paybackAmount,
+            "Invalid msg.value sent for the repayment"
+        );
+
+        require(
+            ((!vars.isETH && _amount == vars.paybackAmount) || (vars.isETH && _amount == msg.value)), 
             "Invalid amount parameter sent for the repayment"
             );
 
         // Borrower should have enough balance to cover the repay
         require(
-            core.getUserUnderlyingAssetBalance(_reserve, _onBehalfOf) > vars.paybackAmountPlusFees,
+            core.getUserUnderlyingAssetBalance(_reserve, _onBehalfOf) > vars.paybackAmount,
             "The user does not have enough balance to complete the repayment"
         );
-
-        // Could be useless
-        vars.paybackAmount = vars.compoundedBorrowBalance;
 
         address payable senderPayable = payable(msg.sender);
 
@@ -493,7 +496,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 _tokenIdFromCore = proposalStructure.tokenId;
 
         // 1. check Bond(NFT) owner
-        // Structure 에서 받아오는 걸로
         address payable ownerOfBond = payable(nft.ownerOf(_tokenIdFromCore));
 
         // 2. send to lender
@@ -1094,8 +1096,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         return result;
     }
 
-    mapping(uint256 => uint256) public proposalIdToTokenId;
-
     function proposalAcceptInternal(
         address _reserve,
         uint256 _amount,
@@ -1124,8 +1124,8 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         if(_isBorrowProposal){ // Borrow의 경우 Borrow Proposer의 담보가 충분한지 확인
 
             // reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
-
-            CoreLibrary.ProposalStructure memory borrowProposalFromCore = core.getLendProposalFromCore(_proposalId);
+            CoreLibrary.ProposalStructure memory borrowProposalFromCore = core.getBorrowProposalFromCore(_proposalId);
+            
             reserveForCollateral = borrowProposalFromCore.reserveForCollateral;
             _dueDate = borrowProposalFromCore.dueDate;
             _interestRate = borrowProposalFromCore.interestRate;
@@ -1133,9 +1133,9 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
             uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
 
-            console.log("   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
+            console.log("   => LBPM : user Current Available Reserve Balance in Wei : ", userCurrentAvailableReserveBalanceInWei);
 
-            require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
+            require(userCurrentAvailableReserveBalanceInWei >= _amount, "Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
 
 
         } else { // Lend Proposal Accept Case
@@ -1204,6 +1204,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 _tokenId;
         uint256 _contractTimestamp = block.timestamp;
         // require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
+        console.log("   => LBPM : _dueDate : ", _dueDate);
         _tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount);
         
         if (_isBorrowProposal) {
