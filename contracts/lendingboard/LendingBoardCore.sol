@@ -156,14 +156,14 @@ contract LendingBoardCore is VersionedInitializable {
         return lendProposalList[_proposalId];
     }
 
-    function setBorrowTokenIdToProposalId(
+    function setTokenIdToBorrowProposalId(
         uint256 _proposalId,
         uint256 _tokenId
     ) public {
         borrowProposalList[_proposalId].tokenId = _tokenId;
     }
 
-    function setLendTokenIdToProposalId(
+    function setTokenIdToLendProposalId(
         uint256 _proposalId,
         uint256 _tokenId
     ) public {
