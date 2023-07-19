@@ -30,6 +30,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     const TestOracle = await ethers.getContractFactory("TestOracle");
     const TestLendingRateOracle = await ethers.getContractFactory("TestLendingRateOracle");
     const TokenDistributor = await ethers.getContractFactory("TokenDistributor");
+    const LendingBoardNFT = await ethers.getContractFactory("LendingBoardNFT");
 
     // Main Contracts Deployment
     const hardhatLendingBoardProposeMode = await LendingBoardProposeMode.deploy();
@@ -54,6 +55,10 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatTestLendingRateOracle.deployed();
     const hardhatTokenDistributor = await TokenDistributor.deploy();
     await hardhatTokenDistributor.deployed();
+    const hardhatLendingBoardNFT = await LendingBoardNFT.deploy(); // NFT Minting Contracts Deployment
+    await hardhatLendingBoardNFT.deployed();
+    // Test -> might be erased
+    console.log("NFT Token Deployed to : ", hardhatLendingBoardNFT.address);
 
     // Using LendingBoardAddressesProvider(LBAP) set the deployed Smart Contract address to the appropriate location
     await hardhatLendingBoardAddressesProvider.setLendingBoardImpl(hardhatLendingBoardProposeMode.address);
@@ -62,6 +67,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatLendingBoardAddressesProvider.setLendingBoardDataProviderImpl(hardhatLendingBoardDataProvider.address);
     await hardhatLendingBoardAddressesProvider.setLendingBoardParametersProviderImpl(hardhatLendingBoardParametersProvider.address);
     await hardhatLendingBoardAddressesProvider.setFeeProviderImpl(hardhatLendingBoardFeeProvider.address);
+    await hardhatLendingBoardAddressesProvider.setLendingBoardNFTImpl(hardhatLendingBoardNFT.address); // Newly updated for NFT
 
     // Setting address for contracts that are outside the context of the protocol
     await hardhatLendingBoardAddressesProvider.setLendingBoardLiquidationManager(hardhatLendingBoardLiquidationManager.address);
@@ -244,7 +250,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       const interestRate = 10; // 일단은 parseEther 고려하지 않고 10으로 설정
       // dueDate의 경우 임의로 현재시간의 + 100000 으로 설정한다.
       const dueDate = Date.now() + 100000;
-      console.log("dueDate from JS : ",dueDate);
+
       // Borrowing STKN( = 2ETH) using PLUG( = 5ETH) as a collateral
       await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount1,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
 
@@ -255,17 +261,19 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       // Data from borowProposal needs to have a borrower's id matching that of owner.address.
       expect(owner.address).to.equal(generatedBorrowProposal.borrower);
 
+      console.log(" ========================== Lender's Account Balance before BorrowProposal Accept ========================== ");
       // User1's STKN Reserve Data before Borrow Proposal Accept
       let user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
-      console.log("User1's STKN Reserve Data : ",user1STKNReserveData);
+      console.log(user1STKNReserveData);
 
       await hardhatLendingBoardProposeMode.connect(user1).borrowProposalAccept(0);
-      console.log("Lender's Account Balance after BorrowProposal Accepted");
+      console.log(" ========================== Lender's Account Balance after BorrowProposal Accepted ========================== ");
   
       // User1's STKN Reserve Data after Borrow Proposal Accept
       // WIP : 현재 User1의 currentBorrowBalance(대출량)이 증가하지 않는 문제 발생 
       user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
-      // console.log("User1's STKN Reserve Data After Proposal Accepted : ",user1STKNReserveData);
+      console.log(" ========================== User1's(Lender) STKN Reserve Data After First Proposal Accepted ========================== ");
+      console.log(user1STKNReserveData);
 
       const borrowProposalList = await hardhatLendingBoardProposeMode.getBorrowProposalList(0,1);
       // console.log("Borrow Proposal List : ",borrowProposalList);
@@ -297,17 +305,20 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
 
       // User1's STKN Reserve Data before Borrow Proposal Accept
       let user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
-      console.log("User1's STKN Reserve Data : ",user1STKNReserveData);
+      console.log("========================== User1's STKN Reserve Data After First Proposal Proposed ========================== ");
+      console.log(user1STKNReserveData);
       
       // User1's PLUG Reserve Data before Borrow Proposal Accpet(PLUG used as Collateral in this case)
       let user1PLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user1.address);
-      console.log("User1's PLUG Reserve Data : ",user1PLUGReserveData);
+      console.log("========================== User1's PLUG Reserve Data After First Proposal Proposed ========================== ");
+      console.log(user1PLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
 
       await hardhatLendingBoardProposeMode.connect(user1).lendProposalAccept(0);
   
       // User1's STKN Reserve Data after Borrow Proposal Accept
       // WIP : 현재 User1의 currentBorrowBalance(대출량)이 증가하지 않는 문제 발생 
-      console.log(" ========================== Lender's Account Balance after lendProposal Accepted ========================== ");
+      console.log(" ========================== Borrower's Account Balance after lendProposal Accepted ========================== ");
       user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
       console.log("========================== User1's STKN Reserve Data After First Proposal Accepted ========================== ");
       console.log(user1STKNReserveData);
