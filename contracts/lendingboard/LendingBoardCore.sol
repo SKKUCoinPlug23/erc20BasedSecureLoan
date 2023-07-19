@@ -1151,7 +1151,7 @@ contract LendingBoardCore is VersionedInitializable {
     }
 
     // WIP : getting User Borrow Balance for certain proposalId
-    function getUserBorrowBalancesProposeMode(address _reserve, address _user, uint256 _proposalId, bool _isBorrowProposal)
+    function getProposalBorrowBalances(address _reserve, address _user, uint256 _proposalId, bool _isBorrowProposal)
         public
         view
         returns (uint256, uint256, uint256)
@@ -1177,7 +1177,6 @@ contract LendingBoardCore is VersionedInitializable {
         // );
         // console.log("   => LBC : User Compounded Borrow Balance : ",compoundedBalance);
         uint256 compoundedBalance = CoreLibrary.getProposalBorrowBalances(proposal);
-
 
         return (principal, compoundedBalance, compoundedBalance.sub(principal));
     }
@@ -1515,6 +1514,7 @@ contract LendingBoardCore is VersionedInitializable {
             revert("Invalid borrow rate mode");
         }
         //increase the principal borrows and the origination fee
+        // WIP : 현재 복리의 이자의 개념 때문에 _balanceIncrease를 principalBorrowBalance를 더해준다. => 더하지 않는 방향으로 수정해야할듯
         user.principalBorrowBalance = user.principalBorrowBalance.add(_amountBorrowed).add(
             _balanceIncrease
         );
