@@ -1200,12 +1200,15 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         address payable borrowerPayable = payable(_borrower);
         core.transferToUser(_reserve, borrowerPayable, _amount);
 
+        console.log("   => LBPM : NFT Minting Started");
+
         // @김주헌 Added Minting NFT & Send to Lender
         uint256 _tokenId;
         uint256 _contractTimestamp = block.timestamp;
         // require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
         _tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount);
         
+        console.log("   => LBPM : NFT Minting Done");
         if (_isBorrowProposal) {
             core.setBorrowTokenIdToProposalId(_proposalId, _tokenId);
         } else {
