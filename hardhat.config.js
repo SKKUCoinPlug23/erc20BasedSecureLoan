@@ -2,6 +2,12 @@ require("@nomicfoundation/hardhat-toolbox");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
+  networks: {
+    hardhat: {
+      loggingEnabled: true,
+      allowUnlimitedContractSize: true
+    }
+  },
   solidity: {
     version: "0.8.13",
     settings: {
@@ -9,7 +15,7 @@ module.exports = {
         enabled: true,
         runs: 200
       },
-      viaIR :true,
+      viaIR: true,
     }
   }
 }
