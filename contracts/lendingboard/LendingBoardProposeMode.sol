@@ -493,11 +493,16 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             vars.paybackAmountMinusFees,
             vars.originationFee,
             vars.borrowBalanceIncrease,
-            (userPrincipalBorrowBalanceCheck == 0 
-            && userCompoundedBorrowBalanceCheck == 0
-            && userBorrowBalanceIncreaseCheck == 0)
+            userPrincipalBorrowBalanceCheck == 0
         );
 
+        (
+            userPrincipalBorrowBalanceCheck, 
+            userCompoundedBorrowBalanceCheck,
+            userBorrowBalanceIncreaseCheck
+        ) = core.getUserBorrowBalancesProposeMode(_reserve, _onBehalfOf, _proposalId, _isBorrowProposal);
+        console.log("\x1b[44m%s\x1b[0m", "userPrincipalBorrowBalanceCheck: ", userPrincipalBorrowBalanceCheck);
+        // 아마 proposal에 principal이랑 compounded 제대로 들어가면 0으로 뜰것임
         userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
         console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance After Update: ", userCurrentAvailableReserveBalance);
         
@@ -1178,6 +1183,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         }
 
+        uint256 userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[46m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Borrow: ", userCurrentAvailableReserveBalance);
+
+
         uint256 borrowBalanceIncreased; // WIP : Revision mandated
         console.log("   => LBPM : Service Fee : ", _serviceFee);
 
@@ -1215,6 +1224,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         } else {
             core.setTokenIdToLendProposalId(_proposalId, _tokenId);
         }
+
+        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[46m%s\x1b[0m", "userCurrentAvailableReserveBalance After Borrow: ", userCurrentAvailableReserveBalance);
+
 
         emit ProposalAccepted(
             _reserve,

@@ -1583,16 +1583,19 @@ contract LendingBoardCore is VersionedInitializable {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
         CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
 
+        console.log("\x1b[44m%s\x1b[0m", "[Before] user.principalBorrowBalance: ", user.principalBorrowBalance);
         //update the user principal borrow balance, adding the cumulated interest and then subtracting the payback amount
         user.principalBorrowBalance = user.principalBorrowBalance.add(_balanceIncrease).sub(
             _paybackAmountMinusFees
         );
+        console.log("\x1b[44m%s\x1b[0m", "[After] user.principalBorrowBalance: ", user.principalBorrowBalance);
         user.lastVariableBorrowCumulativeIndex = reserve.lastVariableBorrowCumulativeIndex;
 
         //if the balance decrease is equal to the previous principal (user is repaying the whole loan)
         //and the rate mode is stable, we reset the interest rate mode of the user
         if (_repaidWholeLoan) {
             user.stableBorrowRate = 0;
+            user.compoundedBorrowBalance = 0;
             user.lastVariableBorrowCumulativeIndex = 0;
         }
         user.originationFee = user.originationFee.sub(_originationFeeRepaid);
