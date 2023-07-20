@@ -21,7 +21,7 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         uint256 dueDate;
         uint256 contractTimestamp;
         uint256 interestRate;
-        uint256 paybackAmount;
+        uint256 paybackAmountMinusFee;
     }
 
     // mapping for NFT TokenID -> metadata structure
@@ -37,7 +37,7 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         uint256 _dueDate,
         uint256 _contractTimestamp,
         uint256 _interestRate,
-        uint256 _paybackAmount
+        uint256 _paybackAmountMinusFee
     )
         public
         returns (uint256)
@@ -54,7 +54,7 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
             _dueDate, 
             _contractTimestamp, 
             _interestRate, 
-            _paybackAmount
+            _paybackAmountMinusFee
         );
 
         return newItemId;
@@ -72,7 +72,7 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         uint256 _dueDate,
         uint256 _contractTimestamp,
         uint256 _interestRate,
-        uint256 _paybackAmount
+        uint256 _paybackAmountMinusFee
     ) 
         public 
     {
@@ -84,7 +84,7 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
             _dueDate, 
             _contractTimestamp, 
             _interestRate, 
-            _paybackAmount
+            _paybackAmountMinusFee
         );
     }
 
@@ -98,7 +98,7 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         return result;
     }
 
-    function getNFTmetadata(uint256 _tokenId) public view returns (Metadata memory) {
+    function getNFTMetadata(uint256 _tokenId) public view returns (Metadata memory) {
         return mappedNFT[_tokenId];
     }
 

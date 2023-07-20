@@ -156,14 +156,14 @@ contract LendingBoardCore is VersionedInitializable {
         return lendProposalList[_proposalId];
     }
 
-    function setBorrowTokenIdToProposalId(
+    function setTokenIdToBorrowProposalId(
         uint256 _proposalId,
         uint256 _tokenId
     ) public {
         borrowProposalList[_proposalId].tokenId = _tokenId;
     }
 
-    function setLendTokenIdToProposalId(
+    function setTokenIdToLendProposalId(
         uint256 _proposalId,
         uint256 _tokenId
     ) public {
@@ -1151,7 +1151,7 @@ contract LendingBoardCore is VersionedInitializable {
     }
 
     // WIP : getting User Borrow Balance for certain proposalId
-    function getProposalBorrowBalances(address _reserve, address _user, uint256 _proposalId, bool _isBorrowProposal)
+    function getUserBorrowBalancesProposeMode(address _reserve, address _user, uint256 _proposalId, bool _isBorrowProposal)
         public
         view
         returns (uint256, uint256, uint256)
@@ -1176,7 +1176,8 @@ contract LendingBoardCore is VersionedInitializable {
         //     reserves[_reserve]
         // );
         // console.log("   => LBC : User Compounded Borrow Balance : ",compoundedBalance);
-        uint256 compoundedBalance = CoreLibrary.getProposalBorrowBalances(proposal);
+        uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalanceProposeMode(user);
+
 
         return (principal, compoundedBalance, compoundedBalance.sub(principal));
     }
@@ -1514,7 +1515,6 @@ contract LendingBoardCore is VersionedInitializable {
             revert("Invalid borrow rate mode");
         }
         //increase the principal borrows and the origination fee
-        // WIP : 현재 복리의 이자의 개념 때문에 _balanceIncrease를 principalBorrowBalance를 더해준다. => 더하지 않는 방향으로 수정해야할듯
         user.principalBorrowBalance = user.principalBorrowBalance.add(_amountBorrowed).add(
             _balanceIncrease
         );
@@ -1547,20 +1547,20 @@ contract LendingBoardCore is VersionedInitializable {
         //update the indexes
         reserves[_reserve].updateCumulativeIndexes();
 
-        // //compound the cumulated interest to the borrow balance and then subtracting the payback amount
-        // if (borrowRateMode == CoreLibrary.InterestRateMode.STABLE) {
-        //     reserve.increaseTotalBorrowsStableAndUpdateAverageRate(
-        //         _balanceIncrease,
-        //         user.stableBorrowRate
-        //     );
-        //     reserve.decreaseTotalBorrowsStableAndUpdateAverageRate(
-        //         _paybackAmountMinusFees,
-        //         user.stableBorrowRate
-        //     );
-        // } else {
-        //     reserve.increaseTotalBorrowsVariable(_balanceIncrease);
-        //     reserve.decreaseTotalBorrowsVariable(_paybackAmountMinusFees);
-        // }
+        //compound the cumulated interest to the borrow balance and then subtracting the payback amount
+        if (borrowRateMode == CoreLibrary.InterestRateMode.STABLE) {
+            reserve.increaseTotalBorrowsStableAndUpdateAverageRate(
+                _balanceIncrease,
+                user.stableBorrowRate
+            );
+            reserve.decreaseTotalBorrowsStableAndUpdateAverageRate(
+                _paybackAmountMinusFees,
+                user.stableBorrowRate
+            );
+        } else {
+            reserve.increaseTotalBorrowsVariable(_balanceIncrease);
+            reserve.decreaseTotalBorrowsVariable(_paybackAmountMinusFees);
+        }
     }
 
     /**
@@ -1583,16 +1583,19 @@ contract LendingBoardCore is VersionedInitializable {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
         CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
 
+        console.log("\x1b[44m%s\x1b[0m", "[Before] user.principalBorrowBalance: ", user.principalBorrowBalance);
         //update the user principal borrow balance, adding the cumulated interest and then subtracting the payback amount
         user.principalBorrowBalance = user.principalBorrowBalance.add(_balanceIncrease).sub(
             _paybackAmountMinusFees
         );
+        console.log("\x1b[44m%s\x1b[0m", "[After] user.principalBorrowBalance: ", user.principalBorrowBalance);
         user.lastVariableBorrowCumulativeIndex = reserve.lastVariableBorrowCumulativeIndex;
 
         //if the balance decrease is equal to the previous principal (user is repaying the whole loan)
         //and the rate mode is stable, we reset the interest rate mode of the user
         if (_repaidWholeLoan) {
             user.stableBorrowRate = 0;
+            user.compoundedBorrowBalance = 0;
             user.lastVariableBorrowCumulativeIndex = 0;
         }
         user.originationFee = user.originationFee.sub(_originationFeeRepaid);
