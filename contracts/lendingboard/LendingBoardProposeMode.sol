@@ -481,7 +481,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             userPrincipalBorrowBalanceCheck, 
             userCompoundedBorrowBalanceCheck,
             userBorrowBalanceIncreaseCheck
-        ) = core.getUserBorrowBalancesProposeMode(_reserve, _onBehalfOf, _proposalId, _isBorrowProposal);
+        ) = core.getUserBorrowBalances(_reserve, _onBehalfOf);
         
         userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
         console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Update: ", userCurrentAvailableReserveBalance);
@@ -500,12 +500,14 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             userPrincipalBorrowBalanceCheck, 
             userCompoundedBorrowBalanceCheck,
             userBorrowBalanceIncreaseCheck
-        ) = core.getUserBorrowBalancesProposeMode(_reserve, _onBehalfOf, _proposalId, _isBorrowProposal);
+        ) = core.getUserBorrowBalances(_reserve, _onBehalfOf);
         console.log("\x1b[44m%s\x1b[0m", "userPrincipalBorrowBalanceCheck: ", userPrincipalBorrowBalanceCheck);
         // 아마 proposal에 principal이랑 compounded 제대로 들어가면 0으로 뜰것임
         userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
         console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance After Update: ", userCurrentAvailableReserveBalance);
-        
+        console.log("\x1b[42m%s\x1b[0m", "[Final] principal: ", userPrincipalBorrowBalanceCheck);
+        console.log("\x1b[42m%s\x1b[0m", "[Final] compounded: ", userCompoundedBorrowBalanceCheck);
+        console.log("\x1b[42m%s\x1b[0m", "[Final] increase: ", userBorrowBalanceIncreaseCheck);
         // Repayment Finished
         // Redirect Creditor & Send paybackAmountMinusFees to Creditor
         // Burn NFT for entire loan process end

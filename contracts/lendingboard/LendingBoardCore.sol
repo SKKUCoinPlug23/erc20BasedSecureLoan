@@ -1156,33 +1156,33 @@ contract LendingBoardCore is VersionedInitializable {
         return (principal, compoundedBalance, compoundedBalance.sub(principal));
     }
 
-    // WIP : getting User Borrow Balance for certain proposalId
-    function getUserBorrowBalancesProposeMode(address _reserve, address _user, uint256 _proposalId, bool _isBorrowProposal)
-        public
-        view
-        returns (uint256, uint256, uint256)
-    {
-        CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
-        CoreLibrary.ProposalStructure storage proposal;
+    // // WIP : getting User Borrow Balance for certain proposalId
+    // function getUserBorrowBalancesProposeMode(address _reserve, address _user, uint256 _proposalId, bool _isBorrowProposal)
+    //     public
+    //     view
+    //     returns (uint256, uint256, uint256)
+    // {
+    //     CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
+    //     CoreLibrary.ProposalStructure storage proposal;
 
-        if (user.principalBorrowBalance == 0) {
-            return (0, 0, 0);
-        }
+    //     if (user.principalBorrowBalance == 0) {
+    //         return (0, 0, 0);
+    //     }
 
-        if(_isBorrowProposal){
-            proposal = borrowProposalList[_proposalId];
-        } else {
-            proposal = lendProposalList[_proposalId];
-        }
+    //     if(_isBorrowProposal){
+    //         proposal = borrowProposalList[_proposalId];
+    //     } else {
+    //         proposal = lendProposalList[_proposalId];
+    //     }
 
-        uint256 interestRate = proposal.interestRate;
+    //     uint256 interestRate = proposal.interestRate;
 
-        uint256 principal = user.principalBorrowBalance;
-        uint256 compoundedBalance = (principal).mul(100 + interestRate).div(100);
-        console.log("   => LBC : getUserBorrowBalancesProposeMode : ",compoundedBalance);
+    //     uint256 principal = user.principalBorrowBalance;
+    //     uint256 compoundedBalance = (principal).mul(100 + interestRate).div(100);
+    //     console.log("   => LBC : getUserBorrowBalancesProposeMode : ",compoundedBalance);
 
-        return (principal, compoundedBalance, compoundedBalance.sub(principal));
-    }
+    //     return (principal, compoundedBalance, compoundedBalance.sub(principal));
+    // }
 
     /**
     * @dev the variable borrow index of the user is 0 if the user is not borrowing or borrowing at stable
