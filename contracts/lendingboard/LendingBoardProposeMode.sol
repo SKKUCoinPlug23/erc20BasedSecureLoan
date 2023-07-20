@@ -438,6 +438,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         //default to max amount
         vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
+        vars.paybackAmountMinusFees = vars.paybackAmount.sub(vars.originationFee);
 
         if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
             vars.paybackAmount = _amount;
@@ -458,50 +459,21 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             core.getUserUnderlyingAssetBalance(_reserve, _onBehalfOf) > vars.paybackAmount,
             "The user does not have enough balance to complete the repayment"
         );
-
+        
+        uint256 userCurrentAvailableReserveBalance;
+        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Transfer: ", userCurrentAvailableReserveBalance);
+        
+        // Send the amount to repay to the core except the origination fee
         address payable senderPayable = payable(msg.sender);
-
         core.transferToReserve{value:vars.isETH ? msg.value.sub(vars.originationFee) : 0}(
             _reserve,
             senderPayable,
-            vars.paybackAmount
+            vars.paybackAmountMinusFees
         );
-
-        // 0. Get Token ID
-        uint256 _tokenIdFromCore = proposalStructure.tokenId;
-
-        // 1. check Bond(NFT) owner
-        address payable ownerOfBond = payable(nft.ownerOf(_tokenIdFromCore));
-
-        // 2. send to lender
-        core.transferToUser(
-            _reserve,
-            ownerOfBond,
-            vars.paybackAmount
-        );
-        
-        // 3. burn NFT
-        nft.burnNFT(_tokenIdFromCore);
         
         // UpdateOnRepayState로 repay 완료된 이후에 reserve data update
         // repaidWholeLoan = true
-        console.log("[!] Before UpdateOnRepayState");
-        console.log("[+] CHECKSUM -> paybackAmountMinusFees: ", vars.paybackAmountMinusFees);
-        console.log("[+] CHECKSUM -> originationFee: ", vars.originationFee);
-        console.log("[+] CHECKSUM -> borrowBalanceIncrease: ", vars.borrowBalanceIncrease);
-        core.updateStateOnRepay(
-            _reserve,
-            _onBehalfOf,
-            vars.paybackAmountMinusFees,
-            vars.originationFee,
-            vars.borrowBalanceIncrease,
-            false   
-        );
-        console.log("[!] After UpdateOnRepayState");
-        console.log("[+] CHECKSUM -> paybackAmountMinusFees: ", vars.paybackAmountMinusFees);
-        console.log("[+] CHECKSUM -> originationFee: ", vars.originationFee);
-        console.log("[+] CHECKSUM -> borrowBalanceIncrease: ", vars.borrowBalanceIncrease);
-        // check user principalBorrowBalance is zero
         uint256 userPrincipalBorrowBalanceCheck;
         uint256 userCompoundedBorrowBalanceCheck;
         uint256 userBorrowBalanceIncreaseCheck;
@@ -510,25 +482,38 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             userCompoundedBorrowBalanceCheck,
             userBorrowBalanceIncreaseCheck
         ) = core.getUserBorrowBalancesProposeMode(_reserve, _onBehalfOf, _proposalId, _isBorrowProposal);
+        
+        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Update: ", userCurrentAvailableReserveBalance);
 
-        console.log("[!] Check Values after parsed from Reserve Data");
-        console.log("[+] CHECKSUM -> paybackAmountMinusFees: ", userPrincipalBorrowBalanceCheck);
-        console.log("[+] CHECKSUM -> originationFee: ", userCompoundedBorrowBalanceCheck);
-        console.log("[+] CHECKSUM -> borrowBalanceIncrease: ", userBorrowBalanceIncreaseCheck);
-        if (
-            userPrincipalBorrowBalanceCheck == 0 
+        // Update After Repayment and Service Fee Payment
+        core.updateStateOnRepay(
+            _reserve,
+            _onBehalfOf,
+            vars.paybackAmountMinusFees,
+            vars.originationFee,
+            vars.borrowBalanceIncrease,
+            (userPrincipalBorrowBalanceCheck == 0 
             && userCompoundedBorrowBalanceCheck == 0
-            && userBorrowBalanceIncreaseCheck == 0
-        ) {
-            core.updateStateOnRepay(
-                _reserve,
-                _onBehalfOf,
-                0,
-                0,
-                0,
-                true
-            );
-        }
+            && userBorrowBalanceIncreaseCheck == 0)
+        );
+
+        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance After Update: ", userCurrentAvailableReserveBalance);
+        
+        // Repayment Finished
+        // Redirect Creditor & Send paybackAmountMinusFees to Creditor
+        // Burn NFT for entire loan process end
+        uint256 _tokenIdFromCore = proposalStructure.tokenId;
+        address payable ownerOfBond = payable(nft.ownerOf(_tokenIdFromCore));
+
+        core.transferToUser(
+            _reserve,
+            ownerOfBond,
+            vars.paybackAmountMinusFees
+        );
+
+        nft.burnNFT(_tokenIdFromCore);
 
         emit Repay(
             _reserve,
@@ -691,10 +676,12 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             ,
         ) = dataProvider.getUserReserveData(_reserve,_user);
 
-        userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - 
-        userCurrentBorrowBalance;
+        console.log("\x1b[33m%s\x1b[0m", "userCurrentATokenBalance : ", userCurrentATokenBalance);
+        console.log("\x1b[33m%s\x1b[0m", "userCurrentBorrowBalance : ", userCurrentBorrowBalance);
+        userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - userCurrentBorrowBalance;
         
-        userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
+        // userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
+        userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei;
 
         return userCurrentAvailableReserveBalance;
     }

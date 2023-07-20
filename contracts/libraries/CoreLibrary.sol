@@ -283,11 +283,23 @@ library CoreLibrary {
     function getProposalBorrowBalances(
         CoreLibrary.ProposalStructure storage _proposal
     ) internal view returns (uint256){
-        uint256 compoundedBalance = (1e18 + _proposal.interestRate).mul(_proposal.amount);
+        uint256 compoundedBalance = _proposal.amount.add((_proposal.interestRate).mul(_proposal.amount));
         console.log("   => CL : Propose Mode  _proposal.interestRate and CompoundBalance",_proposal.interestRate, compoundedBalance);
         return compoundedBalance;
     }
 
+    function getCompoundedBorrowBalanceProposeMode(
+        CoreLibrary.UserReserveData storage _self
+    ) internal view returns (uint256) {
+        if (_self.principalBorrowBalance == 0) return 0;
+
+        uint256 principal = _self.principalBorrowBalance;
+        uint256 interestRate = _self.stableBorrowRate;
+        uint256 compoundedBalance = principal.add((interestRate).mul(principal));
+        console.log("[*] CL : getCompoundedBorrowBalanceProposeMode : ", compoundedBalance);
+
+        return compoundedBalance;
+    }
 
     /**
     * @dev calculates the compounded borrow balance of a user
@@ -306,6 +318,7 @@ library CoreLibrary {
         uint256 cumulatedInterest = 0;
 
         console.log("   => CL : _self.stableBorrowRate : ",_self.stableBorrowRate);
+        console.log("   => CL : principalBorrowBalanceRay : ",principalBorrowBalanceRay);
 
         if (_self.stableBorrowRate > 0) {
             console.log("   => CL : case of self.stableBorrowRate > 0 : ", _self.stableBorrowRate);
