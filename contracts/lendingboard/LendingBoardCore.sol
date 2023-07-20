@@ -324,6 +324,7 @@ contract LendingBoardCore is VersionedInitializable {
         principalBorrowBalance = proposalInstance.amount;
         compoundInterestRate = 100 + proposalInstance.interestRate;
         balanceIncrease = ((principalBorrowBalance).mul(compoundInterestRate)).div(100) - principalBorrowBalance;
+
         console.log("   => LBC : principalBorrowBalance : ",principalBorrowBalance);
         console.log("   => LBC : compoundInterestRate : ",compoundInterestRate);
         console.log("   => LBC : balanceIncrease : ",balanceIncrease);
@@ -1143,10 +1144,15 @@ contract LendingBoardCore is VersionedInitializable {
         }
 
         uint256 principal = user.principalBorrowBalance;
-        uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalance(
-            user,
-            reserves[_reserve]
-        );
+        // original CompoundedBalance setting
+        // uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalance(
+        //     user,
+        //     reserves[_reserve]
+        // );
+
+        // WIP
+        uint256 compoundedBalance = user.compoundedBorrowBalance;
+
         return (principal, compoundedBalance, compoundedBalance.sub(principal));
     }
 
@@ -1169,15 +1175,11 @@ contract LendingBoardCore is VersionedInitializable {
             proposal = lendProposalList[_proposalId];
         }
 
-        uint256 principal = user.principalBorrowBalance;
-        // console.log("   => LBC : User Principal Borrow Balance : ",principal);
-        // uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalance(
-        //     user,
-        //     reserves[_reserve]
-        // );
-        // console.log("   => LBC : User Compounded Borrow Balance : ",compoundedBalance);
-        uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalanceProposeMode(user);
+        uint256 interestRate = proposal.interestRate;
 
+        uint256 principal = user.principalBorrowBalance;
+        uint256 compoundedBalance = (principal).mul(100 + interestRate).div(100);
+        console.log("   => LBC : getUserBorrowBalancesProposeMode : ",compoundedBalance);
 
         return (principal, compoundedBalance, compoundedBalance.sub(principal));
     }
@@ -1515,9 +1517,18 @@ contract LendingBoardCore is VersionedInitializable {
             revert("Invalid borrow rate mode");
         }
         //increase the principal borrows and the origination fee
-        user.principalBorrowBalance = user.principalBorrowBalance.add(_amountBorrowed).add(
+        // Original user.principalBorrowBalance setting
+        // user.principalBorrowBalance = user.principalBorrowBalance.add(_amountBorrowed).add(
+        //     _balanceIncrease
+        // );
+        
+        // WIP 23.07.20
+        user.principalBorrowBalance = user.principalBorrowBalance.add(_amountBorrowed);
+        
+        user.compoundedBorrowBalance = user.compoundedBorrowBalance.add(_amountBorrowed).add(
             _balanceIncrease
         );
+
         user.originationFee = user.originationFee.add(_fee);
 
         //solium-disable-next-line

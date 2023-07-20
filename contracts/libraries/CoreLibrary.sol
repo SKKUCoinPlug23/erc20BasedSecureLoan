@@ -288,18 +288,18 @@ library CoreLibrary {
         return compoundedBalance;
     }
 
-    function getCompoundedBorrowBalanceProposeMode(
-        CoreLibrary.UserReserveData storage _self
-    ) internal view returns (uint256) {
-        if (_self.principalBorrowBalance == 0) return 0;
+    // function getCompoundedBorrowBalanceProposeMode(
+    //     CoreLibrary.UserReserveData storage _self
+    // ) internal view returns (uint256) {
+    //     if (_self.principalBorrowBalance == 0) return 0;
 
-        uint256 principal = _self.principalBorrowBalance;
-        uint256 interestRate = _self.stableBorrowRate;
-        uint256 compoundedBalance = principal.add((interestRate).mul(principal));
-        console.log("[*] CL : getCompoundedBorrowBalanceProposeMode : ", compoundedBalance);
+    //     uint256 principal = _self.principalBorrowBalance;
+    //     uint256 interestRate = _self.stableBorrowRate;
+    //     uint256 compoundedBalance = principal.add((interestRate).mul(principal));
+    //     console.log("[*] CL : getCompoundedBorrowBalanceProposeMode : ", compoundedBalance);
 
-        return compoundedBalance;
-    }
+    //     return compoundedBalance;
+    // }
 
     /**
     * @dev calculates the compounded borrow balance of a user

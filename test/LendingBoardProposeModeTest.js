@@ -345,5 +345,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     
   });
 
+  describe("<Liquidation Situation>", function () {
+
+    it("Should be underCollateralized and be ready for liquidation", async function () {
+      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatLendingBoardCore,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
+
+    });
+  });
 
 });
