@@ -1,10 +1,6 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-// import "openzeppelin-solidity/contracts/math/SafeMath.sol"; // not needed
-// import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
-// import "openzeppelin-solidity/contracts/utils/Address.sol";
-// import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -264,14 +260,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         bool healthFactorBelowThreshold;
     }
 
-    /**
-    * @dev Allows users to borrow a specific amount of the reserve currency, provided that the borrower
-    * already deposited enough collateral.
-    * @param _reserve the address of the reserve
-    * @param _amount the amount to be borrowed
-    * @param _interestRateMode the interest rate mode at which the user wants to borrow. Can be 0 (STABLE) or 1 (VARIABLE)
-    **/
-
     function borrow(
         address _reserve,
         uint256 _amount,
@@ -343,15 +331,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             "There is not enough collateral to cover a new borrow"
         );
 
-        /**
-        * Following conditions need to be met if the user is borrowing at a stable rate:
-        * 1. Reserve must be enabled for stable rate borrowing
-        * 2. Users cannot borrow from the reserve if their collateral is (mostly) the same currency
-        *    they are borrowing, to prevent abuses.
-        * 3. Users will be able to borrow only a relatively small, configurable amount of the total
-        *    liquidity
-        **/
-
         if (vars.rateMode == CoreLibrary.InterestRateMode.STABLE) {
             //check if the borrow mode is stable and if stable rate borrowing is enabled on this reserve
             require(
@@ -396,34 +375,19 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         );
     }
 
-    /**
-    * @notice repays a borrow on the specific reserve, for the specified amount (or for the whole amount, if uint256(-1) is specified).
-    * @dev the target user is defined by _onBehalfOf. If there is no repayment on behalf of another account,
-    * _onBehalfOf must be equal to msg.sender.
-    * @param _reserve the address of the reserve on which the user borrowed
-    * @param _amount the amount to repay, or uint256(-1) if the user wants to repay everything
-    * @param _onBehalfOf the address for which msg.sender is repaying.
-    **/
-
     struct RepayLocalVars {
         uint256 principalBorrowBalance;
         uint256 compoundedBorrowBalance;
         uint256 borrowBalanceIncrease;
         bool isETH;
         uint256 paybackAmount;
-        uint256 paybackAmountPlusFees;
+        uint256 paybackAmountMinusFees;
         uint256 currentStableRate;
         uint256 originationFee;
+        address reserve;
     }
 
-    /**
-     * @dev repayment
-     * @param _reserve the address of the reserve on which the user borrowed
-     * @param _amount the amount to repay (principal + interest + fees)
-     * @param _onBehalfOf the address of borrower
-     * @param _proposalId the id of the proposal
-     */
-    function repay(address _reserve, uint256 _amount, address payable _onBehalfOf, uint256 _proposalId, bool isBorrorwProposal)
+    function repay(address _reserve, uint256 _amount, address payable _onBehalfOf, uint256 _proposalId, bool _isBorrowProposal)
         external
         payable
         nonReentrant
@@ -434,18 +398,23 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         CoreLibrary.ProposalStructure memory proposalStructure;
 
         // Get Borrow Proposal Structure
-        if (isBorrorwProposal) {
+        if (_isBorrowProposal) {
             proposalStructure = core.getBorrowProposalFromCore(_proposalId);
         } else {
             proposalStructure = core.getLendProposalFromCore(_proposalId);
         }
         
+        //  Check reserve validity
+        vars.reserve = proposalStructure.reserveToReceive;
+        require(vars.reserve == _reserve, "Invalid reserve address");
+
         // set repay local variables
         vars.principalBorrowBalance = proposalStructure.amount;
         vars.compoundedBorrowBalance = proposalStructure.amount.add(vars.principalBorrowBalance * proposalStructure.interestRate / 100);
         vars.borrowBalanceIncrease = vars.compoundedBorrowBalance.sub(vars.principalBorrowBalance);
 
-        vars.originationFee = core.getUserOriginationFee(_reserve, _onBehalfOf);
+        // vars.originationFee = core.getUserOriginationFee(_reserve, _onBehalfOf);
+        vars.originationFee = proposalStructure.serviceFee;
         vars.isETH = EthAddressLib.ethAddress() == _reserve;
 
         require(vars.compoundedBorrowBalance > 0, "The user does not have any borrow pending");
@@ -455,55 +424,100 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             "To repay on behalf of an user an explicit amount to repay is needed."
         );
 
-        //default to max amount
-        // vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
-        vars.paybackAmountPlusFees = vars.compoundedBorrowBalance + (vars.originationFee);
-
-        // msg.value(_amount) should be same as paybackAmount + Fees
-        // require(
-        //     !vars.isETH || msg.value == vars.paybackAmountPlusFees,
-        //     "Invalid msg.value sent for the repayment"
-        // );
-
-        console.log("[DEBUG] amount should be: ", vars.paybackAmountPlusFees);
-        console.log("[DEBUG] amount is: ", _amount);
+        // pay origination fee to service
         require(
-            _amount == vars.paybackAmountPlusFees, 
+            vars.originationFee > 0,
+            "Oigination Fee should be greater than 0"
+        );
+        core.transferToFeeCollectionAddress{value: vars.isETH ? vars.originationFee : 0}(
+            _reserve,
+            msg.sender,
+            vars.originationFee,
+            addressesProvider.getTokenDistributor()
+        );
+
+        //default to max amount
+        vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
+        vars.paybackAmountMinusFees = vars.paybackAmount.sub(vars.originationFee);
+
+        if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
+            vars.paybackAmount = _amount;
+        }
+    
+        require(
+            !vars.isETH || msg.value == vars.paybackAmount,
+            "Invalid msg.value sent for the repayment"
+        );
+
+        require(
+            ((!vars.isETH && _amount == vars.paybackAmount) || (vars.isETH && _amount == msg.value)), 
             "Invalid amount parameter sent for the repayment"
             );
 
         // Borrower should have enough balance to cover the repay
         require(
-            core.getUserUnderlyingAssetBalance(_reserve, _onBehalfOf) > vars.paybackAmountPlusFees,
+            core.getUserUnderlyingAssetBalance(_reserve, _onBehalfOf) > vars.paybackAmount,
             "The user does not have enough balance to complete the repayment"
         );
-
-        // Could be useless
-        vars.paybackAmount = vars.compoundedBorrowBalance;
-
+        
+        uint256 userCurrentAvailableReserveBalance;
+        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Transfer: ", userCurrentAvailableReserveBalance);
+        
+        // Send the amount to repay to the core except the origination fee
         address payable senderPayable = payable(msg.sender);
-
         core.transferToReserve{value:vars.isETH ? msg.value.sub(vars.originationFee) : 0}(
             _reserve,
             senderPayable,
-            vars.paybackAmount
+            vars.paybackAmountMinusFees
+        );
+        
+        // UpdateOnRepayState로 repay 완료된 이후에 reserve data update
+        // repaidWholeLoan = true
+        uint256 userPrincipalBorrowBalanceCheck;
+        uint256 userCompoundedBorrowBalanceCheck;
+        uint256 userBorrowBalanceIncreaseCheck;
+        (
+            userPrincipalBorrowBalanceCheck, 
+            userCompoundedBorrowBalanceCheck,
+            userBorrowBalanceIncreaseCheck
+        ) = core.getUserBorrowBalancesProposeMode(_reserve, _onBehalfOf, _proposalId, _isBorrowProposal);
+        
+        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Update: ", userCurrentAvailableReserveBalance);
+
+        // Update After Repayment and Service Fee Payment
+        core.updateStateOnRepay(
+            _reserve,
+            _onBehalfOf,
+            vars.paybackAmountMinusFees,
+            vars.originationFee,
+            vars.borrowBalanceIncrease,
+            userPrincipalBorrowBalanceCheck == 0
         );
 
-        // 0. Get Token ID
+        (
+            userPrincipalBorrowBalanceCheck, 
+            userCompoundedBorrowBalanceCheck,
+            userBorrowBalanceIncreaseCheck
+        ) = core.getUserBorrowBalancesProposeMode(_reserve, _onBehalfOf, _proposalId, _isBorrowProposal);
+        console.log("\x1b[44m%s\x1b[0m", "userPrincipalBorrowBalanceCheck: ", userPrincipalBorrowBalanceCheck);
+        // 아마 proposal에 principal이랑 compounded 제대로 들어가면 0으로 뜰것임
+        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance After Update: ", userCurrentAvailableReserveBalance);
+        
+        // Repayment Finished
+        // Redirect Creditor & Send paybackAmountMinusFees to Creditor
+        // Burn NFT for entire loan process end
         uint256 _tokenIdFromCore = proposalStructure.tokenId;
-
-        // 1. check Bond(NFT) owner
-        // Structure 에서 받아오는 걸로
         address payable ownerOfBond = payable(nft.ownerOf(_tokenIdFromCore));
 
-        // 2. send to lender
         core.transferToUser(
             _reserve,
             ownerOfBond,
-            vars.paybackAmount
+            vars.paybackAmountMinusFees
         );
-        
-        // 3. burn NFT
+
         nft.burnNFT(_tokenIdFromCore);
 
         emit Repay(
@@ -547,15 +561,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         }
     }
 
-    /**
-    * @dev users can invoke this function to liquidate an undercollateralized position.
-    * @param _reserve the address of the collateral to liquidated
-    * @param _reserve the address of the principal reserve
-    * @param _user the address of the borrower
-    * @param _purchaseAmount the amount of principal that the liquidator wants to repay
-    * @param _receiveAToken true if the liquidators wants to receive the aTokens, false if
-    * he wants to receive the underlying asset directly
-    **/
     function liquidationCall(
         address _collateral,
         address _reserve,
@@ -676,10 +681,12 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             ,
         ) = dataProvider.getUserReserveData(_reserve,_user);
 
-        userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - 
-        userCurrentBorrowBalance;
+        console.log("\x1b[33m%s\x1b[0m", "userCurrentATokenBalance : ", userCurrentATokenBalance);
+        console.log("\x1b[33m%s\x1b[0m", "userCurrentBorrowBalance : ", userCurrentBorrowBalance);
+        userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - userCurrentBorrowBalance;
         
-        userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
+        // userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
+        userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei;
 
         return userCurrentAvailableReserveBalance;
     }
@@ -1094,8 +1101,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         return result;
     }
 
-    mapping(uint256 => uint256) public proposalIdToTokenId;
-
     function proposalAcceptInternal(
         address _reserve,
         uint256 _amount,
@@ -1124,8 +1129,8 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         if(_isBorrowProposal){ // Borrow의 경우 Borrow Proposer의 담보가 충분한지 확인
 
             // reserveForCollateral = borrowProposalList[_proposalId].reserveForCollateral;
-
-            CoreLibrary.ProposalStructure memory borrowProposalFromCore = core.getLendProposalFromCore(_proposalId);
+            CoreLibrary.ProposalStructure memory borrowProposalFromCore = core.getBorrowProposalFromCore(_proposalId);
+            
             reserveForCollateral = borrowProposalFromCore.reserveForCollateral;
             _dueDate = borrowProposalFromCore.dueDate;
             _interestRate = borrowProposalFromCore.interestRate;
@@ -1133,9 +1138,9 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
             uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
 
-            console.log("   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
+            console.log("   => LBPM : user Current Available Reserve Balance in Wei : ", userCurrentAvailableReserveBalanceInWei);
 
-            require(userCurrentAvailableReserveBalanceInWei >= _amount,"Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
+            require(userCurrentAvailableReserveBalanceInWei >= _amount, "Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
 
 
         } else { // Lend Proposal Accept Case
@@ -1178,6 +1183,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         }
 
+        uint256 userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[46m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Borrow: ", userCurrentAvailableReserveBalance);
+
+
         uint256 borrowBalanceIncreased; // WIP : Revision mandated
         console.log("   => LBPM : Service Fee : ", _serviceFee);
 
@@ -1206,14 +1215,19 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 _tokenId;
         uint256 _contractTimestamp = block.timestamp;
         // require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
+        console.log("   => LBPM : _dueDate : ", _dueDate);
         _tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, _dueDate, _contractTimestamp, _interestRate, _paybackAmount);
         
         console.log("   => LBPM : NFT Minting Done");
         if (_isBorrowProposal) {
-            core.setBorrowTokenIdToProposalId(_proposalId, _tokenId);
+            core.setTokenIdToBorrowProposalId(_proposalId, _tokenId);
         } else {
-            core.setLendTokenIdToProposalId(_proposalId, _tokenId);
+            core.setTokenIdToLendProposalId(_proposalId, _tokenId);
         }
+
+        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
+        console.log("\x1b[46m%s\x1b[0m", "userCurrentAvailableReserveBalance After Borrow: ", userCurrentAvailableReserveBalance);
+
 
         emit ProposalAccepted(
             _reserve,
