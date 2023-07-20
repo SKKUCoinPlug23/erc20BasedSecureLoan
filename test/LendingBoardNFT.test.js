@@ -247,6 +247,9 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log("[+] Owner STKN(Borrow) amount After borrow: ", await hardhatSampleToken.balanceOf(owner.address));
       console.log("[+] Owner PLUG(Collateral) amount After borrow: ", await hardhatPlugToken.balanceOf(owner.address));
 
+      // =========
+      //    NFT
+      // =========
       // Check the NFT Balance of Owner After Borrow Proposal Accept
       const currNFTbalance = await hardhatLendingBoardNFT.balanceOf(owner.address);
       expect(currNFTbalance).to.equal(1);

@@ -1176,7 +1176,7 @@ contract LendingBoardCore is VersionedInitializable {
         //     reserves[_reserve]
         // );
         // console.log("   => LBC : User Compounded Borrow Balance : ",compoundedBalance);
-        uint256 compoundedBalance = CoreLibrary.getProposalBorrowBalances(proposal);
+        uint256 compoundedBalance = CoreLibrary.getCompoundedBorrowBalanceProposeMode(user);
 
 
         return (principal, compoundedBalance, compoundedBalance.sub(principal));
