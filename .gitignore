@@ -1,2 +1,8 @@
+
+# Hardhat Compile Cache
 artifacts/
 cache/
+
+# .env for deploy private keys
+.env
+
