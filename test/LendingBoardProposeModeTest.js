@@ -311,7 +311,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       let user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
       console.log("========================== User1's STKN Reserve Data After First Proposal Proposed ========================== ");
       console.log(user1STKNReserveData);
-      
+
       // User1's PLUG Reserve Data before Borrow Proposal Accpet(PLUG used as Collateral in this case)
       let user1PLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user1.address);
       console.log("========================== User1's PLUG Reserve Data After First Proposal Proposed ========================== ");
