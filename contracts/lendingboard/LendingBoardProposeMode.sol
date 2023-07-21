@@ -460,10 +460,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             "The user does not have enough balance to complete the repayment"
         );
         
-        uint256 userCurrentAvailableReserveBalance;
-        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
-        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Transfer: ", userCurrentAvailableReserveBalance);
-        
         // Send the amount to repay to the core except the origination fee
         address payable senderPayable = payable(msg.sender);
         core.transferToReserve{value:vars.isETH ? msg.value.sub(vars.originationFee) : 0}(
@@ -481,10 +477,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             userPrincipalBorrowBalanceCheck, 
             userCompoundedBorrowBalanceCheck,
             userBorrowBalanceIncreaseCheck
-        ) = core.getUserBorrowBalancesProposeMode(_reserve, _onBehalfOf, _proposalId, _isBorrowProposal);
-        
-        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
-        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Update: ", userCurrentAvailableReserveBalance);
+        ) = core.getUserBorrowBalances(_reserve, _onBehalfOf);
 
         // Update After Repayment and Service Fee Payment
         core.updateStateOnRepay(
@@ -496,16 +489,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             userPrincipalBorrowBalanceCheck == 0
         );
 
-        (
-            userPrincipalBorrowBalanceCheck, 
-            userCompoundedBorrowBalanceCheck,
-            userBorrowBalanceIncreaseCheck
-        ) = core.getUserBorrowBalancesProposeMode(_reserve, _onBehalfOf, _proposalId, _isBorrowProposal);
-        console.log("\x1b[44m%s\x1b[0m", "userPrincipalBorrowBalanceCheck: ", userPrincipalBorrowBalanceCheck);
-        // 아마 proposal에 principal이랑 compounded 제대로 들어가면 0으로 뜰것임
-        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
-        console.log("\x1b[42m%s\x1b[0m", "userCurrentAvailableReserveBalance After Update: ", userCurrentAvailableReserveBalance);
-        
         // Repayment Finished
         // Redirect Creditor & Send paybackAmountMinusFees to Creditor
         // Burn NFT for entire loan process end
@@ -681,8 +664,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             ,
         ) = dataProvider.getUserReserveData(_reserve,_user);
 
-        console.log("\x1b[33m%s\x1b[0m", "userCurrentATokenBalance : ", userCurrentATokenBalance);
-        console.log("\x1b[33m%s\x1b[0m", "userCurrentBorrowBalance : ", userCurrentBorrowBalance);
         userCurrentAvailableReserveBalanceInWei = userCurrentATokenBalance - userCurrentBorrowBalance;
         
         // userCurrentAvailableReserveBalance = userCurrentAvailableReserveBalanceInWei.div(10 ** 18);
@@ -1183,10 +1164,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         }
 
-        uint256 userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
-        console.log("\x1b[46m%s\x1b[0m", "userCurrentAvailableReserveBalance Before Borrow: ", userCurrentAvailableReserveBalance);
-
-
         uint256 borrowBalanceIncreased; // WIP : Revision mandated
         console.log("   => LBPM : Service Fee : ", _serviceFee);
 
@@ -1224,10 +1201,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         } else {
             core.setTokenIdToLendProposalId(_proposalId, _tokenId);
         }
-
-        userCurrentAvailableReserveBalance = getUserReserveBalance(_reserve, msg.sender);
-        console.log("\x1b[46m%s\x1b[0m", "userCurrentAvailableReserveBalance After Borrow: ", userCurrentAvailableReserveBalance);
-
 
         emit ProposalAccepted(
             _reserve,

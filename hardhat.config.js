@@ -9,7 +9,7 @@ module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      loggingEnabled: true,
+      // loggingEnabled: true,
       allowUnlimitedContractSize: true,
     },
     sepolia: {
