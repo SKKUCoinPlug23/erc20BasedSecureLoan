@@ -137,17 +137,3 @@ contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
         super._afterTokenTransfer(from, to, firstTokenId, batchSize);
     }
 }
-
-// Updates
-// 2023.07.13
-// - ERC721Enumerable 을 사용하기 위하여 Overriding
-// - User의 토큰 리스트를 받아오기 위하여 getUserTokenList 함수 추가
-
-// Enumerable.sol 을 inherit 하였으므로...
-// Token Transfer가 일어날 때 마다 _beforeTokenTransfer, _afterTokenTransfer hook 발동
-// 자동적으로 mapping이 수정되어 소유자를 관리할 수 있음
-// repay에서는 LendingBoardNFT의 받아온 tokenId를 이용하여 ownerOf로써 소유자를 확인하고,
-// 해당 소유자의 주소로 repay를 진행
-
-// 이후에 Service 에서 NFT 거래까지 담당한다면 _transfer 를 이용하여
-// 기존의 _beforeTokenTransfer, _afterTokenTransfer hook을 발동시켜 관리할 수 있음
