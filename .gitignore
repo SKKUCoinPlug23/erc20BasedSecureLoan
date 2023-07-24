@@ -3,6 +3,9 @@
 artifacts/
 cache/
 
+# Deploy Scripts
+scripts/
+
 # .env for deploy private keys
 .env
 

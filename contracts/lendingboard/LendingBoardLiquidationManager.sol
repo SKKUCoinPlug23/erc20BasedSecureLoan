@@ -295,6 +295,56 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         return (uint256(LiquidationErrors.NO_ERROR), "No errors");
     }
 
+    function liquidationCallProposeMode(
+        uint256 _proposalId,
+        bool _isBorrowProposal
+    ) external payable returns (uint256, string memory){
+        CoreLibrary.ProposalStructure memory proposal;
+        if(_isBorrowProposal){
+            proposal = core.getBorrowProposalFromCore(_proposalId);
+        } else {
+            proposal = core.getLendProposalFromCore(_proposalId);
+        }
+
+        // WIP : The proposal should be !active && !repayed => 추후에 추가
+
+        bool proposalLiquidationAvailability = dataProvider.getProposalLiquidationAvailability(_proposalId, _isBorrowProposal);
+
+        if(!proposalLiquidationAvailability){
+            return (
+                uint256(LiquidationErrors.HEALTH_FACTOR_ABOVE_THRESHOLD),
+                "Proposal's Health factor is not below the threshold"
+            );
+        }
+
+        // proposer가 예치한 Collateral이 존재해야 Liquidation 시행 가능
+        uint256 proposerCollateralBalance = core.getUserUnderlyingAssetBalance(proposal.proposer,proposal.reserveForCollateral);
+
+        if (proposerCollateralBalance == 0) {
+            return (
+                uint256(LiquidationErrors.NO_COLLATERAL_AVAILABLE),
+                "Invalid collateral to liquidate"
+            );
+        }
+        
+        bool isCollateralEnabled =
+            core.isReserveUsageAsCollateralEnabled(proposal.reserveForCollateral) &&
+            core.isUserUseReserveAsCollateralEnabled(proposal.reserveForCollateral, proposal.proposer);
+
+        if (!isCollateralEnabled) {
+            return (
+                uint256(LiquidationErrors.COLLATERAL_CANNOT_BE_LIQUIDATED),
+                "The collateral chosen cannot be liquidated"
+            );
+        }
+
+        // now Liquidation Conditions are met
+        
+
+
+
+    }
+
     struct AvailableCollateralToLiquidateLocalVars {
         uint256 userCompoundedBorrowBalance;
         uint256 liquidationBonus;
