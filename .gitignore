@@ -2,7 +2,9 @@
 # Hardhat Compile Cache
 artifacts/
 cache/
-scripts/
+
+# Deploy Scripts
+scripts/lendingBoardDeploy
 
 # .env for deploy private keys
 .env
