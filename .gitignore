@@ -4,7 +4,7 @@ artifacts/
 cache/
 
 # Deploy Scripts
-scripts/lendingBoardDeploy
+scripts/
 
 # .env for deploy private keys
 .env
