@@ -6,6 +6,7 @@ async function main() {
     const token = await ethers.deployContract("SampleToken");
   
     console.log("Token decimals:", await token.decimals());
+    console.log("Test Deploy Script");
   }
   
   main()
