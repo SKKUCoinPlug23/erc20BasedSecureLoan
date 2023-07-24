@@ -339,6 +339,84 @@ contract LendingBoardDataProvider is VersionedInitializable {
             );
     }
 
+    // WIP 
+    function getProposalLiquidationAvailability(
+        uint256 _proposalId,
+        bool _isBorrowProposal
+    ) public view returns (bool proposalLiquidationAvailability){
+        CoreLibrary.ProposalStructure memory proposal;
+        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle()); 
+        uint256 collateralBalance;
+        uint256 collateralBalanceETH;
+        uint256 reserveDecimals;
+        uint256 collateralLiquidationThreshold;
+        bool usageAsCollateralEnabled;
+
+        if(_isBorrowProposal){
+            proposal = core.getBorrowProposalFromCore(_proposalId);
+        } else {
+            proposal = core.getLendProposalFromCore(_proposalId);
+        }
+
+        (
+            collateralBalance,
+            ,
+            ,
+
+        ) = core.getUserBasicReserveData(proposal.reserveForCollateral, proposal.proposer);
+
+        //fetch Collateral Reserve data
+        (
+            reserveDecimals,
+            ,
+            collateralLiquidationThreshold,
+            usageAsCollateralEnabled
+        ) = core.getReserveConfiguration(proposal.reserveForCollateral);
+        
+        uint256 tokenUnit = 10 ** reserveDecimals;             
+        uint256 collateralUnitPrice = oracle.getAssetPrice(proposal.reserveForCollateral);
+        
+        if(collateralBalance > 0){
+            collateralBalanceETH = collateralUnitPrice.mul(collateralBalance).div(tokenUnit);
+        } else {
+            collateralBalanceETH = 0;
+        }
+        
+        //fetch Borroowing Asset Reserve data
+        (
+            reserveDecimals,
+            ,
+            ,
+
+        ) = core.getReserveConfiguration(proposal.reserveToReceive);
+
+        tokenUnit = 10 ** reserveDecimals;             
+        uint256 borrowUnitPrice = oracle.getAssetPrice(proposal.reserveToReceive);
+        uint256 borrowBalanceETH = borrowUnitPrice.mul(proposal.amount).div(tokenUnit);
+
+        // Service fee ETH price applied, Service Fee payedd with Borrow Asset
+        uint256 serviceFeeETH = borrowUnitPrice.mul(proposal.serviceFee).div(tokenUnit);
+
+        uint256 propoosalHealthFactor = calculateHealthFactorFromBalancesInternal(
+            collateralBalanceETH,
+            borrowBalanceETH,
+            serviceFeeETH,
+            collateralLiquidationThreshold
+        );
+
+        console.log("\x1b[42m%s\x1b[0m", "  => LBDP collateralBalanceETH ",collateralBalanceETH);
+        console.log("\x1b[42m%s\x1b[0m", "  => LBDP borrowBalanceETH ",borrowBalanceETH);
+        console.log("\x1b[42m%s\x1b[0m", "  => LBDP serviceFeeETH ",serviceFeeETH);
+        console.log("\x1b[42m%s\x1b[0m", "  => LBDP collateralLiquidationThreshold ",collateralLiquidationThreshold);
+        // calculated Proposal HealthFactor check
+        console.log("\x1b[42m%s\x1b[0m", "  => LBDP propoosalHealthFactor ",propoosalHealthFactor);
+
+        // If Proposal's Health Factor is lower than 1e18 => Available for Liquidation
+        proposalLiquidationAvailability = propoosalHealthFactor < HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
+
+        return proposalLiquidationAvailability;
+    }
+
     /**
     * @dev returns the health factor liquidation threshold
     **/

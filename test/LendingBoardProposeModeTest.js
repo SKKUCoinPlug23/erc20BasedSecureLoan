@@ -181,8 +181,10 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     let baseLTVasCollateral,liquidationThreshold,liquidationBonus
     // configuring STKN Reserve for Borrowing and Collateral
     await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(STKNaddress,true);
+    // WIP : parseEther('0.70') 으로 해야할지 '70'일지 '0.70'일지
     baseLTVasCollateral = ethers.utils.parseEther('0.5');
-    liquidationThreshold = ethers.utils.parseEther('0.70');
+    // liquidationThreshold = ethers.utils.parseEther('0.70');
+    liquidationThreshold = '70';
     liquidationBonus = ethers.utils.parseEther('0.01');
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(STKNaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
 
@@ -195,7 +197,8 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     // configuring PLUG Reserve for Borrowing and Collateral
     await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(PLUGaddress,true);
     baseLTVasCollateral = ethers.utils.parseEther('0.5');
-    liquidationThreshold = ethers.utils.parseEther('0.70');
+    // liquidationThreshold = ethers.utils.parseEther('0.70');
+    liquidationThreshold = '70';
     liquidationBonus = ethers.utils.parseEther('0.01');
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(PLUGaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
 
@@ -348,7 +351,25 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
   describe("<Liquidation Situation>", function () {
 
     it("Should be underCollateralized and be ready for liquidation", async function () {
-      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatLendingBoardCore,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
+      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
+
+      const borrowAmount1 = ethers.utils.parseEther('10');
+      const borrowAmount2 = ethers.utils.parseEther('20');
+
+      const interestRate = 10; // 일단은 parseEther 고려하지 않고 10으로 설정
+      // dueDate의 경우 임의로 현재시간의 + 100000 으로 설정한다.
+      const dueDate = Date.now() + 100000;
+
+      // Borrowing STKN( = 2ETH) using PLUG( = 5ETH) as a collateral
+      await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount1,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
+
+      // getBorrowProposalList()를 확인하기 위해 동일한 Proposal 두개를 생성한다.
+      await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount2,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
+
+      const generatedBorrowProposal = await hardhatLendingBoardProposeMode.connect(owner).getBorrowProposal(0);
+
+     const proposalLiquidationAvailability = await hardhatLendingBoardDataProvider.getProposalLiquidationAvailability(0,true);
+     console.log(" Proposal Liquidation Availability : ",proposalLiquidationAvailability);
 
     });
   });
