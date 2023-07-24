@@ -223,6 +223,11 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         onlyAmountGreaterThanZero(_amount)
     {
         uint256 currentAvailableLiquidity = core.getReserveAvailableLiquidity(_reserve);
+
+        // Maybe here to add the logic for checking collateral balance
+        // getReserve 함수등으로 borrowbalance 가져와서 특정 collateral 비율 만큼은 
+        // userReserve에서 제외한 상태에서 _amount 보다 큰 값을 redeem 하려고 하면 revert
+
         require(
             currentAvailableLiquidity >= _amount,
             "There is not enough liquidity available to redeem"

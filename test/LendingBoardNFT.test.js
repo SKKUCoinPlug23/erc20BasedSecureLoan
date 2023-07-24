@@ -168,6 +168,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatLendingBoardProposeMode.connect(owner).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
     // PLUG 1000개 예치
     await hardhatLendingBoardProposeMode.connect(owner).deposit(PLUGaddress, depositAmount, 0); // Set Referral Code = 0
+    // const ownerSTKNBalance = await hardhatLendingBoardProposeMode.getUserReserveData(STKNaddress,owner.address);
+    // const ownerPLUGBalance = await hardhatLendingBoardProposeMode.getUserReserveData(PLUGaddress,owner.address);
+    const ownerSTKNBalance = await hardhatSampleToken.balanceOf(owner.address);
+    const ownerPLUGBalance = await hardhatPlugToken.balanceOf(owner.address);
+    console.log("ownerSTKNBalance : ", ownerSTKNBalance);
+    console.log("ownerPLUGBalance : ", ownerPLUGBalance); // -------------> Why different?
 
     console.log(" ====================== ====================== ======================");
 
@@ -203,8 +209,6 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     await hardhatLendingBoardProposeMode.connect(user1).setUserUseReserveAsCollateral(PLUGaddress,1); // 1 : enable, 0 : disable
     // console.log("set PLUG as Collateral enabled");
 
-
-    
     // Fixtures can return anything you consider useful for your tests
     return { owner, user1, user2, borrower1, borrower2, LendingBoardProposeMode, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress,PLUGaddress,hardhatLendingBoardNFT,hardhatPlugToken};
   }
@@ -268,13 +272,13 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
         .connect(owner)
         .borrowProposal(STKNaddress, borrowAmount1, PLUGaddress, interestRate, dueDate))
         .to.emit(hardhatLendingBoardProposeMode, "BorrowProposed");
-      console.log("\x1b[42m%s\x1b[0m", "[*] Borrow Proposal #0 Proposed\n");
+      console.log("\x1b[42m%s\x1b[0m", "\n[*] Borrow Proposal #0 Proposed");
         
       await expect(hardhatLendingBoardProposeMode
         .connect(owner)
         .borrowProposal(STKNaddress, borrowAmount2, PLUGaddress, interestRate, dueDate))
         .to.emit(hardhatLendingBoardProposeMode, "BorrowProposed");
-      console.log("\x1b[42m%s\x1b[0m", "[*] Borrow Proposal #1 Proposed\n");
+      console.log("\x1b[42m%s\x1b[0m", "\n[*] Borrow Proposal #1 Proposed");
       
       const generatedBorrowProposal = await hardhatLendingBoardProposeMode.connect(owner).getBorrowProposal(0);
       // Data from borowProposal needs to have a borrower's id matching that of owner.address.
@@ -289,7 +293,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       // Check the NFT & SToken Balance of Owner After Borrow Proposal Accept
       const currNFTbalance1 = await hardhatLendingBoardNFT.balanceOf(user1.address);
       expect(currNFTbalance1).to.equal(1);
-      console.log("\x1b[42m%s\x1b[0m", "[*] Borrow Proposal #0 Accepted\n");
+      console.log("\x1b[42m%s\x1b[0m", "\n[*] Borrow Proposal #0 Accepted");
 
       borrowerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,owner.address);
       console.log("\x1b[36m%s\x1b[0m", "\n[After Accepted Borrow Proposal #0] Borrower STKN Reserve Data available Liquidity : ", borrowerSTKNReserveData);
@@ -299,7 +303,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       // Check the NFT & SToken Balance of Owner After Borrow Proposal Accept
       const currNFTbalance2 = await hardhatLendingBoardNFT.balanceOf(user1.address);
       expect(currNFTbalance2).to.equal(2);
-      console.log("\x1b[42m%s\x1b[0m", "[*] Borrow Proposal #1 Accepted\n");
+      console.log("\x1b[42m%s\x1b[0m", "\n[*] Borrow Proposal #1 Accepted");
 
       borrowerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,owner.address);
       console.log("\x1b[36m%s\x1b[0m", "\n[After Accepted Borrow Proposal #1] Borrower STKN Reserve Data available Liquidity : ", borrowerSTKNReserveData);
@@ -307,7 +311,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       // =========
       //    NFT
       // =========
-        
+
       // Get Information of NFT (Get mapping Value) 
       const nftInfo1 = await hardhatLendingBoardNFT.connect(user1).getNFTMetadata(1);
       console.log("[+] NFT #0 Info : ", nftInfo1);
@@ -344,7 +348,6 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       const fee1 = paybackAmount1 * 0.0025; // fee
       const fee2 = paybackAmount2 * 0.0025; // fee
 
-
       const finalPaybackAmount1 = ethers.utils.parseEther((paybackAmount1 + interest1 + fee1).toString());
       const finalPaybackAmount2 = ethers.utils.parseEther((paybackAmount2 + interest2 + fee2).toString());
       console.log("[+] Repay Amount for Proposal #0: ", finalPaybackAmount1.toString());
@@ -352,18 +355,17 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
 
       await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress, finalPaybackAmount1, owner.address, 0, true);
       borrowerSTKNReserveData = await hardhatLendingBoardProposeMode.getUserReserveData(STKNaddress, owner.address);
-      console.log("\x1b[42m%s\x1b[0m", "[*] Borrow Proposal #0 Repayed\n");
+      console.log("\x1b[42m%s\x1b[0m", "\n[*] Borrow Proposal #0 Repayed");
       console.log("\x1b[36m%s\x1b[0m", "\n[After Repay Proposal #0] owner STKN Reserve Data available Liquidity : ", borrowerSTKNReserveData);
 
       await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress, finalPaybackAmount2, owner.address, 1, true);
       borrowerSTKNReserveData = await hardhatLendingBoardProposeMode.getUserReserveData(STKNaddress, owner.address);
-      console.log("\x1b[42m%s\x1b[0m", "[*] Borrow Proposal #1 Repayed\n");
+      console.log("\x1b[42m%s\x1b[0m", "\n[*] Borrow Proposal #1 Repayed");
       console.log("\x1b[36m%s\x1b[0m", "\n[After Repay Proposal #1] owner STKN Reserve Data available Liquidity : ", borrowerSTKNReserveData);
 
       // check lender's NFT balance after repay & burn NFT
       const afterNFTbalance = await hardhatLendingBoardNFT.balanceOf(user1.address);
       expect(afterNFTbalance).to.equal(0);
-
     });
     
   });
