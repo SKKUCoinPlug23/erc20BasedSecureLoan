@@ -182,24 +182,27 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
     // configuring STKN Reserve for Borrowing and Collateral
     await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(STKNaddress,true);
     // WIP : parseEther('0.70') 으로 해야할지 '70'일지 '0.70'일지
-    baseLTVasCollateral = ethers.utils.parseEther('0.5');
+    // baseLTVasCollateral = ethers.utils.parseEther('0.5');
+    baseLTVasCollateral = '50'
     // liquidationThreshold = ethers.utils.parseEther('0.70');
     liquidationThreshold = '70';
-    liquidationBonus = ethers.utils.parseEther('0.01');
+    // liquidationBonus = ethers.utils.parseEther('0.01');
+    liquidationBonus = '10'
+
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(STKNaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
 
     await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(STKNaddress,1); // 1 : enable, 0 : disable
     await hardhatLendingBoardProposeMode.connect(user1).setUserUseReserveAsCollateral(STKNaddress,1); // 1 : enable, 0 : disable
-
-
-    // console.log("set STKN as Collateral enabled");
-
+    
     // configuring PLUG Reserve for Borrowing and Collateral
     await hardhatLendingBoardConfigurator.connect(owner).enableBorrowingOnReserve(PLUGaddress,true);
-    baseLTVasCollateral = ethers.utils.parseEther('0.5');
+    // baseLTVasCollateral = ethers.utils.parseEther('0.5');
+    baseLTVasCollateral = '50'
     // liquidationThreshold = ethers.utils.parseEther('0.70');
     liquidationThreshold = '70';
-    liquidationBonus = ethers.utils.parseEther('0.01');
+    // liquidationBonus = ethers.utils.parseEther('0.01');
+    liquidationBonus = '10'
+
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(PLUGaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
 
     await hardhatLendingBoardProposeMode.connect(owner).setUserUseReserveAsCollateral(PLUGaddress,1); // 1 : enable, 0 : disable

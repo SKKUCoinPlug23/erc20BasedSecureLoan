@@ -297,7 +297,8 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
 
     function liquidationCallProposeMode(
         uint256 _proposalId,
-        bool _isBorrowProposal
+        bool _isBorrowProposal,
+        bool _receiveAToken
     ) external payable returns (uint256, string memory){
         CoreLibrary.ProposalStructure memory proposal;
         if(_isBorrowProposal){
@@ -308,6 +309,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
 
         // WIP : The proposal should be !active && !repayed => 추후에 추가
 
+        // Check for Liquidation Availability
         bool proposalLiquidationAvailability = dataProvider.getProposalLiquidationAvailability(_proposalId, _isBorrowProposal);
 
         if(!proposalLiquidationAvailability){
@@ -339,6 +341,25 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         }
 
         // now Liquidation Conditions are met
+        
+        //all clear - calculate the max principal amount that can be liquidated
+        // Conventionally 50% is allowed to liquidate at once due to giving the chance to Borrower on a situation of undercollateralized
+        uint256 maxPrincipalAmountToLiquidate = proposerCollateralBalance
+            .mul(LIQUIDATION_CLOSE_FACTOR_PERCENT)
+            .div(100);
+        
+        // Proposal에 담보로 설정된 금액만 liquidate이 가능하기에 actualAmountToLiquidate을 따로 계산하지 않는다.
+
+        //if liquidator reclaims the underlying asset, we make sure there is enough available collateral in the reserve
+        // if (!_receiveAToken) {
+        //     uint256 currentAvailableCollateral = core.getReserveAvailableLiquidity(proposal.reserveForCollateral);
+        //     if (currentAvailableCollateral < ) {
+        //         return (
+        //             uint256(LiquidationErrors.NOT_ENOUGH_LIQUIDITY),
+        //             "There isn't enough liquidity available to liquidate"
+        //         );
+        //     }
+        // }
         
 
 
