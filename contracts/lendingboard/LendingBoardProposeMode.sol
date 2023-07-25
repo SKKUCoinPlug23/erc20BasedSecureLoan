@@ -1117,6 +1117,8 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         console.log("\x1b[42m%s\x1b[0m", "\n    => LBPM collateralAmount calculation : ",collateralAmount);
 
+        core.setProposalCollateralAmount(_proposalId, _isBorrowProposal, collateralAmount);
+
         uint256 paybackAmountMinusFee;
 
         // Borrow Proposal Accept Case
