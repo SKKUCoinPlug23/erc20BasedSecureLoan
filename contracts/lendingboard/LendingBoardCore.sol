@@ -156,6 +156,18 @@ contract LendingBoardCore is VersionedInitializable {
         return lendProposalList[_proposalId];
     }
 
+    // getBorrow~ getLend~ => getProposalFromCore 로 통일
+    function getProposalFromCore(
+        uint256 _proposalId,
+        bool _isBorrowProposal
+    ) public view returns (CoreLibrary.ProposalStructure memory){
+        if(_isBorrowProposal){
+            return borrowProposalList[_proposalId];
+        } else {
+            return lendProposalList[_proposalId]; 
+        }
+    }
+
     function setTokenIdToBorrowProposalId(
         uint256 _proposalId,
         uint256 _tokenId
@@ -168,6 +180,29 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _tokenId
     ) public {
         lendProposalList[_proposalId].tokenId = _tokenId;
+    }
+
+    function setProposalCollateralAmount(
+        uint256 _proposalId,
+        bool _isBorrowProposal,
+        uint256 _collateralAmount
+    ) public {
+        if(_isBorrowProposal){
+            borrowProposalList[_proposalId].collateralAmount = _collateralAmount;
+        } else {
+            lendProposalList[_proposalId].collateralAmount = _collateralAmount;
+        }
+    }
+
+    function deactivateProposal(
+        uint256 _proposalId,
+        bool _isBorrowProposal
+    ) public {
+        if(_isBorrowProposal){
+            borrowProposalList[_proposalId].active = false;
+        } else {
+            lendProposalList[_proposalId].active = false;
+        }
     }
 
     /**
