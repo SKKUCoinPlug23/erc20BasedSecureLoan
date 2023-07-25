@@ -556,5 +556,43 @@ contract LendingBoardDataProvider is VersionedInitializable {
         lastUpdateTimestamp = core.getUserLastUpdate(_reserve, _user);
         usageAsCollateralEnabled = core.isUserUseReserveAsCollateralEnabled(_reserve, _user);
     }
+
+    function getProposalData(uint256 _proposalId, bool _isBorrowProposal) 
+        external
+        view
+        returns (
+            bool active,
+            address proposer,
+            address reserveToReceive,
+            uint256 amount,
+            address reserveForCollateral,
+            uint256 collateralAmount,
+            uint256 interestRate,
+            uint256 dueDate,
+            uint256 proposalDate,
+            uint256 serviceFee,
+            uint256 ltv,
+            uint256 tokenId,
+            bool isRepayed
+        )
+    {
+        CoreLibrary.ProposalStructure memory proposalFromCore = core.getProposalFromCore(_proposalId,_isBorrowProposal);
+
+        active = proposalFromCore.active;
+        proposer = proposalFromCore.proposer;
+        reserveToReceive = proposalFromCore.reserveToReceive;
+        amount = proposalFromCore.amount;
+        reserveForCollateral = proposalFromCore.reserveForCollateral;
+        collateralAmount = proposalFromCore.collateralAmount;
+        interestRate = proposalFromCore.interestRate;
+        dueDate = proposalFromCore.dueDate;
+        proposalDate = proposalFromCore.proposalDate;
+        serviceFee = proposalFromCore.serviceFee;
+        serviceFee = proposalFromCore.dueDate;
+        ltv = proposalFromCore.ltv;
+        tokenId = proposalFromCore.tokenId;
+        isRepayed = proposalFromCore.isRepayed;
+    }
     
+
 }

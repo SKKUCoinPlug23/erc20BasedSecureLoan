@@ -300,6 +300,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         bool _isBorrowProposal,
         bool _receiveAToken
     ) external payable returns (uint256, string memory){
+
         CoreLibrary.ProposalStructure memory proposal;
         if(_isBorrowProposal){
             proposal = core.getBorrowProposalFromCore(_proposalId);
@@ -308,6 +309,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         }
 
         // WIP : The proposal should be !active && !repayed => 추후에 추가
+        // ~
 
         // Check for Liquidation Availability
         bool proposalLiquidationAvailability = dataProvider.getProposalLiquidationAvailability(_proposalId, _isBorrowProposal);
@@ -344,6 +346,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         
         //all clear - calculate the max principal amount that can be liquidated
         // Conventionally 50% is allowed to liquidate at once due to giving the chance to Borrower on a situation of undercollateralized
+        
         uint256 maxPrincipalAmountToLiquidate = proposerCollateralBalance
             .mul(LIQUIDATION_CLOSE_FACTOR_PERCENT)
             .div(100);

@@ -95,6 +95,7 @@ library CoreLibrary {
         address reserveToReceive;
         uint256 amount;
         address reserveForCollateral;
+        uint256 collateralAmount;
         uint256 interestRate;
         uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
         uint256 proposalDate;
