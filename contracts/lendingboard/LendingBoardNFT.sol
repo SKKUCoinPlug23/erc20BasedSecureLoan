@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
 import "hardhat/console.sol";
 
-contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable, Ownable {
+contract LendingBoardNFT is ERC721URIStorage, ERC721Enumerable {
     
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
