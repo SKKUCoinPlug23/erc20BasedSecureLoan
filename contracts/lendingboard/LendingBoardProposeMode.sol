@@ -644,9 +644,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 _timestamp
     );
 
-    // List for borrowProposal structures
-    // mapping(uint256 => BorrowProposal) internal borrowProposalList;
-    mapping(uint256 => ProposalStructure) internal borrowProposalList;
     
     // Counting length for Iteration
     // uint256 public borrowProposalListCount = 0;
@@ -808,7 +805,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 borrowFee = borrowProposalVars.serviceFee;
 
         proposalAcceptInternal(reserveToBorrow,amount,_proposalId,borrower,msg.sender,borrowFee,true);
-        borrowProposalList[_proposalId].active = false;
+        // borrowProposalList[_proposalId].active = false;
     }
     
     function getBorrowProposal(uint256 _proposalId) 
@@ -917,19 +914,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 _timestamp
     );
 
-    // event BorrowAccepted (
-    //     address indexed _reserveToLend,
-    //     address indexed _lender,
-    //     address  _borrower,
-    //     uint256 indexed _proposalId,
-    //     uint256 _amount,
-    //     uint256 _originationFee,
-    //     uint256 _timestamp
-    // );
-
-    // List for borrowProposal structures
-    mapping(uint256 => ProposalStructure) internal lendProposalList;
-
     function lendProposal(
         address _reserveToLend, uint256 _amount, address _reserveForCollateral, uint256 _interestRate, uint256 _dueDate
     )  
@@ -1030,7 +1014,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 lendFee = lendProposalVars.serviceFee;
         // Borrower가 곧 msg.sender이기에 parameter로 전달한다.
         proposalAcceptInternal(reserveToLend,amount,_proposalId,msg.sender,lender,lendFee,false);
-        lendProposalList[_proposalId].active = false;
+        // lendProposalList[_proposalId].active = false;
     }
 
     function getLendProposal(uint256 _proposalId) 
