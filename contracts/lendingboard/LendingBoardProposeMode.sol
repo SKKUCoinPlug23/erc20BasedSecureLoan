@@ -448,16 +448,11 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
             vars.paybackAmount = _amount;
         }
-    
-        require(
-            !vars.isETH || msg.value == vars.paybackAmount,
-            "Invalid msg.value sent for the repayment"
-        );
 
         require(
-            ((!vars.isETH && _amount == vars.paybackAmount) || (vars.isETH && _amount == msg.value)), 
+            ((!vars.isETH && _amount == vars.paybackAmount) || (vars.isETH && vars.paybackAmount == msg.value)), 
             "Invalid amount parameter sent for the repayment"
-            );
+        );
 
         // Borrower should have enough balance to cover the repay
         require(
@@ -491,7 +486,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             vars.paybackAmountMinusFees,
             vars.originationFee,
             vars.borrowBalanceIncrease,
-            userPrincipalBorrowBalanceCheck == 0
+            false
         );
 
         // Repayment Finished
