@@ -381,6 +381,12 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
       console.log("========================== User1's STKN Reserve Data After First Proposal Accepted ========================== ");
       console.log(user1STKNReserveData);
+
+      user1PLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user1.address);
+      console.log("========================== User1's PLUG Reserve Data After Second Proposal Accepted ========================== ");
+      console.log(user1PLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
       console.log("========================== First Lend Proposal and Accept Done ========================== ");
       
       // User1's STKKN Reserve Data after accepting Second Lend Proposal
@@ -389,13 +395,72 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       console.log("========================== User1's STKN Reserve Data After Second Proposal Accepted ========================== ");
       console.log(user1STKNReserveData);
       console.log(" ========================== ========================== ========================== ");
-      // const userBorrowBalanceOnProposal = await hardhatLendingBoardCore.connect(user1).getUserBorrowBalancesProposeMode(STKNaddress,user1.address,0,false);
-      // console.log(userBorrowBalanceOnProposal);
-      // console.log(" ========================== ========================== ========================== ");
 
+      user1PLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user1.address);
+      console.log("========================== User1's PLUG Reserve Data After Second Proposal Accepted ========================== ");
+      console.log(user1PLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
 
       const lendProposalList = await hardhatLendingBoardProposeMode.getLendProposalList(0,1);
       console.log("Lend Proposal List : ", lendProposalList);
+    });
+    
+  });
+
+  describe("\x1b[44m<Proposal and Repayment Interaction>", function () {
+
+    it("\x1b[45m Lend Proposal then Repay Case",async function(){
+      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatLendingBoardCore,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
+     
+      // borrow()
+      var reserveData = await hardhatLendingBoardProposeMode.getReserveData(STKNaddress);
+      console.log("STKN Reserve Data available Liquidity : ", reserveData.availableLiquidity.toString());
+      console.log("Owner STKN amount : ",await hardhatSampleToken.balanceOf(owner.address));
+
+      const lendAmount1 = ethers.utils.parseEther('10');
+      const lendAmount2 = ethers.utils.parseEther('20');
+
+      const interestRate = 10; // 일단은 parseEther 고려하지 않고 10으로 설정
+      // dueDate의 경우 임의로 현재시간의 + 100000 으로 설정한다.
+      const dueDate = Date.now() + 100000;
+      console.log("dueDate from JS : ", dueDate);
+      // Lending STKN( = 2ETH) using PLUG( = 5ETH) as a collateral
+      await expect(hardhatLendingBoardProposeMode.connect(owner).lendProposal(STKNaddress,lendAmount1,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"LendProposed");
+
+      await expect(hardhatLendingBoardProposeMode.connect(owner).lendProposal(STKNaddress,lendAmount2,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"LendProposed");
+
+      const generatedLendProposal = await hardhatLendingBoardProposeMode.connect(owner).getLendProposal(0);
+      // Data from borowProposal needs to have a borrower's id matching that of owner.address.
+      expect(owner.address).to.equal(generatedLendProposal.lender);
+
+      await hardhatLendingBoardProposeMode.connect(user1).lendProposalAccept(0);
+  
+      // User1's STKN Reserve Data after Borrow Proposal Accept
+      // WIP : 현재 User1의 currentBorrowBalance(대출량)이 증가하지 않는 문제 발생 
+      console.log(" ========================== Borrower's Account Balance after lendProposal Accepted ========================== ");
+      let user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
+      console.log("========================== User1's STKN Reserve Data After First Proposal Accepted ========================== ");
+      console.log(user1STKNReserveData);
+
+      let user1PLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user1.address);
+      console.log("========================== User1's PLUG Reserve Data After Second Proposal Accepted ========================== ");
+      console.log(user1PLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
+      console.log("========================== First Lend Proposal and Accept Done ========================== ");
+      
+      // User1's STKKN Reserve Data after accepting Second Lend Proposal
+      await hardhatLendingBoardProposeMode.connect(user1).lendProposalAccept(1);
+      user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
+      console.log("========================== User1's STKN Reserve Data After Second Proposal Accepted ========================== ");
+      console.log(user1STKNReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
+      user1PLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user1.address);
+      console.log("========================== User1's PLUG Reserve Data After Second Proposal Accepted ========================== ");
+      console.log(user1PLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
     });
     
   });

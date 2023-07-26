@@ -292,10 +292,12 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // Get Borrow Proposal Structure
         if (_isBorrowProposal) {
             proposalStructure = core.getBorrowProposalFromCore(_proposalId);
+            require(msg.sender == proposalStructure.proposer,"Current msg.sender is not the borrower");
         } else {
             proposalStructure = core.getLendProposalFromCore(_proposalId);
+            // WIP : need validation like Borrow Proposal
         }
-        
+
         //  Check reserve validity
         vars.reserve = proposalStructure.reserveToReceive;
         require(vars.reserve == _reserve, "Invalid reserve address");
@@ -394,6 +396,11 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         );
 
         nft.burnNFT(_tokenIdFromCore);
+
+        // From Core Contract Returning Borrower's Collateral AToken to Borrower
+        address reserveForCollateral = proposalStructure.reserveForCollateral;
+        uint256 collateralAmount = proposalStructure.collateralAmount;
+        core.transferCollateralATokenOnRepay(msg.sender,reserveForCollateral,collateralAmount);
 
         emit Repay(
             _reserve,
@@ -972,7 +979,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
         (
             ,
-            ,
+            address proposer,
             address reserveToReceive,
             uint256 amount,
             address reserveForCollateral,
@@ -1057,6 +1064,15 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             _proposalId 
         );
         console.log("\x1b[42m%s\x1b[0m", "\n   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
+
+        // Borrower's Collateral AToken Sent to Core Contract Address
+        // The Borrower's Collateral AToken from certain proposal should be transfered to the service
+        if(_isBorrowProposal){ 
+            core.transferCollateralATokenOnProposalAccept(proposer,reserveForCollateral,collateralAmount);
+        } else {
+            core.transferCollateralATokenOnProposalAccept(msg.sender,reserveForCollateral,collateralAmount);
+        }
+        
         // Transfering the Token Borrow Proposer Desired
         address payable borrowerPayable = payable(_borrower);
         core.transferToUser(_reserve, borrowerPayable, _amount);
@@ -1072,7 +1088,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         _tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, dueDate, _contractTimestamp, interestRate, paybackAmountMinusFee);
         
         console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Done");
-        
+
         if (_isBorrowProposal) {
             core.setTokenIdToBorrowProposalId(_proposalId, _tokenId);
         } else {

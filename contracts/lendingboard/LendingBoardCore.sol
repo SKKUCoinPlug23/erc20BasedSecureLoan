@@ -117,30 +117,30 @@ contract LendingBoardCore is VersionedInitializable {
     function updateBorrowProposal(
         uint256 _proposalId,
         CoreLibrary.ProposalStructure memory _inputBorrowProposal
-    ) public {
+    ) external {
         borrowProposalList[_proposalId] = _inputBorrowProposal;
     }
 
     function updateLendProposal(
         uint256 _proposalId,
         CoreLibrary.ProposalStructure memory _inputBorrowProposal
-    ) public {
+    ) external {
         lendProposalList[_proposalId] = _inputBorrowProposal;
     }
 
-    function incrementBorrowProposalCount() public { // WIP modifier 추가해야
+    function incrementBorrowProposalCount() external { // WIP modifier 추가해야
         borrowProposalCount++;
     }
 
-    function incrementLendProposalCount() public { // WIP modifier 추가해야
+    function incrementLendProposalCount() external { // WIP modifier 추가해야
         lendProposalCount++;
     }
 
-    function getBorrowProposalCount() public view returns(uint256){
+    function getBorrowProposalCount() external view returns(uint256){
         return borrowProposalCount;
     }
 
-    function getLendProposalCount() public view returns(uint256){
+    function getLendProposalCount() external view returns(uint256){
         return lendProposalCount;
     }
 
@@ -171,14 +171,14 @@ contract LendingBoardCore is VersionedInitializable {
     function setTokenIdToBorrowProposalId(
         uint256 _proposalId,
         uint256 _tokenId
-    ) public {
+    ) external {
         borrowProposalList[_proposalId].tokenId = _tokenId;
     }
 
     function setTokenIdToLendProposalId(
         uint256 _proposalId,
         uint256 _tokenId
-    ) public {
+    ) external {
         lendProposalList[_proposalId].tokenId = _tokenId;
     }
 
@@ -186,7 +186,7 @@ contract LendingBoardCore is VersionedInitializable {
         uint256 _proposalId,
         bool _isBorrowProposal,
         uint256 _collateralAmount
-    ) public {
+    ) external {
         if(_isBorrowProposal){
             borrowProposalList[_proposalId].collateralAmount = _collateralAmount;
         } else {
@@ -197,12 +197,30 @@ contract LendingBoardCore is VersionedInitializable {
     function deactivateProposal(
         uint256 _proposalId,
         bool _isBorrowProposal
-    ) public {
+    ) external {
         if(_isBorrowProposal){
             borrowProposalList[_proposalId].active = false;
         } else {
             lendProposalList[_proposalId].active = false;
         }
+    }
+
+    function transferCollateralATokenOnProposalAccept(
+        address _borrower,
+        address _reserveForCollateral,
+        uint256 _collateralAmount
+    ) external onlyLendingPool {
+        AToken collateralAtoken = AToken(getReserveATokenAddress(_reserveForCollateral));
+        collateralAtoken.transferOnProposalAccept(_borrower,address(this),_collateralAmount);
+    }
+
+    function transferCollateralATokenOnRepay(
+        address _borrower,
+        address _reserveForCollateral,
+        uint256 _collateralAmount
+    ) external onlyLendingPool {
+        AToken collateralAtoken = AToken(getReserveATokenAddress(_reserveForCollateral));
+        collateralAtoken.transferOnRepay(address(this),_borrower,_collateralAmount);
     }
 
     /**
