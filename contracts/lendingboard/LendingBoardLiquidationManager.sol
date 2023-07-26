@@ -300,21 +300,32 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         bool _isBorrowProposal,
         bool _receiveAToken
     ) external payable returns (uint256, string memory){
+        
+        LiquidationCallLocalVars memory vars;
 
-        CoreLibrary.ProposalStructure memory proposal;
-        if(_isBorrowProposal){
-            proposal = core.getBorrowProposalFromCore(_proposalId);
-        } else {
-            proposal = core.getLendProposalFromCore(_proposalId);
-        }
+        (
+            bool proposalActive,
+            address proposer,
+            address reserveToReceive,
+            uint256 amount,
+            address reserveForCollateral,
+            uint256 collateralAmount,
+            uint256 interestRate,
+            uint256 dueDate,
+            uint256 proposalDate,
+            uint256 serviceFee,
+            uint256 ltv,
+            uint256 tokenId,
+            bool isRepayed
+        ) = dataProvider.getProposalData(_proposalId,_isBorrowProposal);
 
-        // WIP : The proposal should be !active && !repayed => 추후에 추가
-        // ~
+        // WIP : The proposal should be !proposalActive && !repayed 
+        require(!proposalActive && !isRepayed, "The Proposal should not be Activated && not be Repayed");
 
         // Check for Liquidation Availability
-        bool proposalLiquidationAvailability = dataProvider.getProposalLiquidationAvailability(_proposalId, _isBorrowProposal);
+        vars.healthFactorBelowThreshold = dataProvider.getProposalLiquidationAvailability(_proposalId, _isBorrowProposal);
 
-        if(!proposalLiquidationAvailability){
+        if(!vars.healthFactorBelowThreshold){
             return (
                 uint256(LiquidationErrors.HEALTH_FACTOR_ABOVE_THRESHOLD),
                 "Proposal's Health factor is not below the threshold"
@@ -322,7 +333,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         }
 
         // proposer가 예치한 Collateral이 존재해야 Liquidation 시행 가능
-        uint256 proposerCollateralBalance = core.getUserUnderlyingAssetBalance(proposal.proposer,proposal.reserveForCollateral);
+        uint256 proposerCollateralBalance = core.getUserUnderlyingAssetBalance(proposer, reserveForCollateral);
 
         if (proposerCollateralBalance == 0) {
             return (
@@ -332,8 +343,8 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         }
         
         bool isCollateralEnabled =
-            core.isReserveUsageAsCollateralEnabled(proposal.reserveForCollateral) &&
-            core.isUserUseReserveAsCollateralEnabled(proposal.reserveForCollateral, proposal.proposer);
+            core.isReserveUsageAsCollateralEnabled(reserveForCollateral) &&
+            core.isUserUseReserveAsCollateralEnabled(reserveForCollateral, proposer);
 
         if (!isCollateralEnabled) {
             return (
@@ -345,11 +356,10 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         // now Liquidation Conditions are met
         
         //all clear - calculate the max principal amount that can be liquidated
-        // Conventionally 50% is allowed to liquidate at once due to giving the chance to Borrower on a situation of undercollateralized
-        
-        uint256 maxPrincipalAmountToLiquidate = proposerCollateralBalance
-            .mul(LIQUIDATION_CLOSE_FACTOR_PERCENT)
-            .div(100);
+        // // Conventionally 50% is allowed to liquidate at once due to giving the chance to Borrower on a situation of undercollateralized
+        // uint256 maxPrincipalAmountToLiquidate = proposerCollateralBalance
+        //     .mul(LIQUIDATION_CLOSE_FACTOR_PERCENT)
+        //     .div(100);
         
         // Proposal에 담보로 설정된 금액만 liquidate이 가능하기에 actualAmountToLiquidate을 따로 계산하지 않는다.
 
@@ -363,9 +373,6 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         //         );
         //     }
         // }
-        
-
-
 
     }
 
