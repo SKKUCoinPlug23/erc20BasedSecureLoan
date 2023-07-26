@@ -292,10 +292,12 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // Get Borrow Proposal Structure
         if (_isBorrowProposal) {
             proposalStructure = core.getBorrowProposalFromCore(_proposalId);
+            require(msg.sender == proposalStructure.proposer,"Current msg.sender is not the borrower");
         } else {
             proposalStructure = core.getLendProposalFromCore(_proposalId);
+            // WIP : need validation like Borrow Proposal
         }
-        
+
         //  Check reserve validity
         vars.reserve = proposalStructure.reserveToReceive;
         require(vars.reserve == _reserve, "Invalid reserve address");
@@ -394,6 +396,11 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         );
 
         nft.burnNFT(_tokenIdFromCore);
+
+        // From Core Contract Returning Borrower's Collateral AToken to Borrower
+        address reserveForCollateral = proposalStructure.reserveForCollateral;
+        uint256 collateralAmount = proposalStructure.collateralAmount;
+        core.transferCollateralATokenOnRepay(msg.sender,reserveForCollateral,collateralAmount);
 
         emit Repay(
             _reserve,
@@ -1058,17 +1065,12 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         );
         console.log("\x1b[42m%s\x1b[0m", "\n   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
 
-        AToken collateralAtoken = AToken(core.getReserveATokenAddress(reserveForCollateral));
-
         // Borrower's Collateral AToken Sent to Core Contract Address
-        address coreAddress = addressesProvider.getLendingBoardCore();
-        console.log("\x1b[42m%s\x1b[0m", "\n    => LBPM collateralAmount transfered to Core Contract : ", collateralAmount);
-
         // The Borrower's Collateral AToken from certain proposal should be transfered to the service
         if(_isBorrowProposal){ 
-            collateralAtoken.transferOnProposalAccept(proposer, coreAddress, collateralAmount);
+            core.transferCollateralATokenOnProposalAccept(proposer,reserveForCollateral,collateralAmount);
         } else {
-            collateralAtoken.transferOnProposalAccept(msg.sender, coreAddress, collateralAmount);
+            core.transferCollateralATokenOnProposalAccept(msg.sender,reserveForCollateral,collateralAmount);
         }
         
         // Transfering the Token Borrow Proposer Desired
