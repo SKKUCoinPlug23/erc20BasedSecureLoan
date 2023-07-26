@@ -265,120 +265,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         bool healthFactorBelowThreshold;
     }
 
-    function borrow(
-        address _reserve,
-        uint256 _amount,
-        uint256 _interestRateMode
-    )
-        external
-        nonReentrant
-        onlyActiveReserve(_reserve)
-        onlyUnfreezedReserve(_reserve)
-        onlyAmountGreaterThanZero(_amount)
-    {
-        // Usage of a memory struct of vars to avoid "Stack too deep" errors due to local variables
-        BorrowLocalVars memory vars;
-
-        //check that the reserve is enabled for borrowing
-        require(core.isReserveBorrowingEnabled(_reserve), "Reserve is not enabled for borrowing");
-        //validate interest rate mode
-        require(
-            uint256(CoreLibrary.InterestRateMode.VARIABLE) == _interestRateMode ||
-                uint256(CoreLibrary.InterestRateMode.STABLE) == _interestRateMode,
-            "Invalid interest rate mode selected"
-        );
-
-        //cast the rateMode to coreLibrary.interestRateMode
-        vars.rateMode = CoreLibrary.InterestRateMode(_interestRateMode);
-
-        //check that the amount is available in the reserve
-        vars.availableLiquidity = core.getReserveAvailableLiquidity(_reserve);
-
-        require(
-            vars.availableLiquidity >= _amount,
-            "There is not enough liquidity available in the reserve"
-        );
-
-        (
-            ,
-            vars.userCollateralBalanceETH,
-            vars.userBorrowBalanceETH,
-            vars.userTotalFeesETH,
-            vars.currentLtv,
-            vars.currentLiquidationThreshold,
-            ,
-            vars.healthFactorBelowThreshold
-        ) = dataProvider.calculateUserGlobalData(msg.sender);
-
-        require(vars.userCollateralBalanceETH > 0, "The collateral balance is 0");
-
-        require(
-            !vars.healthFactorBelowThreshold,
-            "The borrower can already be liquidated so he cannot borrow more"
-        );
-
-        //calculating fees
-        vars.borrowFee = feeProvider.calculateLoanOriginationFee(msg.sender, _amount);
-
-        require(vars.borrowFee > 0, "The amount to borrow is too small");
-
-        vars.amountOfCollateralNeededETH = dataProvider.calculateCollateralNeededInETH(
-            _reserve,
-            _amount,
-            vars.borrowFee,
-            vars.userBorrowBalanceETH,
-            vars.userTotalFeesETH,
-            vars.currentLtv
-        );
-
-        require(
-            vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,
-            "There is not enough collateral to cover a new borrow"
-        );
-
-        if (vars.rateMode == CoreLibrary.InterestRateMode.STABLE) {
-            //check if the borrow mode is stable and if stable rate borrowing is enabled on this reserve
-            require(
-                core.isUserAllowedToBorrowAtStable(_reserve, msg.sender, _amount),
-                "User cannot borrow the selected amount with a stable rate"
-            );
-
-            //calculate the max available loan size in stable rate mode as a percentage of the
-            //available liquidity
-            uint256 maxLoanPercent = parametersProvider.getMaxStableRateBorrowSizePercent();
-            uint256 maxLoanSizeStable = vars.availableLiquidity.mul(maxLoanPercent).div(100);
-
-            require(
-                _amount <= maxLoanSizeStable,
-                "User is trying to borrow too much liquidity at a stable rate"
-            );
-        }
-
-        //all conditions passed - borrow is accepted
-        (vars.finalUserBorrowRate, vars.borrowBalanceIncrease) = core.updateStateOnBorrow(
-            _reserve,
-            msg.sender,
-            _amount,
-            vars.borrowFee,
-            vars.rateMode
-        );
-
-        //if we reached this point, we can transfer
-        address payable senderPayable = payable(msg.sender);
-        core.transferToUser(_reserve, senderPayable, _amount);
-
-        emit Borrow(
-            _reserve,
-            msg.sender,
-            _amount,
-            _interestRateMode,
-            vars.finalUserBorrowRate,
-            vars.borrowFee,
-            vars.borrowBalanceIncrease,
-            //solium-disable-next-line
-            block.timestamp
-        );
-    }
+    // function borrow() from Aave Protocol deleted
 
     struct RepayLocalVars {
         uint256 principalBorrowBalance;
@@ -1145,8 +1032,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             console.log("   => LBPM : borrowAssetPriceInEth : ", borrowAssetPriceInEth);
 
             // amount가 parseEther로 들어가ㅏ기에 10^18로 나눠도 wei 단위로 표시됨
-            uint256 collateralOraclePriceInWei = oracle
-                .getAssetPrice(reserveForCollateral);
             uint256 userCollateralBalance = getUserReserveBalance(_reserve,msg.sender);
             uint256 userCollateralLtvAppliedValue = (userCollateralBalance)
                 .mul(collateralLtv)
@@ -1160,7 +1045,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         }
 
         uint256 borrowBalanceIncreased; // WIP : Revision mandated
-        console.log("   => LBPM : Service Fee : ", _serviceFee);
+        console.log("\x1b[42m   => LBPM : Service Fee : ", _serviceFee);
 
         (,borrowBalanceIncreased) = core.updateStateOnBorrowProposeMode(
             _reserve,
@@ -1171,8 +1056,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             _isBorrowProposal,
             _proposalId 
         );
-        console.log("   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
-
+        console.log("\x1b[42m%s\x1b[0m", "\n   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
         // Transfering the Token Borrow Proposer Desired
         address payable borrowerPayable = payable(_borrower);
         core.transferToUser(_reserve, borrowerPayable, _amount);
@@ -1180,15 +1064,15 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // After Proposal Accepted => Deactivation
         core.deactivateProposal(_proposalId,_isBorrowProposal);
 
-        console.log("   => LBPM : NFT Minting Started");
-
+        console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Started");
         // @김주헌 Added Minting NFT & Send to Lender
         uint256 _tokenId;
         uint256 _contractTimestamp = block.timestamp;
         // require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
         _tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, dueDate, _contractTimestamp, interestRate, paybackAmountMinusFee);
         
-        console.log("   => LBPM : NFT Minting Done");
+        console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Done");
+        
         if (_isBorrowProposal) {
             core.setTokenIdToBorrowProposalId(_proposalId, _tokenId);
         } else {
