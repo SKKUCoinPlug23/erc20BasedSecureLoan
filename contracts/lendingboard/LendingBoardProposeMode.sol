@@ -279,11 +279,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         address reserve;
     }
 
-    function repay(address _reserve, uint256 _amount, address payable _onBehalfOf, uint256 _proposalId, bool _isBorrowProposal)
+    function repay(uint256 _amount, address payable _onBehalfOf, uint256 _proposalId, bool _isBorrowProposal)
         external
         payable
         nonReentrant
-        onlyActiveReserve(_reserve)
         onlyAmountGreaterThanZero(_amount)
     {
         RepayLocalVars memory vars;
@@ -300,7 +299,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         //  Check reserve validity
         vars.reserve = proposalStructure.reserveToReceive;
-        require(vars.reserve == _reserve, "Invalid reserve address");
+        requireReserveActiveInternal(vars.reserve);
 
         // set repay local variables
         vars.principalBorrowBalance = proposalStructure.amount;
@@ -309,7 +308,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         // vars.originationFee = core.getUserOriginationFee(_reserve, _onBehalfOf);
         vars.originationFee = proposalStructure.serviceFee;
-        vars.isETH = EthAddressLib.ethAddress() == _reserve;
+        vars.isETH = EthAddressLib.ethAddress() == vars.reserve;
 
         require(vars.compoundedBorrowBalance > 0, "The user does not have any borrow pending");
 
@@ -324,7 +323,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             "Oigination Fee should be greater than 0"
         );
         core.transferToFeeCollectionAddress{value: vars.isETH ? vars.originationFee : 0}(
-            _reserve,
+            vars.reserve,
             msg.sender,
             vars.originationFee,
             addressesProvider.getTokenDistributor()
@@ -345,14 +344,14 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         // Borrower should have enough balance to cover the repay
         require(
-            core.getUserUnderlyingAssetBalance(_reserve, _onBehalfOf) > vars.paybackAmount,
+            core.getUserUnderlyingAssetBalance(vars.reserve, _onBehalfOf) > vars.paybackAmount,
             "The user does not have enough balance to complete the repayment"
         );
         
         // Send the amount to repay to the core except the origination fee
         address payable senderPayable = payable(msg.sender);
         core.transferToReserve{value:vars.isETH ? msg.value.sub(vars.originationFee) : 0}(
-            _reserve,
+            vars.reserve,
             senderPayable,
             vars.paybackAmountMinusFees
         );
@@ -366,11 +365,11 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             userPrincipalBorrowBalanceCheck, 
             userCompoundedBorrowBalanceCheck,
             userBorrowBalanceIncreaseCheck
-        ) = core.getUserBorrowBalances(_reserve, _onBehalfOf);
+        ) = core.getUserBorrowBalances(vars.reserve, _onBehalfOf);
 
         // Update After Repayment and Service Fee Payment
         core.updateStateOnRepay(
-            _reserve,
+            vars.reserve,
             _onBehalfOf,
             vars.paybackAmountMinusFees,
             vars.originationFee,
@@ -385,7 +384,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         address payable ownerOfBond = payable(nft.ownerOf(_tokenIdFromCore));
 
         core.transferToUser(
-            _reserve,
+            vars.reserve,
             ownerOfBond,
             vars.paybackAmountMinusFees
         );
@@ -398,7 +397,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         core.transferCollateralATokenOnRepay(msg.sender,reserveForCollateral,collateralAmount);
 
         emit Repay(
-            _reserve,
+            vars.reserve,
             _onBehalfOf,
             msg.sender,
             vars.paybackAmount,
