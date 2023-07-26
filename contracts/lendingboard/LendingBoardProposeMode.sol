@@ -972,7 +972,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
         (
             ,
-            ,
+            address proposer,
             address reserveToReceive,
             uint256 amount,
             address reserveForCollateral,
@@ -1057,6 +1057,20 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             _proposalId 
         );
         console.log("\x1b[42m%s\x1b[0m", "\n   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
+
+        AToken collateralAtoken = AToken(core.getReserveATokenAddress(reserveForCollateral));
+
+        // Borrower's Collateral AToken Sent to Core Contract Address
+        address coreAddress = addressesProvider.getLendingBoardCore();
+        console.log("\x1b[42m%s\x1b[0m", "\n    => LBPM collateralAmount transfered to Core Contract : ", collateralAmount);
+
+        // The Borrower's Collateral AToken from certain proposal should be transfered to the service
+        if(_isBorrowProposal){ 
+            collateralAtoken.transferOnProposalAccept(proposer, coreAddress, collateralAmount);
+        } else {
+            collateralAtoken.transferOnProposalAccept(msg.sender, coreAddress, collateralAmount);
+        }
+        
         // Transfering the Token Borrow Proposer Desired
         address payable borrowerPayable = payable(_borrower);
         core.transferToUser(_reserve, borrowerPayable, _amount);
@@ -1072,7 +1086,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         _tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, dueDate, _contractTimestamp, interestRate, paybackAmountMinusFee);
         
         console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Done");
-        
+
         if (_isBorrowProposal) {
             core.setTokenIdToBorrowProposalId(_proposalId, _tokenId);
         } else {

@@ -381,6 +381,12 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       user1STKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user1.address);
       console.log("========================== User1's STKN Reserve Data After First Proposal Accepted ========================== ");
       console.log(user1STKNReserveData);
+
+      user1PLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user1.address);
+      console.log("========================== User1's PLUG Reserve Data After Second Proposal Accepted ========================== ");
+      console.log(user1PLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
       console.log("========================== First Lend Proposal and Accept Done ========================== ");
       
       // User1's STKKN Reserve Data after accepting Second Lend Proposal
@@ -389,10 +395,11 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       console.log("========================== User1's STKN Reserve Data After Second Proposal Accepted ========================== ");
       console.log(user1STKNReserveData);
       console.log(" ========================== ========================== ========================== ");
-      // const userBorrowBalanceOnProposal = await hardhatLendingBoardCore.connect(user1).getUserBorrowBalancesProposeMode(STKNaddress,user1.address,0,false);
-      // console.log(userBorrowBalanceOnProposal);
-      // console.log(" ========================== ========================== ========================== ");
 
+      user1PLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user1.address);
+      console.log("========================== User1's PLUG Reserve Data After Second Proposal Accepted ========================== ");
+      console.log(user1PLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
 
       const lendProposalList = await hardhatLendingBoardProposeMode.getLendProposalList(0,1);
       console.log("Lend Proposal List : ", lendProposalList);
