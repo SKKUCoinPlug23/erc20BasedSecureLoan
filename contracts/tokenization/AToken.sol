@@ -147,6 +147,14 @@ contract AToken is ERC20 {
         _;
     }
 
+    modifier onlyLendingBoardCore {
+        require(
+            msg.sender == address(core),
+            "The caller of this function must be a Lending Board Core"
+        );
+        _;
+    }
+
     modifier whenTransferAllowed(address _from, uint256 _amount) {
         require(isTransferAllowed(_from, _amount), "Transfer cannot be allowed.");
         _;
@@ -337,6 +345,23 @@ contract AToken is ERC20 {
         //so no need to emit a specific event here
         executeTransferInternal(_from, _to, _value);
     }
+
+    // WIP => Corresponding AToken transfered to Service Core Contract
+    function transferOnProposalAccept(address _from, address _to, uint256 _value) external onlyLendingBoardCore {
+
+        //being a normal transfer, the Transfer() and BalanceTransfer() are emitted
+        //so no need to emit a specific event here
+        executeTransferInternal(_from, _to, _value);
+    }
+
+    // WIP => Corresponding AToken transfered to Service Core Contract
+    function transferOnRepay(address _from, address _to, uint256 _value) external onlyLendingBoardCore {
+
+        //being a normal transfer, the Transfer() and BalanceTransfer() are emitted
+        //so no need to emit a specific event here
+        executeTransferInternal(_from, _to, _value);
+    }
+
 
     /**
     * @dev calculates the balance of the user, which is the
