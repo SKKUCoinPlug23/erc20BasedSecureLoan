@@ -353,26 +353,29 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             );
         }
 
+        // WIP : 현재 Proposal Structure의 재조정이 이뤄지지 않은 상태이기에 Borrow Proposal의 경우에만 Liquidation이 이뤄지게 끔
+        require(_isBorrowProposal,"Currently Only Borrow Proposals are available for Liquidation");
+
+        //if the user hasn't borrowed the specific currency defined by _reserve, it cannot be liquidated
+        (, vars.userCompoundedBorrowBalance, vars.borrowBalanceIncrease) = core
+            .getUserBorrowBalances(reserveToReceive, proposer);
+
+        if (vars.userCompoundedBorrowBalance == 0) {
+            return (
+                uint256(LiquidationErrors.CURRRENCY_NOT_BORROWED),
+                "User did not borrow the specified currency"
+            );
+        }
+
         // now Liquidation Conditions are met
+
+        vars.originationFee = core.getUserOriginationFee(reserveToReceive, proposer);
+        //if there is a fee to liquidate, calculate the maximum amount of fee that can be liquidated
         
-        //all clear - calculate the max principal amount that can be liquidated
-        // // Conventionally 50% is allowed to liquidate at once due to giving the chance to Borrower on a situation of undercollateralized
-        // uint256 maxPrincipalAmountToLiquidate = proposerCollateralBalance
-        //     .mul(LIQUIDATION_CLOSE_FACTOR_PERCENT)
-        //     .div(100);
         
         // Proposal에 담보로 설정된 금액만 liquidate이 가능하기에 actualAmountToLiquidate을 따로 계산하지 않는다.
 
-        //if liquidator reclaims the underlying asset, we make sure there is enough available collateral in the reserve
-        // if (!_receiveAToken) {
-        //     uint256 currentAvailableCollateral = core.getReserveAvailableLiquidity(proposal.reserveForCollateral);
-        //     if (currentAvailableCollateral < ) {
-        //         return (
-        //             uint256(LiquidationErrors.NOT_ENOUGH_LIQUIDITY),
-        //             "There isn't enough liquidity available to liquidate"
-        //         );
-        //     }
-        // }
+
 
     }
 

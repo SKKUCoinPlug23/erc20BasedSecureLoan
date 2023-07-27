@@ -607,16 +607,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 requestedBorrowAmountInWei = oracle
             .getAssetPrice(_reserveToBorrow)
             .mul(_amount)
-            .div(10 ** reserveDecimals); 
-    
-        console.log("   => LBPM :reserveDecimals for _reserveToBorrow : ",reserveDecimals);
-
-        // 추후에 _fee 를 추가하여 계산한다.
-        // uint256 requestedBorrowAmountETH = oracle
-        //     .getAssetPrice(_reserveToBorrow)
-        //     .mul(_amount.add(_fee))
-        //     .div(10 ** reserveDecimals); 
-        
+            .div(10 ** reserveDecimals);     
 
         uint256 collateralNeededInWei = _amount
             .mul(requestedBorrowAmountInWei)
@@ -625,15 +616,11 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 collateralNeeded = collateralNeededInWei
             .div(oracle.getAssetPrice(_reserveForCollateral));
         
-        console.log("   => LBPM : _amount, requestedBorrowAmountETH, borrowLTV ",_amount,requestedBorrowAmountInWei,borrowLTV);
-        console.log("   => LBPM : ETH Needed for Borrow Proposal : ",collateralNeededInWei);
-        console.log("   => LBPM : Collateral Needed for Borrow Proposal : ",collateralNeeded);
         require(userCurrentAvailableCollateralBalance >= collateralNeeded,"There is not enough collateral to cover a new borrow proposal");
 
         //calculating fees
         borrowLocalVars.borrowFee = feeProvider.calculateLoanOriginationFee(msg.sender, _amount);
         require(borrowLocalVars.borrowFee > 0, "The amount to borrow is too small");
-        console.log("   => LBPM : Borrow Fee for this borrow proposal : ",borrowLocalVars.borrowFee);
 
         // If all conditions passed - Borrow Proposal Generated
         proposalVars.active = true;
@@ -846,14 +833,11 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             .mul(_amount)
             .div(10 ** reserveDecimals); 
 
-        console.log("   => LBPM : _amount, requestedLendAmountInWei, collateralLTV : ",_amount,requestedLendAmountInWei,collateralLTV);
-
         // Lemd하기에 충분한 balance를 가지고 있는지 확인한다.
         require(userCurrentAvailableLendBalanceInWei >= _amount,"There is not enough balance to lend in order to cover a new lend proposal");
 
         lendLocarVars.lendFee = feeProvider.calculateLoanOriginationFee(msg.sender, _amount);
         require(lendLocarVars.lendFee > 0, "The amount to borrow is too small");
-        console.log("   => LBPM : Lend Fee for this lend proposal : ",lendLocarVars.lendFee);
 
         proposalVars.active = true;
         proposalVars.proposer = msg.sender;
@@ -1009,8 +993,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             .mul(100)
             .div(collateralOraclePriceInWei);
 
-        console.log("\x1b[42m%s\x1b[0m", "\n    => LBPM collateralAmount calculation : ",collateralAmount);
-
         core.setProposalCollateralAmount(_proposalId, _isBorrowProposal, collateralAmount);
 
         uint256 paybackAmountMinusFee;
@@ -1021,8 +1003,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             paybackAmountMinusFee = amount + (amount * interestRate / 100);
 
             uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
-
-            console.log("\x1b[42m%s\x1b[0m", "\n   => LBPM : user Current Available Reserve Balance in Wei : ",userCurrentAvailableReserveBalanceInWei);
 
             require(userCurrentAvailableReserveBalanceInWei >= _amount, "Lender doesn't have enough Reserve Balance to Accept Borrow Proposal");
 
@@ -1036,7 +1016,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
                 .div(10 ** 18); // potential error points
             uint256 borrowAssetPriceInEth = borrowAssetPriceInWei
                 .div(10 ** 18);
-            console.log("   => LBPM : borrowAssetPriceInEth : ", borrowAssetPriceInEth);
 
             // amount가 parseEther로 들어가ㅏ기에 10^18로 나눠도 wei 단위로 표시됨
             uint256 userCollateralBalance = getUserReserveBalance(_reserve,msg.sender);
@@ -1045,14 +1024,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
                 .mul(collateralOraclePriceInWei)
                 .div(10 ** 36);
 
-            console.log("\x1b[42m%s\x1b[0m", "\n   => LBPM : collateralOraclePriceInWei : ",collateralOraclePriceInWei);
-            console.log("\x1b[42m%s\x1b[0m", "\n   => LBPM : userCollateralLtvAppliedValue : ",userCollateralLtvAppliedValue);
-
             require(userCollateralLtvAppliedValue >= borrowAssetPriceInEth,"Borrower doesn't have enough collateral to accept Lend Proposal");
         }
 
         uint256 borrowBalanceIncreased; // WIP : Revision mandated
-        console.log("\x1b[42m   => LBPM : Service Fee : ", _serviceFee);
 
         (,borrowBalanceIncreased) = core.updateStateOnBorrowProposeMode(
             _reserve,
@@ -1063,7 +1038,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             _isBorrowProposal,
             _proposalId 
         );
-        console.log("\x1b[42m%s\x1b[0m", "\n   => LBPM : User Borrow Balance Increased : ",borrowBalanceIncreased);
 
         // Borrower's Collateral AToken Sent to Core Contract Address
         // The Borrower's Collateral AToken from certain proposal should be transfered to the service
@@ -1213,6 +1187,4 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
     function requireAmountGreaterThanZeroInternal(uint256 _amount) internal pure {
         require(_amount > 0, "Amount must be greater than 0");
     }    
-
-
 }
