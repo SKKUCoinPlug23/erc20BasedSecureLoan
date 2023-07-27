@@ -187,7 +187,8 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
     // liquidationThreshold = ethers.utils.parseEther('0.70');
     liquidationThreshold = '70';
     // liquidationBonus = ethers.utils.parseEther('0.01');
-    liquidationBonus = '10'
+    // WIP : 기존에는 10으로 설정했는데 calculateAvailableCollateralToLiquidate() 계산과정 확인해보니 100 + 10 = 110 으로 설정하는게 맞는듯
+    liquidationBonus = '110'
 
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(STKNaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
 
@@ -201,7 +202,7 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
     // liquidationThreshold = ethers.utils.parseEther('0.70');
     liquidationThreshold = '70';
     // liquidationBonus = ethers.utils.parseEther('0.01');
-    liquidationBonus = '10'
+    liquidationBonus = '110'
 
     await hardhatLendingBoardConfigurator.connect(owner).enableReserveAsCollateral(PLUGaddress,baseLTVasCollateral,liquidationThreshold,liquidationBonus);
 
