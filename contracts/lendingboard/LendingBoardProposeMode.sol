@@ -279,11 +279,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         address reserve;
     }
 
-    function repay(uint256 _amount, address payable _onBehalfOf, uint256 _proposalId, bool _isBorrowProposal)
+    function repay(uint256 _proposalId, bool _isBorrowProposal)
         external
         payable
         nonReentrant
-        onlyAmountGreaterThanZero(_amount)
     {
         RepayLocalVars memory vars;
         CoreLibrary.ProposalStructure memory proposalStructure;
@@ -306,22 +305,24 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         vars.compoundedBorrowBalance = proposalStructure.amount.add(vars.principalBorrowBalance * proposalStructure.interestRate / 100);
         vars.borrowBalanceIncrease = vars.compoundedBorrowBalance.sub(vars.principalBorrowBalance);
 
-        // vars.originationFee = core.getUserOriginationFee(_reserve, _onBehalfOf);
+        // vars.originationFee = core.getUserOriginationFee(_reserve, msg.sender);
         vars.originationFee = proposalStructure.serviceFee;
         vars.isETH = EthAddressLib.ethAddress() == vars.reserve;
 
         require(vars.compoundedBorrowBalance > 0, "The user does not have any borrow pending");
 
-        require(
-            _amount != UINT_MAX_VALUE || msg.sender == _onBehalfOf,
-            "To repay on behalf of an user an explicit amount to repay is needed."
-        );
+        // proposalStructure에 borower 추가되면 주석 해제
+        // require(
+        //     proposalStructure.borrower == msg.sender,
+        //     "To repay on behalf of an user an explicit amount to repay is needed."
+        // );
 
         // pay origination fee to service
         require(
             vars.originationFee > 0,
             "Oigination Fee should be greater than 0"
         );
+        
         core.transferToFeeCollectionAddress{value: vars.isETH ? vars.originationFee : 0}(
             vars.reserve,
             msg.sender,
@@ -333,18 +334,14 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
         vars.paybackAmountMinusFees = vars.paybackAmount.sub(vars.originationFee);
 
-        if (_amount != UINT_MAX_VALUE && _amount < vars.paybackAmount) {
-            vars.paybackAmount = _amount;
-        }
-
-        require(
-            ((!vars.isETH && _amount == vars.paybackAmount) || (vars.isETH && vars.paybackAmount == msg.value)), 
-            "Invalid amount parameter sent for the repayment"
-        );
+        // require(
+        //     ((!vars.isETH && _amount == vars.paybackAmount) || (vars.isETH && vars.paybackAmount == msg.value)), 
+        //     "Invalid amount parameter sent for the repayment"
+        // );
 
         // Borrower should have enough balance to cover the repay
         require(
-            core.getUserUnderlyingAssetBalance(vars.reserve, _onBehalfOf) > vars.paybackAmount,
+            core.getUserUnderlyingAssetBalance(vars.reserve, msg.sender) > vars.paybackAmount,
             "The user does not have enough balance to complete the repayment"
         );
         
@@ -365,12 +362,12 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             userPrincipalBorrowBalanceCheck, 
             userCompoundedBorrowBalanceCheck,
             userBorrowBalanceIncreaseCheck
-        ) = core.getUserBorrowBalances(vars.reserve, _onBehalfOf);
+        ) = core.getUserBorrowBalances(vars.reserve, msg.sender);
 
         // Update After Repayment and Service Fee Payment
         core.updateStateOnRepay(
             vars.reserve,
-            _onBehalfOf,
+            msg.sender,
             vars.paybackAmountMinusFees,
             vars.originationFee,
             vars.borrowBalanceIncrease,
@@ -398,7 +395,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         emit Repay(
             vars.reserve,
-            _onBehalfOf,
+            msg.sender,
             msg.sender,
             vars.paybackAmount,
             vars.originationFee,
