@@ -88,9 +88,9 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
     await hardhatLendingBoardDataProvider.initialize(hardhatLendingBoardAddressesProvider.address);
     await hardhatLendingBoardParametersProvider.initialize(hardhatLendingBoardAddressesProvider.address);
     await hardhatLendingBoardFeeProvider.initialize(hardhatLendingBoardAddressesProvider.address);
+    // await hardhatLendingBoardLiquidationManager.initialize(hardhatLendingBoardAddressesProvider.address);
     // since DISTRIBUTION_BASE = 10000; set in TokenDistributor.sol dummy data for percentages set like below
     await hardhatTokenDistributor.initialize([owner.address,user1.address,user2.address],[4000,3000,2000]);
-    // await hardhatLendingBoardLiquidationManager.initialize(hardhatLendingBoardAddressesProvider.address);
 
     // SampleToken(STKN) Deployment for Testing. SampleToken.sol에서 가져옴
     const SampleToken = await ethers.getContractFactory("SampleToken");
@@ -152,6 +152,11 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
     await hardhatSampleToken.connect(owner).transfer(user1.address,transferAmount);
     await hardhatPlugToken.connect(owner).transfer(user1.address,transferAmount);
 
+    // user2(Liquidator)에게도 동일하게 전송
+    await hardhatSampleToken.connect(owner).transfer(user2.address,transferAmount);
+    await hardhatPlugToken.connect(owner).transfer(user2.address,transferAmount);
+
+
     // Approve LendingBoard contract to spend tokens
     const approveAmount = ethers.utils.parseEther('2000');
 
@@ -177,6 +182,17 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
 
     await hardhatLendingBoardProposeMode.connect(user1).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
     await hardhatLendingBoardProposeMode.connect(user1).deposit(PLUGaddress, depositAmount, 0); // Set Referral Code = 0
+
+    console.log(" ====================== ====================== ======================");
+
+    // User2의 approval 및 Deposit
+    approvalResult = await hardhatSampleToken.connect(user2).approve(hardhatLendingBoardCore.address, approveAmount);
+    approvalResult = await hardhatPlugToken.connect(user2).approve(hardhatLendingBoardCore.address, approveAmount);
+
+    await hardhatLendingBoardProposeMode.connect(user2).deposit(STKNaddress, depositAmount, 0); // Set Referral Code = 0
+    await hardhatLendingBoardProposeMode.connect(user2).deposit(PLUGaddress, depositAmount, 0); // Set Referral Code = 0
+
+    console.log(" ====================== ====================== ======================");
 
     let baseLTVasCollateral,liquidationThreshold,liquidationBonus
     // configuring STKN Reserve for Borrowing and Collateral
@@ -213,7 +229,7 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
 
     
     // Fixtures can return anything you consider useful for your tests
-    return { owner, user1, user2, borrower1, borrower2, LendingBoardProposeMode, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider,hardhatSampleToken,STKNaddress,PLUGaddress};
+    return { owner, user1, user2, borrower1, borrower2, LendingBoardProposeMode, hardhatLendingBoardProposeMode,hardhatLendingBoardAddressesProvider,hardhatLendingBoardCore,hardhatLendingBoardConfigurator,hardhatLendingBoardDataProvider, hardhatLendingBoardFeeProvider, hardhatLendingBoardLiquidationManager, hardhatSampleToken,STKNaddress,PLUGaddress};
   }
 
   describe("\x1b[44m<<Initializations>", function () {
@@ -469,7 +485,7 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
   describe("\x1b[44m<<Liquidation Situation>", function () {
 
     it("\x1b[45m Should be underCollateralized and be ready for liquidation", async function () {
-      const { owner,user1, hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
+      const { owner,user1, user2,  hardhatLendingBoardProposeMode, hardhatLendingBoardConfigurator,hardhatLendingBoardCore, hardhatSampleToken,hardhatLendingBoardDataProvider,hardhatLendingBoardFeeProvider, hardhatLendingBoardLiquidationManager, STKNaddress, PLUGaddress } = await loadFixture(deployLendingBoardFixture);
 
       const borrowAmount1 = ethers.utils.parseEther('10');
       const borrowAmount2 = ethers.utils.parseEther('20');
@@ -486,9 +502,23 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
 
       const generatedBorrowProposal = await hardhatLendingBoardProposeMode.connect(owner).getBorrowProposal(0);
 
-     const proposalLiquidationAvailability = await hardhatLendingBoardDataProvider.getProposalLiquidationAvailability(0,true);
-     console.log(" Proposal Liquidation Availability : ",proposalLiquidationAvailability);
+      const proposalLiquidationAvailability = await hardhatLendingBoardDataProvider.getProposalLiquidationAvailability(0,true); // _isBorrowProposal == true
+      console.log(" Proposal Liquidation Availability : ",proposalLiquidationAvailability);
 
+      await hardhatLendingBoardProposeMode.connect(user1).borrowProposalAccept(0);
+
+      // const borrowProposalDataFromCore = await hardhatLendingBoardCore.connect(user2).getProposalFromCore(0,true);
+      const borrowProposalDataFromCore = await hardhatLendingBoardDataProvider.connect(user2).getProposalData(0,true);
+      console.log(" Borrow Proposal From Core : ",borrowProposalDataFromCore);
+
+
+      console.log(" Owner in this case Borrower's address : ", owner.address);
+      console.log(" Collateral address : ", PLUGaddress);
+      // Direct Access to Liquidation Manager for Testing
+      await hardhatLendingBoardProposeMode.connect(user2).liquidationCallProposeMode(0,true,true);
+      // await hardhatLendingBoardLiquidationManager.connect(user2).liquidationCallProposeMode(0,true,true);
+      // await hardhatLendingBoardLiquidationManager.connect(user2).liquidationCallProposeMode(0,true,true);
+     
     });
   });
 
