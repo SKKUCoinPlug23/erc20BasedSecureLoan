@@ -353,12 +353,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log("[+] Repay Amount for Proposal #0: ", finalPaybackAmount1.toString());
       console.log("[+] Repay Amount for Proposal #1: ", finalPaybackAmount2.toString());
 
-      await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress, finalPaybackAmount1, owner.address, 0, true);
+      await hardhatLendingBoardProposeMode.connect(owner).repay(0, true);
       borrowerSTKNReserveData = await hardhatLendingBoardProposeMode.getUserReserveData(STKNaddress, owner.address);
       console.log("\x1b[42m%s\x1b[0m", "\n[*] Borrow Proposal #0 Repayed");
       console.log("\x1b[36m%s\x1b[0m", "\n[After Repay Proposal #0] owner STKN Reserve Data available Liquidity : ", borrowerSTKNReserveData);
 
-      await hardhatLendingBoardProposeMode.connect(owner).repay(STKNaddress, finalPaybackAmount2, owner.address, 1, true);
+      await hardhatLendingBoardProposeMode.connect(owner).repay(1, true);
       borrowerSTKNReserveData = await hardhatLendingBoardProposeMode.getUserReserveData(STKNaddress, owner.address);
       console.log("\x1b[42m%s\x1b[0m", "\n[*] Borrow Proposal #1 Repayed");
       console.log("\x1b[36m%s\x1b[0m", "\n[After Repay Proposal #1] owner STKN Reserve Data available Liquidity : ", borrowerSTKNReserveData);

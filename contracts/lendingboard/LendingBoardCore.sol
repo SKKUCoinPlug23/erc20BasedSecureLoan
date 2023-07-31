@@ -1653,6 +1653,11 @@ contract LendingBoardCore is VersionedInitializable {
         user.lastVariableBorrowCumulativeIndex = reserve.lastVariableBorrowCumulativeIndex;
         
         user.compoundedBorrowBalance = user.compoundedBorrowBalance.sub(_paybackAmountMinusFees);
+
+        if (user.principalBorrowBalance == 0) {
+            _repaidWholeLoan = true;
+        }
+        
         //if the balance decrease is equal to the previous principal (user is repaying the whole loan)
         //and the rate mode is stable, we reset the interest rate mode of the user
         if (_repaidWholeLoan) {
