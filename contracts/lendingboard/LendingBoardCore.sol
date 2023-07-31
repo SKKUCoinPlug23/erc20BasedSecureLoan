@@ -757,7 +757,6 @@ contract LendingBoardCore is VersionedInitializable {
     {
         AToken aToken = AToken(reserves[_reserve].aTokenAddress);
         return aToken.balanceOf(_user);
-
     }
 
     /**
