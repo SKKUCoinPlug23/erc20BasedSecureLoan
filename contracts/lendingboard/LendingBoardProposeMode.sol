@@ -296,7 +296,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             // WIP : need validation like Borrow Proposal
         }
 
-        //  Check reserve validity
+        // Check reserve validity
         vars.reserve = proposalStructure.reserveToReceive;
         requireReserveActiveInternal(vars.reserve);
 
@@ -322,7 +322,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             vars.originationFee > 0,
             "Oigination Fee should be greater than 0"
         );
-        
+
         core.transferToFeeCollectionAddress{value: vars.isETH ? vars.originationFee : 0}(
             vars.reserve,
             msg.sender,
