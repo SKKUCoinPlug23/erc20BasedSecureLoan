@@ -473,6 +473,31 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         }
     }
 
+    function liquidationCallProposeMode(
+        uint256 _proposalId,
+        bool _isBorrowProposal,
+        bool _receiveAToken
+    ) external payable nonReentrant {
+        address liquidationManager = addressesProvider.getLendingBoardLiquidationManager();
+
+        //solium-disable-next-line
+        (bool success, bytes memory result) = liquidationManager.delegatecall(
+            abi.encodeWithSignature(
+                "liquidationCallProposeMode(uint256,bool,bool)",
+                _proposalId,
+                _isBorrowProposal,
+                _receiveAToken
+            )
+        );
+        require(success, "Liquidation Call for ProposeMode failed");
+
+        (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
+
+        if (returnCode != 0) {
+            //error found
+            revert(string(abi.encodePacked("Liquidation failed: ", returnMessage)));
+        }
+    }
 
 
     // WIP : borrowProposal, borrowProposalAccept, getBorrowProposal, lendProposal, lendProposalAccept, getLendProposal

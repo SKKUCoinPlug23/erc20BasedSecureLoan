@@ -17,6 +17,9 @@ import "./LendingBoardCore.sol";
 import "./LendingBoardDataProvider.sol";
 import "../interfaces/IPriceOracleGetter.sol";
 
+// WIP 
+import "../libraries/EthAddressLib.sol";
+
 /**
 * @title LendingPoolLiquidationManager contract
 * @author Aave
@@ -105,6 +108,19 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         bool isCollateralEnabled;
         bool healthFactorBelowThreshold;
     }
+
+
+    // Originally No Initialize() function was implemented,,, WHy??
+    // function initialize(LendingBoardAddressesProvider _addressesProvider) public initializer {
+    //     addressesProvider = _addressesProvider;
+    //     core = LendingBoardCore(addressesProvider.getLendingBoardCore());
+    //     dataProvider = LendingBoardDataProvider(addressesProvider.getLendingBoardDataProvider());
+    //     parametersProvider = LendingBoardParametersProvider(
+    //         addressesProvider.getLendingBoardParametersProvider()
+    //     );
+    //     feeProvider = IFeeProvider(addressesProvider.getFeeProvider());
+    //     ethereumAddress = EthAddressLib.ethAddress();
+    // }
 
     /**
     * @dev as the contract extends the VersionedInitializable contract to match the state
@@ -300,6 +316,8 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         bool _isBorrowProposal,
         bool _receiveAToken
     ) external payable returns (uint256, string memory){
+
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager Start");
         
         LiquidationCallLocalVars memory vars;
 
@@ -310,20 +328,31 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             uint256 amount,
             address reserveForCollateral,
             uint256 collateralAmount,
-            uint256 interestRate,
-            uint256 dueDate,
-            uint256 proposalDate,
+            ,
+            ,
+            ,
             uint256 serviceFee,
-            uint256 ltv,
-            uint256 tokenId,
+            ,
+            ,
             bool isRepayed
         ) = dataProvider.getProposalData(_proposalId,_isBorrowProposal);
+
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : getProposalData done");
+
+
+        // !----- Currently Only Borrow Proposal Liquidation is allowd, later REAL borrower로 변경 요망 -----!
+        address borrower = proposer; 
 
         // WIP : The proposal should be !proposalActive && !repayed 
         require(!proposalActive && !isRepayed, "The Proposal should not be Activated && not be Repayed");
 
+        // WIP Due Date 가 지난 시점에서의 Liquidation Situation도 고려해야
+
         // Check for Liquidation Availability
         vars.healthFactorBelowThreshold = dataProvider.getProposalLiquidationAvailability(_proposalId, _isBorrowProposal);
+
+        // WIP : setting healthFactorBelowThreshold to TRUE for testing 
+        vars.healthFactorBelowThreshold = true;
 
         if(!vars.healthFactorBelowThreshold){
             return (
@@ -332,15 +361,26 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             );
         }
 
-        // proposer가 예치한 Collateral이 존재해야 Liquidation 시행 가능
-        uint256 proposerCollateralBalance = core.getUserUnderlyingAssetBalance(proposer, reserveForCollateral);
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : Health Factor Threshold Checked");
 
-        if (proposerCollateralBalance == 0) {
+        // proposer가 예치한 Collateral이 존재해야 Liquidation 시행 가능
+        console.log("\x1b[43m%s %s\x1b[0m", "\n   => Liquidation Manager : Borrower Address ",borrower);
+        console.log("\x1b[43m%s %s\x1b[0m", "\n   => Liquidation Manager : reserveForCollateral Address ",reserveForCollateral);
+
+        uint256 borrowerCollateralBalance = core.getUserUnderlyingAssetBalance(reserveForCollateral,borrower);
+
+        console.log("\x1b[43m%s %s\x1b[0m", "\n   => Liquidation Manager : borrowerCollateralBalance ",borrowerCollateralBalance);
+
+        if (borrowerCollateralBalance == 0) {
             return (
                 uint256(LiquidationErrors.NO_COLLATERAL_AVAILABLE),
                 "Invalid collateral to liquidate"
             );
         }
+
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : if after borrowerCollateralBalance ");
+
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager :   Borrower Collateral Balance Checked");
         
         bool isCollateralEnabled =
             core.isReserveUsageAsCollateralEnabled(reserveForCollateral) &&
@@ -353,8 +393,10 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             );
         }
 
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager :  Collateral Enabled Checked");
+
         // WIP : 현재 Proposal Structure의 재조정이 이뤄지지 않은 상태이기에 Borrow Proposal의 경우에만 Liquidation이 이뤄지게 끔
-        require(_isBorrowProposal,"Currently Only Borrow Proposals are available for Liquidation");
+        require(_isBorrowProposal, "!------Currently Only Borrow Proposals are available for Liquidation-------!");
 
         //if the user hasn't borrowed the specific currency defined by _reserve, it cannot be liquidated
         (, vars.userCompoundedBorrowBalance, vars.borrowBalanceIncrease) = core
@@ -367,15 +409,112 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             );
         }
 
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : Liquidation Conditions are Met");
+
         // now Liquidation Conditions are met
 
-        vars.originationFee = core.getUserOriginationFee(reserveToReceive, proposer);
         //if there is a fee to liquidate, calculate the maximum amount of fee that can be liquidated
+
         
         
         // Proposal에 담보로 설정된 금액만 liquidate이 가능하기에 actualAmountToLiquidate을 따로 계산하지 않는다.
+        vars.actualAmountToLiquidate = amount; // Borrow Asset Amount
+        vars.userCollateralBalance = collateralAmount;
+        
+        // Borrow Asset Amount은 고정, Collateral in return depends on Borrow Asset Amount
+        uint256 collateralToTransfer = calculateCollateraToReturn(
+            reserveForCollateral,
+            reserveToReceive,
+            vars.actualAmountToLiquidate
+        );
 
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : collateralToTransfer calculation done");
 
+        // Service Fee는 대출자산을 기준으로 계산됨
+        vars.originationFee = serviceFee;
+
+        vars.liquidatedCollateralForFee = calculateCollateraToReturn(
+            reserveForCollateral,
+            reserveToReceive,
+            vars.originationFee
+        );
+        vars.feeLiquidated = vars.originationFee;
+
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : liquidatedCollateralForFee calculation done");
+
+        //if liquidator reclaims the underlying asset, we make sure there is enough available collateral in the reserve
+        if (!_receiveAToken) {
+            uint256 currentAvailableCollateral = core.getReserveAvailableLiquidity(reserveForCollateral);
+            if (currentAvailableCollateral < collateralToTransfer) {
+                return (
+                    uint256(LiquidationErrors.NOT_ENOUGH_LIQUIDITY),
+                    "There isn't enough liquidity available to liquidate"
+                );
+            }
+        }
+        
+        core.updateStateOnLiquidation(
+            reserveToReceive,
+            reserveForCollateral,
+            borrower,
+            vars.actualAmountToLiquidate,
+            collateralToTransfer,
+            vars.feeLiquidated,
+            vars.liquidatedCollateralForFee,
+            vars.borrowBalanceIncrease,
+            _receiveAToken
+        );
+
+        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : updateStateOnLiquidation done");
+
+        AToken collateralAtoken = AToken(core.getReserveATokenAddress(reserveForCollateral));
+
+        //if liquidator reclaims the aToken, he receives the equivalent atoken amount
+        if (_receiveAToken) {
+            collateralAtoken.transferOnLiquidation(borrower, msg.sender, collateralToTransfer);
+        } else {
+            //otherwise receives the underlying asset
+            //burn the equivalent amount of atoken
+            collateralAtoken.burnOnLiquidation(borrower, collateralToTransfer);
+            core.transferToUser(reserveForCollateral, payable(msg.sender), collateralToTransfer);
+        }
+
+        //transfers the principal currency to the pool
+        core.transferToReserve{value: msg.value}(reserveToReceive, payable(msg.sender), vars.actualAmountToLiquidate);
+        
+        collateralAtoken.burnOnLiquidation(borrower, vars.liquidatedCollateralForFee);
+
+        //then liquidate the fee by transferring it to the fee collection address
+        core.liquidateFee(
+            reserveForCollateral,
+            vars.liquidatedCollateralForFee,
+            addressesProvider.getTokenDistributor()
+        );
+
+        emit OriginationFeeLiquidated(
+            reserveForCollateral,
+            reserveToReceive,
+            borrower,
+            vars.feeLiquidated,
+            vars.liquidatedCollateralForFee,
+            //solium-disable-next-line
+            block.timestamp
+        );
+
+        emit LiquidationCall(
+            reserveForCollateral,
+            reserveToReceive,
+            borrower,
+            vars.actualAmountToLiquidate,
+            collateralToTransfer,
+            vars.borrowBalanceIncrease,
+            msg.sender,
+            _receiveAToken,
+            //solium-disable-next-line
+            block.timestamp
+        );
+
+        return (uint256(LiquidationErrors.NO_ERROR), "No errors");
 
     }
 
@@ -439,4 +578,37 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
 
         return (collateralAmount, principalAmountNeeded);
     }
+
+    // Propose Mode : Calculating Collateral Amount to transfer to Liquidator
+    function calculateCollateraToReturn(
+        address _collateral,
+        address _principal,
+        uint256 _purchaseAmount
+    ) internal view returns (uint256 collateralAmount) {
+
+        collateralAmount = 0;
+
+        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+
+        // Usage of a memory struct of vars to avoid "Stack too deep" errors due to local variables
+        AvailableCollateralToLiquidateLocalVars memory vars;
+
+        vars.collateralPrice = oracle.getAssetPrice(_collateral);
+        vars.principalCurrencyPrice = oracle.getAssetPrice(_principal);
+        vars.liquidationBonus = core.getReserveLiquidationBonus(_collateral);
+
+        //this is the maximum possible amount of the selected collateral that can be liquidated, given the
+        //max amount of principal currency that is available for liquidation.
+        vars.maxAmountCollateralToLiquidate = vars
+            .principalCurrencyPrice
+            .mul(_purchaseAmount)
+            .div(vars.collateralPrice)
+            .mul(vars.liquidationBonus)
+            .div(100);
+
+        collateralAmount = vars.maxAmountCollateralToLiquidate;
+
+        return (collateralAmount);
+    }
+
 }
