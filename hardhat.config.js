@@ -2,7 +2,9 @@ require("@nomicfoundation/hardhat-toolbox");
 require('dotenv').config();
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
-const SEPOLIA_PRIVATE_KEY = process.env.SEPOLIA_PRIVATE_KEY;
+const SEPOLIA_PRIVATE_KEY1 = process.env.SEPOLIA_PRIVATE_KEY1;
+const SEPOLIA_PRIVATE_KEY2 = process.env.SEPOLIA_PRIVATE_KEY2;
+const SEPOLIA_PRIVATE_KEY3 = process.env.SEPOLIA_PRIVATE_KEY3;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -12,10 +14,11 @@ module.exports = {
       // loggingEnabled: true,
       allowUnlimitedContractSize: true,
     },
-    // sepolia: {
-    //   url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
-    //   accounts: [SEPOLIA_PRIVATE_KEY]
-    // }
+    sepolia: {
+      loggingEnabled: true,
+      url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
+      accounts: [SEPOLIA_PRIVATE_KEY1,SEPOLIA_PRIVATE_KEY2,SEPOLIA_PRIVATE_KEY3]
+    }
   },
   solidity: {
     compilers:[
@@ -34,6 +37,11 @@ module.exports = {
         settings: {
           optimizer: {
             enabled: true,
+            details: {
+              yulDetails: {
+                optimizerSteps: "u",
+              },
+            },
             runs: 200
           },
           viaIR: true,

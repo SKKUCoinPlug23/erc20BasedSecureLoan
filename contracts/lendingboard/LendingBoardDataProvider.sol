@@ -561,38 +561,79 @@ contract LendingBoardDataProvider is VersionedInitializable {
         external
         view
         returns (
-            bool active,
-            address proposer,
-            address reserveToReceive,
-            uint256 amount,
-            address reserveForCollateral,
-            uint256 collateralAmount,
-            uint256 interestRate,
-            uint256 dueDate,
-            uint256 proposalDate,
-            uint256 serviceFee,
-            uint256 ltv,
-            uint256 tokenId,
-            bool isRepayed
+            bool,
+            address,
+            address,
+            uint256,
+            address,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            bool
         )
     {
         CoreLibrary.ProposalStructure memory proposalFromCore = core.getProposalFromCore(_proposalId,_isBorrowProposal);
 
-        active = proposalFromCore.active;
-        proposer = proposalFromCore.proposer;
-        reserveToReceive = proposalFromCore.reserveToReceive;
-        amount = proposalFromCore.amount;
-        reserveForCollateral = proposalFromCore.reserveForCollateral;
-        collateralAmount = proposalFromCore.collateralAmount;
-        interestRate = proposalFromCore.interestRate;
-        dueDate = proposalFromCore.dueDate;
-        proposalDate = proposalFromCore.proposalDate;
-        serviceFee = proposalFromCore.serviceFee;
-        serviceFee = proposalFromCore.dueDate;
-        ltv = proposalFromCore.ltv;
-        tokenId = proposalFromCore.tokenId;
-        isRepayed = proposalFromCore.isRepayed;
+        return (
+            proposalFromCore.active,
+            proposalFromCore.proposer,
+            proposalFromCore.reserveToReceive,
+            proposalFromCore.amount,
+            proposalFromCore.reserveForCollateral,
+            proposalFromCore.collateralAmount,
+            proposalFromCore.interestRate,
+            proposalFromCore.dueDate,
+            proposalFromCore.proposalDate,
+            proposalFromCore.serviceFee,
+            proposalFromCore.ltv,
+            proposalFromCore.tokenId,
+            proposalFromCore.isRepayed
+        );
     }
+
+    // getProposalData is causing a Stack too deep error when viaIR is disabled,,,
+    // function getProposalData(uint256 _proposalId, bool _isBorrowProposal) 
+    //     external
+    //     view
+    //     returns (
+    //         bool,
+    //         address,
+    //         address,
+    //         uint256,
+    //         address,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         bool
+    //     )
+    // {
+    //     CoreLibrary.ProposalStructure memory proposalFromCore = core.getProposalFromCore(_proposalId,_isBorrowProposal);
+
+    //     return (
+    //         proposalFromCore.active,
+    //         proposalFromCore.proposer,
+    //         proposalFromCore.reserveToReceive,
+    //         proposalFromCore.amount,
+    //         proposalFromCore.reserveForCollateral,
+    //         proposalFromCore.collateralAmount,
+    //         proposalFromCore.interestRate,
+    //         proposalFromCore.dueDate,
+    //         proposalFromCore.proposalDate,
+    //         proposalFromCore.serviceFee,
+    //         proposalFromCore.ltv,
+    //         proposalFromCore.tokenId,
+    //         proposalFromCore.isRepayed
+    //     );
+    // }
+
     
 
 }
