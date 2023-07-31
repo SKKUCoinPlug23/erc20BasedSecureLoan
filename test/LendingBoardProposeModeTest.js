@@ -507,17 +507,33 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
 
       await hardhatLendingBoardProposeMode.connect(user1).borrowProposalAccept(0);
 
+      let ownerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,owner.address);
+      console.log("========================== Owner's STKN Reserve Data After Proposal Accepted ========================== ");
+      console.log(ownerSTKNReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
+      let ownerPLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,owner.address);
+      console.log("========================== Owner's PLUG Reserve Data After Proposal Accepted ========================== ");
+      console.log(ownerPLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
       // const borrowProposalDataFromCore = await hardhatLendingBoardCore.connect(user2).getProposalFromCore(0,true);
-      const borrowProposalDataFromCore = await hardhatLendingBoardDataProvider.connect(user2).getProposalData(0,true);
-      console.log(" Borrow Proposal From Core : ",borrowProposalDataFromCore);
+      // const borrowProposalDataFromCore = await hardhatLendingBoardDataProvider.connect(user2).getProposalData(0,true);
+      // console.log(" Borrow Proposal From Core : ",borrowProposalDataFromCore);
 
-
-      console.log(" Owner in this case Borrower's address : ", owner.address);
-      console.log(" Collateral address : ", PLUGaddress);
       // Direct Access to Liquidation Manager for Testing
+      // user2 set as LIquidator
       await hardhatLendingBoardProposeMode.connect(user2).liquidationCallProposeMode(0,true,true);
-      // await hardhatLendingBoardLiquidationManager.connect(user2).liquidationCallProposeMode(0,true,true);
-      // await hardhatLendingBoardLiquidationManager.connect(user2).liquidationCallProposeMode(0,true,true);
+
+      ownerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,owner.address);
+      console.log("========================== Owner's STKN Reserve Data After Liquidation ========================== ");
+      console.log(ownerSTKNReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
+      ownerPLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,owner.address);
+      console.log("========================== Owner's PLUG Reserve Data After Liquidation ========================== ");
+      console.log(ownerPLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
      
     });
   });
