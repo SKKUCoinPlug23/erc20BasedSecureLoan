@@ -153,17 +153,17 @@ contract LendingBoardCore is VersionedInitializable {
         return lendProposalCount;
     }
 
-    function getBorrowProposalFromCore(
-        uint256 _proposalId
-    ) public view returns (CoreLibrary.ProposalStructure memory){
-        return borrowProposalList[_proposalId];
-    }
+    // function getBorrowProposalFromCore(
+    //     uint256 _proposalId
+    // ) public view returns (CoreLibrary.ProposalStructure memory){
+    //     return borrowProposalList[_proposalId];
+    // }
 
-    function getLendProposalFromCore(
-        uint256 _proposalId
-    ) public view returns (CoreLibrary.ProposalStructure memory){
-        return lendProposalList[_proposalId];
-    }
+    // function getLendProposalFromCore(
+    //     uint256 _proposalId
+    // ) public view returns (CoreLibrary.ProposalStructure memory){
+    //     return lendProposalList[_proposalId];
+    // }
 
     // getBorrow~ getLend~ => getProposalFromCore 로 통일
     function getProposalFromCore
@@ -383,11 +383,13 @@ contract LendingBoardCore is VersionedInitializable {
 
         CoreLibrary.ProposalStructure memory proposalInstance;
 
-        if(_isBorrowProposal){
-            proposalInstance = getBorrowProposalFromCore(_proposalId);
-        } else {
-            proposalInstance = getLendProposalFromCore(_proposalId);
-        }
+        // if(_isBorrowProposal){
+        //     proposalInstance = getBorrowProposalFromCore(_proposalId);
+        // } else {
+        //     proposalInstance = getLendProposalFromCore(_proposalId);
+        // }
+        
+        proposalInstance = getProposalFromCore(_proposalId, _isBorrowProposal);
 
         principalBorrowBalance = proposalInstance.amount;
         compoundInterestRate = 100 + proposalInstance.interestRate;

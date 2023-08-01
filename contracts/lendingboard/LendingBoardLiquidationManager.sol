@@ -323,7 +323,8 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
 
         (
             bool proposalActive,
-            address proposer,
+            address borrower,
+            ,
             address reserveToReceive,
             uint256 amount,
             address reserveForCollateral,
@@ -341,7 +342,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
 
 
         // !----- Currently Only Borrow Proposal Liquidation is allowd, later REAL borrower로 변경 요망 -----!
-        address borrower = proposer; 
+        // address borrower = proposer; 
 
         // WIP : The proposal should be !proposalActive && !repayed 
         require(!proposalActive && !isRepayed, "The Proposal should not be Activated && not be Repayed");
@@ -384,7 +385,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         
         bool isCollateralEnabled =
             core.isReserveUsageAsCollateralEnabled(reserveForCollateral) &&
-            core.isUserUseReserveAsCollateralEnabled(reserveForCollateral, proposer);
+            core.isUserUseReserveAsCollateralEnabled(reserveForCollateral, borrower);
 
         if (!isCollateralEnabled) {
             return (
@@ -400,7 +401,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
 
         //if the user hasn't borrowed the specific currency defined by _reserve, it cannot be liquidated
         (, vars.userCompoundedBorrowBalance, vars.borrowBalanceIncrease) = core
-            .getUserBorrowBalances(reserveToReceive, proposer);
+            .getUserBorrowBalances(reserveToReceive, borrower);
 
         if (vars.userCompoundedBorrowBalance == 0) {
             return (

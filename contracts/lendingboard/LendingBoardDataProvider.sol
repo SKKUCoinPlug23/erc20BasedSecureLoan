@@ -344,7 +344,7 @@ contract LendingBoardDataProvider is VersionedInitializable {
         uint256 _proposalId,
         bool _isBorrowProposal
     ) public view returns (bool proposalLiquidationAvailability){
-        CoreLibrary.ProposalStructure memory proposal;
+        CoreLibrary.ProposalStructure memory proposalStructure;
         IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle()); 
         uint256 collateralBalance;
         uint256 collateralBalanceETH;
@@ -352,18 +352,14 @@ contract LendingBoardDataProvider is VersionedInitializable {
         uint256 collateralLiquidationThreshold;
         bool usageAsCollateralEnabled;
 
-        if(_isBorrowProposal){
-            proposal = core.getBorrowProposalFromCore(_proposalId);
-        } else {
-            proposal = core.getLendProposalFromCore(_proposalId);
-        }
+        proposalStructure = core.getProposalFromCore(_proposalId,_isBorrowProposal);
 
         (
             collateralBalance,
             ,
             ,
 
-        ) = core.getUserBasicReserveData(proposal.reserveForCollateral, proposal.proposer);
+        ) = core.getUserBasicReserveData(proposalStructure.reserveForCollateral, proposalStructure.borrower);
 
         //fetch Collateral Reserve data
         (
@@ -371,10 +367,10 @@ contract LendingBoardDataProvider is VersionedInitializable {
             ,
             collateralLiquidationThreshold,
             usageAsCollateralEnabled
-        ) = core.getReserveConfiguration(proposal.reserveForCollateral);
+        ) = core.getReserveConfiguration(proposalStructure.reserveForCollateral);
         
         uint256 tokenUnit = 10 ** reserveDecimals;             
-        uint256 collateralUnitPrice = oracle.getAssetPrice(proposal.reserveForCollateral);
+        uint256 collateralUnitPrice = oracle.getAssetPrice(proposalStructure.reserveForCollateral);
         
         if(collateralBalance > 0){
             collateralBalanceETH = collateralUnitPrice.mul(collateralBalance).div(tokenUnit);
@@ -388,14 +384,14 @@ contract LendingBoardDataProvider is VersionedInitializable {
             ,
             ,
 
-        ) = core.getReserveConfiguration(proposal.reserveToReceive);
+        ) = core.getReserveConfiguration(proposalStructure.reserveToReceive);
 
         tokenUnit = 10 ** reserveDecimals;             
-        uint256 borrowUnitPrice = oracle.getAssetPrice(proposal.reserveToReceive);
-        uint256 borrowBalanceETH = borrowUnitPrice.mul(proposal.amount).div(tokenUnit);
+        uint256 borrowUnitPrice = oracle.getAssetPrice(proposalStructure.reserveToReceive);
+        uint256 borrowBalanceETH = borrowUnitPrice.mul(proposalStructure.amount).div(tokenUnit);
 
         // Service fee ETH price applied, Service Fee payedd with Borrow Asset
-        uint256 serviceFeeETH = borrowUnitPrice.mul(proposal.serviceFee).div(tokenUnit);
+        uint256 serviceFeeETH = borrowUnitPrice.mul(proposalStructure.serviceFee).div(tokenUnit);
 
         uint256 propoosalHealthFactor = calculateHealthFactorFromBalancesInternal(
             collateralBalanceETH,
@@ -408,7 +404,7 @@ contract LendingBoardDataProvider is VersionedInitializable {
         console.log("\x1b[42m%s\x1b[0m", "  => LBDP borrowBalanceETH ",borrowBalanceETH);
         console.log("\x1b[42m%s\x1b[0m", "  => LBDP serviceFeeETH ",serviceFeeETH);
         console.log("\x1b[42m%s\x1b[0m", "  => LBDP collateralLiquidationThreshold ",collateralLiquidationThreshold);
-        // calculated Proposal HealthFactor check
+        // calculated ProposalStructure HealthFactor check
         console.log("\x1b[42m%s\x1b[0m", "  => LBDP propoosalHealthFactor ",propoosalHealthFactor);
 
         // If Proposal's Health Factor is lower than 1e18 => Available for Liquidation
@@ -564,6 +560,7 @@ contract LendingBoardDataProvider is VersionedInitializable {
             bool,
             address,
             address,
+            address,
             uint256,
             address,
             uint256,
@@ -580,7 +577,8 @@ contract LendingBoardDataProvider is VersionedInitializable {
 
         return (
             proposalFromCore.active,
-            proposalFromCore.proposer,
+            proposalFromCore.borrower,
+            proposalFromCore.lender,
             proposalFromCore.reserveToReceive,
             proposalFromCore.amount,
             proposalFromCore.reserveForCollateral,
