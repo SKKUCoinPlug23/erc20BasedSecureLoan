@@ -82,6 +82,15 @@ contract LendingBoardCore is VersionedInitializable {
         _;
     }
 
+    modifier onlyValidProposal(uint256 _proposalId, bool _isBorrowProposal) {
+        if(_isBorrowProposal) {
+            require( _proposalId < getBorrowProposalCount(),"Invalid Borrow Proposal ID");
+        } else {
+            require( _proposalId < getLendProposalCount(),"Invalid Lend Proposal ID");
+        }
+        _;
+    }
+
     mapping(address => CoreLibrary.ReserveData) internal reserves;
     mapping(address => mapping(address => CoreLibrary.UserReserveData)) internal usersReserveData;
 
@@ -136,11 +145,11 @@ contract LendingBoardCore is VersionedInitializable {
         lendProposalCount++;
     }
 
-    function getBorrowProposalCount() external view returns(uint256){
+    function getBorrowProposalCount() public view returns(uint256){
         return borrowProposalCount;
     }
 
-    function getLendProposalCount() external view returns(uint256){
+    function getLendProposalCount() public view returns(uint256){
         return lendProposalCount;
     }
 
@@ -157,10 +166,16 @@ contract LendingBoardCore is VersionedInitializable {
     }
 
     // getBorrow~ getLend~ => getProposalFromCore 로 통일
-    function getProposalFromCore(
+    function getProposalFromCore
+    (
         uint256 _proposalId,
         bool _isBorrowProposal
-    ) public view returns (CoreLibrary.ProposalStructure memory){
+    )
+        public 
+        view
+        onlyValidProposal(_proposalId, _isBorrowProposal)
+        returns (CoreLibrary.ProposalStructure memory)
+    {
         if(_isBorrowProposal){
             return borrowProposalList[_proposalId];
         } else {
