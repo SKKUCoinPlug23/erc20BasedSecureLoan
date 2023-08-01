@@ -91,7 +91,8 @@ library CoreLibrary {
 
     struct ProposalStructure {
         bool active;
-        address proposer;
+        address borrower;
+        address lender;
         address reserveToReceive;
         uint256 amount;
         address reserveForCollateral;
