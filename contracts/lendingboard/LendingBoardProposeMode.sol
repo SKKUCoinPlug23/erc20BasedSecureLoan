@@ -287,14 +287,32 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         RepayLocalVars memory vars;
         CoreLibrary.ProposalStructure memory proposalStructure;
 
-        // Get Borrow Proposal Structure
-        if (_isBorrowProposal) {
-            proposalStructure = core.getBorrowProposalFromCore(_proposalId);
-            require(msg.sender == proposalStructure.proposer,"Current msg.sender is not the borrower");
-        } else {
-            proposalStructure = core.getLendProposalFromCore(_proposalId);
-            // WIP : need validation like Borrow Proposal
-        }
+        // // Get Borrow Proposal Structure
+        // if (_isBorrowProposal) {
+        //     proposalStructure = core.getBorrowProposalFromCore(_proposalId);
+        // } else {
+        //     proposalStructure = core.getLendProposalFromCore(_proposalId);
+        //     // WIP : need validation like Borrow Proposal
+        // }
+
+        proposalStructure = core.getProposalFromCore(_proposalId,_isBorrowProposal);
+        require(msg.sender == proposalStructure.proposer,"Currently Borrow Proposal Case is only possible for testing, later Proposal Structure Modification Required");
+
+        // (
+        //     ,
+        //     ,
+        //     vars.reserve,
+        //     vars.principalBorrowBalance,
+        //     address reserveForCollateral,
+        //     ,
+        //     uint256 interestRate,
+        //     uint256 dueDate,
+        //     ,
+        //     vars.originationFee ,
+        //     ,
+        //     ,
+            
+        // ) = dataProvider.getProposalData(_proposalId,_isBorrowProposal);
 
         // Check reserve validity
         vars.reserve = proposalStructure.reserveToReceive;
@@ -329,6 +347,8 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             vars.originationFee,
             addressesProvider.getTokenDistributor()
         );
+
+        console.log("\x1b[43m %s %s \x1b[0m", "\n   => LBPM : Fee Collected Amount", vars.originationFee);
 
         //default to max amount
         vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
