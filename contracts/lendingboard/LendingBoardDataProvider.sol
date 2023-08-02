@@ -354,6 +354,11 @@ contract LendingBoardDataProvider is VersionedInitializable {
 
         proposalStructure = core.getProposalFromCore(_proposalId,_isBorrowProposal);
 
+        // dueDate of proposal is passed, proposal is available for Liquidation
+        if(proposalStructure.dueDate < block.timestamp) {
+            return true;
+        }
+
         (
             collateralBalance,
             ,

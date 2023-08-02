@@ -238,6 +238,16 @@ contract LendingBoardCore is VersionedInitializable {
         collateralAtoken.transferOnRepay(address(this),_borrower,_collateralAmount);
     }
 
+    // function transferCollateralATokenOnRepay(
+    //     address _borrower,
+    //     address _reserveForCollateral,
+    //     uint256 _collateralAmount
+    // ) external onlyLendingPool {
+    //     AToken collateralAtoken = AToken(getReserveATokenAddress(_reserveForCollateral));
+    //     collateralAtoken.transferOnRepay(address(this),_borrower,_collateralAmount);
+    // }
+
+
     /**
     * @dev updates the state of the core as a result of a deposit action
     * @param _reserve the address of the reserve in which the deposit is happening
