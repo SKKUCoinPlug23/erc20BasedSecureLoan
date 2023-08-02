@@ -1089,13 +1089,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // Borrower's Collateral AToken Sent to Core Contract Address
         // The Borrower's Collateral AToken from certain proposal should be transfered to the service
         core.transferCollateralATokenOnProposalAccept(_borrower,reserveForCollateral,collateralAmount);
-        
-        // if(_isBorrowProposal){ 
-        //     core.transferCollateralATokenOnProposalAccept(_borrower,reserveForCollateral,collateralAmount);
-        // } else {
-        //     core.transferCollateralATokenOnProposalAccept(_lender,reserveForCollateral,collateralAmount);
-        // }
-        
+
         // Transfering the Token Borrow Proposer Desired
         address payable borrowerPayable = payable(_borrower);
         core.transferToUser(_reserve, borrowerPayable, _amount);

@@ -339,8 +339,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         ) = dataProvider.getProposalData(_proposalId,_isBorrowProposal);
 
         console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : getProposalData done");
-
-
+        
         // !----- Currently Only Borrow Proposal Liquidation is allowd, later REAL borrower로 변경 요망 -----!
         // address borrower = proposer; 
 
@@ -364,10 +363,6 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
 
         console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : Health Factor Threshold Checked");
 
-        // proposer가 예치한 Collateral이 존재해야 Liquidation 시행 가능
-        console.log("\x1b[43m%s %s\x1b[0m", "\n   => Liquidation Manager : Borrower Address ",borrower);
-        console.log("\x1b[43m%s %s\x1b[0m", "\n   => Liquidation Manager : reserveForCollateral Address ",reserveForCollateral);
-
         uint256 borrowerCollateralBalance = core.getUserUnderlyingAssetBalance(reserveForCollateral,borrower);
 
         console.log("\x1b[43m%s %s\x1b[0m", "\n   => Liquidation Manager : borrowerCollateralBalance ",borrowerCollateralBalance);
@@ -378,8 +373,6 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
                 "Invalid collateral to liquidate"
             );
         }
-
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : if after borrowerCollateralBalance ");
 
         console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager :   Borrower Collateral Balance Checked");
         
@@ -413,10 +406,6 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : Liquidation Conditions are Met");
 
         // now Liquidation Conditions are met
-
-        //if there is a fee to liquidate, calculate the maximum amount of fee that can be liquidated
-
-        
         
         // Proposal에 담보로 설정된 금액만 liquidate이 가능하기에 actualAmountToLiquidate을 따로 계산하지 않는다.
         vars.actualAmountToLiquidate = amount; // Borrow Asset Amount
@@ -466,19 +455,37 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             _receiveAToken
         );
 
+        console.log("\x1b[42m%s %s\x1b[0m", "\n   => Liquidation Manager :  vars.actualAmountToLiquidate",vars.actualAmountToLiquidate);
+        
+        console.log("\x1b[42m%s %s\x1b[0m", "\n   => Liquidation Manager :  collateralToTransfer",collateralToTransfer);
+
         console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : updateStateOnLiquidation done");
 
         AToken collateralAtoken = AToken(core.getReserveATokenAddress(reserveForCollateral));
 
         //if liquidator reclaims the aToken, he receives the equivalent atoken amount
+        // Proposal Mode collects Borrower's Collateral AToken to LBCore contract, thus on Liquidation AToken should move from LBCore address
+
+        address coreContractAddress = address(core);
+
         if (_receiveAToken) {
-            collateralAtoken.transferOnLiquidation(borrower, msg.sender, collateralToTransfer);
+            collateralAtoken.transferOnLiquidation(coreContractAddress, msg.sender, collateralToTransfer);
+            
         } else {
             //otherwise receives the underlying asset
             //burn the equivalent amount of atoken
-            collateralAtoken.burnOnLiquidation(borrower, collateralToTransfer);
+            collateralAtoken.burnOnLiquidation(coreContractAddress, collateralToTransfer);
             core.transferToUser(reserveForCollateral, payable(msg.sender), collateralToTransfer);
         }
+
+        // if (_receiveAToken) {
+        //     collateralAtoken.transferOnLiquidation(borrower, msg.sender, collateralToTransfer);
+        // } else {
+        //     //otherwise receives the underlying asset
+        //     //burn the equivalent amount of atoken
+        //     collateralAtoken.burnOnLiquidation(borrower, collateralToTransfer);
+        //     core.transferToUser(reserveForCollateral, payable(msg.sender), collateralToTransfer);
+        // }
 
         //transfers the principal currency to the pool
         core.transferToReserve{value: msg.value}(reserveToReceive, payable(msg.sender), vars.actualAmountToLiquidate);

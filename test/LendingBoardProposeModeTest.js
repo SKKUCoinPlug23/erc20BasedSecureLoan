@@ -480,7 +480,12 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       // User1 is the appropriate Borrower
       await hardhatLendingBoardProposeMode.connect(owner).repay(0,true);
 
-      console.log(" ========================== Owner (Borrower) STKN Reserve Data After First Proposal Accepted ========================== ");
+      // Attempt on Repaying on a already Repayed Proposal should be reverted
+      await expect(
+        hardhatLendingBoardProposeMode.connect(owner).repay(0,true)
+      ).to.be.reverted;
+
+      console.log(" ========================== Owner (Borrower) STKN Reserve Data After Repayment ========================== ");
       ownerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,owner.address);
       console.log(ownerSTKNReserveData);
 
@@ -508,7 +513,7 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount1,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
 
       // getBorrowProposalList()를 확인하기 위해 동일한 Proposal 두개를 생성한다.
-      await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount2,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
+      // await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount2,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
 
       const generatedBorrowProposal = await hardhatLendingBoardProposeMode.connect(owner).getBorrowProposal(0);
 
@@ -525,6 +530,16 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       let ownerPLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,owner.address);
       console.log("========================== Owner's PLUG Reserve Data After Proposal Accepted ========================== ");
       console.log(ownerPLUGReserveData);
+      console.log(" ========================== ========================== ========================== ");
+
+      let liquidatorSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user2.address);
+      console.log("========================== Liquidator's STKN Reserve Data Before Liquidation ========================== ");
+      console.log(liquidatorSTKNReserveData.currentATokenBalance);
+      console.log(" ========================== ========================== ========================== ");
+
+      let liquidatorPLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user2.address);
+      console.log("========================== Liquidator's PLUG Reserve Data Before Liquidation ========================== ");
+      console.log(liquidatorPLUGReserveData.currentATokenBalance);
       console.log(" ========================== ========================== ========================== ");
 
       // const borrowProposalDataFromCore = await hardhatLendingBoardCore.connect(user2).getProposalFromCore(0,true);
@@ -545,6 +560,17 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       console.log(ownerPLUGReserveData);
       console.log(" ========================== ========================== ========================== ");
      
+
+      liquidatorSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(STKNaddress,user2.address);
+      console.log("========================== Liquidator's STKN Reserve Data After Liquidation ========================== ");
+      console.log(liquidatorSTKNReserveData.currentATokenBalance);
+      console.log(" ========================== ========================== ========================== ");
+
+      liquidatorPLUGReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(PLUGaddress,user2.address);
+      console.log("========================== Liquidator's PLUG Reserve Data After Liquidation ========================== ");
+      console.log(liquidatorPLUGReserveData.currentATokenBalance);
+      console.log(" ========================== ========================== ========================== ");
+
     });
   });
 
