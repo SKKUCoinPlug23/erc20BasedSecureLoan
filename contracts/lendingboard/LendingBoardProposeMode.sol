@@ -1049,7 +1049,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // Borrow Proposal Accept Case
         if(_isBorrowProposal){ // Borrow의 경우 Borrow Proposer의 담보가 충분한지 확인
 
-
             // Borrow Proposal Accept msg.sender will be Lender, so Lender's Balance Should be Checked
             uint256 userCurrentAvailableReserveBalanceInWei = getUserReserveBalance(_reserve,msg.sender).mul(10 ** 18);
 

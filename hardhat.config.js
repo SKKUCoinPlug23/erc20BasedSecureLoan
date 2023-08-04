@@ -17,6 +17,13 @@ module.exports = {
     sepolia: {
       loggingEnabled: true,
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
+      gasPrice : 80000000000,
+      accounts: [SEPOLIA_PRIVATE_KEY1,SEPOLIA_PRIVATE_KEY2,SEPOLIA_PRIVATE_KEY3]
+    },
+    metadium: {
+      loggingEnabled: true,
+      url: `https://api.metadium.com/dev`,
+      gasPrice : 80000000000,
       accounts: [SEPOLIA_PRIVATE_KEY1,SEPOLIA_PRIVATE_KEY2,SEPOLIA_PRIVATE_KEY3]
     }
   },
