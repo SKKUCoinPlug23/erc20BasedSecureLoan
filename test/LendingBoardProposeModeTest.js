@@ -445,9 +445,12 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       // getBorrowProposalList()를 확인하기 위해 동일한 Proposal 두개를 생성한다.
       await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount2,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
 
-      const generatedBorrowProposal = await hardhatLendingBoardProposeMode.connect(owner).getBorrowProposal(0);
-      // Data from borowProposal needs to have a borrower's id matching that of owner.address.
-      expect(owner.address).to.equal(generatedBorrowProposal.borrower);
+      await expect(hardhatLendingBoardProposeMode.connect(user1).lendProposal(STKNaddress,borrowAmount1,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"LendProposed");
+
+
+      console.log("\x1b[43m%s\x1b[0m", "\n   Owner's Repay Readyed Proposal");
+      let userRepayProposalList = await hardhatLendingBoardProposeMode.connect(owner).getRepayProposalList(owner.address);
+      console.log(userRepayProposalList);
 
       console.log(" ========================== Lender's Account Balance before BorrowProposal Accept ========================== ");
       // User1's STKN Reserve Data before Borrow Proposal Accept
@@ -455,6 +458,11 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       console.log(user1STKNReserveData);
 
       await hardhatLendingBoardProposeMode.connect(user1).borrowProposalAccept(0);
+      await hardhatLendingBoardProposeMode.connect(owner).lendProposalAccept(0);
+
+      console.log("\x1b[43m%s\x1b[0m", "\n   Owner's Repay Readyed Proposal after Acception");
+      userRepayProposalList = await hardhatLendingBoardProposeMode.connect(owner).getRepayProposalList(owner.address);
+      console.log(userRepayProposalList);
       console.log(" ========================== Lender's Account Balance after BorrowProposal Accepted ========================== ");
   
       // User1's STKN Reserve Data after Borrow Proposal Accept

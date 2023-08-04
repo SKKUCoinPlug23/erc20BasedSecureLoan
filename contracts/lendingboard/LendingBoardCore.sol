@@ -153,18 +153,6 @@ contract LendingBoardCore is VersionedInitializable {
         return lendProposalCount;
     }
 
-    // function getBorrowProposalFromCore(
-    //     uint256 _proposalId
-    // ) public view returns (CoreLibrary.ProposalStructure memory){
-    //     return borrowProposalList[_proposalId];
-    // }
-
-    // function getLendProposalFromCore(
-    //     uint256 _proposalId
-    // ) public view returns (CoreLibrary.ProposalStructure memory){
-    //     return lendProposalList[_proposalId];
-    // }
-
     // getBorrow~ getLend~ => getProposalFromCore 로 통일
     function getProposalFromCore
     (
@@ -209,14 +197,49 @@ contract LendingBoardCore is VersionedInitializable {
         }
     }
 
+    function setProposalBorrower(
+        uint256 _proposalId,
+        bool _isBorrowProposal,
+        address _borrower
+    ) external {
+        if(_isBorrowProposal){
+            borrowProposalList[_proposalId].borrower = _borrower;
+        } else {
+            lendProposalList[_proposalId].borrower = _borrower;
+        }
+    }
+
+    function setProposalLender(
+        uint256 _proposalId,
+        bool _isBorrowProposal,
+        address _lender
+    ) external {
+        if(_isBorrowProposal){
+            borrowProposalList[_proposalId].lender = _lender;
+        } else {
+            lendProposalList[_proposalId].lender = _lender;
+        }
+    }
+
     function deactivateProposal(
         uint256 _proposalId,
         bool _isBorrowProposal
-    ) external {
+    ) external onlyLendingPool {
         if(_isBorrowProposal){
             borrowProposalList[_proposalId].active = false;
         } else {
             lendProposalList[_proposalId].active = false;
+        }
+    }
+
+    function updateProposalOnAccept(
+        uint256 _proposalId,
+        bool _isBorrowProposal
+    ) external onlyLendingPool {
+        if(_isBorrowProposal){
+            borrowProposalList[_proposalId].isAccepted = true;
+        } else {
+            lendProposalList[_proposalId].isAccepted = true;
         }
     }
 

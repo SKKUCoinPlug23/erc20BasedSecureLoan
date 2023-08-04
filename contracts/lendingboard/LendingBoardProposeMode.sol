@@ -608,6 +608,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         // If all conditions passed - Borrow Proposal Generated
         proposalVars.active = true;
+        proposalVars.isAccepted = false;
         proposalVars.borrower = msg.sender;
         proposalVars.lender = zeroAddress; // Lender not yet set, so setting to zero Address
         proposalVars.reserveToReceive = _reserveToBorrow;
@@ -670,6 +671,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         view 
         returns(
             bool active,
+            bool isAccepted,
             address borrower,
             address lender,
             address reserveToBorrow,
@@ -692,6 +694,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             borrowProposalVars = core.getProposalFromCore(_proposalId,true);
 
             active = borrowProposalVars.active;
+            isAccepted = borrowProposalVars.isAccepted;
             borrower = borrowProposalVars.borrower;
             lender = borrowProposalVars.lender;
             reserveToBorrow = borrowProposalVars.reserveToReceive;
@@ -704,25 +707,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             ltv = borrowProposalVars.ltv;
             tokenId = borrowProposalVars.tokenId;
             isRepayed = borrowProposalVars.isRepayed;
-    }
-
-    function getBorrowProposalList(uint256 _startIdx, uint256 _endIdx) 
-        public
-        view
-        returns(
-            CoreLibrary.ProposalStructure [] memory result // struct BorrowProposal array
-        )
-    {
-        require(_startIdx >= 0,"Start Index should be larger than 0");
-        require(_endIdx < core.getBorrowProposalCount(),"End Index over borrowProposalListCount");
-        uint256 resultLength = _endIdx - _startIdx + 1;
-        require(resultLength < 2000,"Maximum 2000 iteration per request");
-        result = new CoreLibrary.ProposalStructure [] (resultLength);
-        uint256 resultIndex = 0;
-        for(uint256 i = _startIdx; i <= _endIdx; i++){
-            result[resultIndex++] = core.getProposalFromCore(i,true);
-        }
-        return result;
     }
 
     struct LendLocalVars {
@@ -817,6 +801,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         require(lendLocarVars.lendFee > 0, "The amount to borrow is too small");
 
         proposalVars.active = true;
+        proposalVars.isAccepted = false;
         proposalVars.borrower = zeroAddress;
         proposalVars.lender = msg.sender;
         proposalVars.reserveToReceive = _reserveToLend;
@@ -873,6 +858,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         view 
         returns(
             bool active,
+            bool isAccepted,
             address lender,
             address reserveToLend,
             uint256 amount,
@@ -906,25 +892,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             isRepayed = lendProposalVars.isRepayed;
     }
 
-    function getLendProposalList(uint256 startIdx, uint256 endIdx) 
-        public
-        view
-        returns(
-            CoreLibrary.ProposalStructure[] memory result // struct LendProposal array
-        )
-    {
-        require(startIdx >= 0,"Start Index should be larger than 0");
-        require(endIdx < core.getLendProposalCount(),"End Index exceeding LendProposalListCount");
-        uint256 resultLength = endIdx - startIdx + 1;
-        require(resultLength < 2000,"Maximum 2000 iteration per request");
-        result = new CoreLibrary.ProposalStructure [] (resultLength);
-        uint256 resultIndex = 0;
-        for(uint256 i = startIdx; i <= endIdx; i++){
-            result[resultIndex++] = core.getProposalFromCore(i,false);
-        }
-        return result;
-    }
-
     function proposalAcceptInternal(
         address _reserve,
         uint256 _amount,
@@ -942,22 +909,16 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
     {
 
         IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
-        (
-            ,
-            ,
-            ,
-            address reserveToReceive,
-            ,
-            address reserveForCollateral,
-            ,
-            uint256 interestRate,
-            uint256 dueDate,
-            ,
-            ,
-            uint256 collateralLtv,
-            ,
-            
-        ) = dataProvider.getProposalData(_proposalId,_isBorrowProposal);
+
+        CoreLibrary.ProposalStructure memory proposalVar = core.getProposalFromCore(_proposalId,_isBorrowProposal);
+        bool isAccepted = proposalVar.isAccepted;
+        address reserveToReceive = proposalVar.reserveToReceive;
+        address reserveForCollateral = proposalVar.reserveForCollateral;
+        uint256 interestRate = proposalVar.interestRate;
+        uint256 dueDate = proposalVar.dueDate;
+        uint256 collateralLtv = proposalVar.ltv;
+
+        require(isAccepted == false, "Current Proposal Already Accepted");
 
         uint256 collateralAmount;
 
@@ -1027,7 +988,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         core.transferToUser(_reserve, borrowerPayable, _amount);
 
         // After Proposal Accepted => Deactivation
-        core.deactivateProposal(_proposalId,_isBorrowProposal);
+        // core.deactivateProposal(_proposalId,_isBorrowProposal); => Should be used when User declines Proposal
+
+        // Proposal State Update on Proposal Accept
+        core.updateProposalOnAccept(_proposalId,_isBorrowProposal);
 
         console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Started");
         // @김주헌 Added Minting NFT & Send to Lender
@@ -1040,8 +1004,12 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
         if (_isBorrowProposal) {
             core.setTokenIdToBorrowProposalId(_proposalId, _tokenId);
+            // Modify Proposal State
+            core.setProposalLender(_proposalId, _isBorrowProposal, _lender);
         } else {
             core.setTokenIdToLendProposalId(_proposalId, _tokenId);
+            // Modify Proposal State
+            core.setProposalBorrower(_proposalId, _isBorrowProposal, _borrower); 
         }
 
         emit ProposalAccepted(
@@ -1140,6 +1108,38 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
     function getReserves() external view returns (address[] memory) {
         return core.getReserves();
+    }
+
+    // Getter for Proposals
+    function getBorrowProposalList(uint256 _startIdx, uint256 _endIdx) 
+        public
+        view
+        returns(
+            CoreLibrary.ProposalStructure [] memory result // struct BorrowProposal array
+        )
+    {
+        return dataProvider.getBorrowProposalList(_startIdx, _endIdx);
+    }
+
+    function getLendProposalList(uint256 _startIdx, uint256 _endIdx) 
+        public
+        view
+        returns(
+            CoreLibrary.ProposalStructure [] memory result // struct BorrowProposal array
+        )
+    {
+        return dataProvider.getLendProposalList(_startIdx, _endIdx);
+    }
+
+    // Returns Proposals the _user should Repay
+    function getRepayProposalList(address _user) 
+        public
+        view
+        returns(
+            CoreLibrary.ProposalStructure[] memory result // struct LendProposal array
+        )
+    {
+        return dataProvider.getRepayProposalList(_user);
     }
 
     /**

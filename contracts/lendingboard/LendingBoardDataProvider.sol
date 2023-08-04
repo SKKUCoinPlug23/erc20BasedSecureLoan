@@ -558,44 +558,137 @@ contract LendingBoardDataProvider is VersionedInitializable {
         usageAsCollateralEnabled = core.isUserUseReserveAsCollateralEnabled(_reserve, _user);
     }
 
-    function getProposalData(uint256 _proposalId, bool _isBorrowProposal) 
-        external
+    // function getProposalData(uint256 _proposalId, bool _isBorrowProposal) 
+    //     external
+    //     view
+    //     returns (
+    //         bool,
+    //         bool,
+    //         address,
+    //         address,
+    //         address,
+    //         uint256,
+    //         address,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         uint256,
+    //         bool
+    //     )
+    // {
+    //     CoreLibrary.ProposalStructure memory proposalFromCore = core.getProposalFromCore(_proposalId,_isBorrowProposal);
+
+    //     return (
+    //         proposalFromCore.active,
+    //         proposalFromCore.isAccepted,
+    //         proposalFromCore.borrower,
+    //         proposalFromCore.lender,
+    //         proposalFromCore.reserveToReceive,
+    //         proposalFromCore.amount,
+    //         proposalFromCore.reserveForCollateral,
+    //         proposalFromCore.collateralAmount,
+    //         proposalFromCore.interestRate,
+    //         proposalFromCore.dueDate,
+    //         proposalFromCore.proposalDate,
+    //         proposalFromCore.serviceFee,
+    //         proposalFromCore.ltv,
+    //         proposalFromCore.tokenId,
+    //         proposalFromCore.isRepayed
+    //     );
+    // }
+
+    // Getter for Proposals
+    function getBorrowProposalList(uint256 _startIdx, uint256 _endIdx) 
+        public
         view
-        returns (
-            bool,
-            address,
-            address,
-            address,
-            uint256,
-            address,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            bool
+        returns(
+            CoreLibrary.ProposalStructure [] memory result // struct BorrowProposal array
         )
     {
-        CoreLibrary.ProposalStructure memory proposalFromCore = core.getProposalFromCore(_proposalId,_isBorrowProposal);
+        require(_startIdx >= 0,"Start Index should be larger than 0");
+        require(_endIdx < core.getBorrowProposalCount(),"End Index over borrowProposalListCount");
+        uint256 resultLength = _endIdx - _startIdx + 1;
+        require(resultLength < 2000,"Maximum 2000 iteration per request");
+        result = new CoreLibrary.ProposalStructure [] (resultLength);
+        uint256 resultIndex = 0;
+        for(uint256 i = _startIdx; i <= _endIdx; i++){
+            result[resultIndex++] = core.getProposalFromCore(i,true);
+        }
+        return result;
+    }
 
-        return (
-            proposalFromCore.active,
-            proposalFromCore.borrower,
-            proposalFromCore.lender,
-            proposalFromCore.reserveToReceive,
-            proposalFromCore.amount,
-            proposalFromCore.reserveForCollateral,
-            proposalFromCore.collateralAmount,
-            proposalFromCore.interestRate,
-            proposalFromCore.dueDate,
-            proposalFromCore.proposalDate,
-            proposalFromCore.serviceFee,
-            proposalFromCore.ltv,
-            proposalFromCore.tokenId,
-            proposalFromCore.isRepayed
-        );
+    function getLendProposalList(uint256 startIdx, uint256 endIdx) 
+        public
+        view
+        returns(
+            CoreLibrary.ProposalStructure[] memory result // struct LendProposal array
+        )
+    {
+        require(startIdx >= 0,"Start Index should be larger than 0");
+        require(endIdx < core.getLendProposalCount(),"End Index exceeding LendProposalListCount");
+        uint256 resultLength = endIdx - startIdx + 1;
+        require(resultLength < 2000,"Maximum 2000 iteration per request");
+        result = new CoreLibrary.ProposalStructure [] (resultLength);
+        uint256 resultIndex = 0;
+        for(uint256 i = startIdx; i <= endIdx; i++){
+            result[resultIndex++] = core.getProposalFromCore(i,false);
+        }
+        return result;
+    }
+
+    function getRepayProposalList(address _user) 
+        public
+        view
+        returns(
+            CoreLibrary.ProposalStructure[] memory repayProposal // struct LendProposal array
+        )
+    {
+        uint256 borrowProposalCount = core.getBorrowProposalCount();
+        uint256 lendProposalCount = core.getLendProposalCount();
+        uint256 maxResultCount = borrowProposalCount + lendProposalCount;
+        CoreLibrary.ProposalStructure[] memory cumulatingProposal = new CoreLibrary.ProposalStructure[](maxResultCount);
+        uint256 resultIndex = 0;
+        CoreLibrary.ProposalStructure memory proposal;
+
+        console.log("\x1b[43m%s %s\x1b[0m", "\n   borrowProposalCount : ",borrowProposalCount);
+        console.log("\x1b[43m%s %s\x1b[0m", "\n   lendProposalCount : ",lendProposalCount);
+
+        if(borrowProposalCount > 0){
+            for(uint256 i = 0; i < borrowProposalCount; i++){
+                proposal = core.getProposalFromCore(i,true);
+                address borrower =  proposal.borrower;
+                bool isAccepted = proposal.isAccepted;
+
+                // Repay on Proposal current _user is a Borrower and isAccepted
+                if(borrower == _user && isAccepted){
+                    cumulatingProposal[resultIndex++] = proposal;
+                }
+            }
+        }
+
+        if(lendProposalCount > 0) {
+            for(uint256 i = 0; i < lendProposalCount; i++){
+                proposal = core.getProposalFromCore(i,false);
+                address borrower =  proposal.borrower;
+                bool isAccepted = proposal.isAccepted;
+
+                // Repay on Proposal current _user is a Borrower and isAccepted
+                if(borrower == _user && isAccepted){
+                    cumulatingProposal[resultIndex++] = proposal;
+                }
+            }
+        }
+
+        // Moving Culmulated Propsal to repayProposal which will be returned
+        repayProposal = new CoreLibrary.ProposalStructure[](resultIndex);
+        for(uint256 i = 0; i < resultIndex; i++) {
+            repayProposal[i] = cumulatingProposal[i];
+        }
+
+        return repayProposal;
     }
 
 
