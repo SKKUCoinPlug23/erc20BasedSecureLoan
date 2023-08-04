@@ -598,45 +598,5 @@ contract LendingBoardDataProvider is VersionedInitializable {
         );
     }
 
-    // getProposalData is causing a Stack too deep error when viaIR is disabled,,,
-    // function getProposalData(uint256 _proposalId, bool _isBorrowProposal) 
-    //     external
-    //     view
-    //     returns (
-    //         bool,
-    //         address,
-    //         address,
-    //         uint256,
-    //         address,
-    //         uint256,
-    //         uint256,
-    //         uint256,
-    //         uint256,
-    //         uint256,
-    //         uint256,
-    //         uint256,
-    //         bool
-    //     )
-    // {
-    //     CoreLibrary.ProposalStructure memory proposalFromCore = core.getProposalFromCore(_proposalId,_isBorrowProposal);
-
-    //     return (
-    //         proposalFromCore.active,
-    //         proposalFromCore.proposer,
-    //         proposalFromCore.reserveToReceive,
-    //         proposalFromCore.amount,
-    //         proposalFromCore.reserveForCollateral,
-    //         proposalFromCore.collateralAmount,
-    //         proposalFromCore.interestRate,
-    //         proposalFromCore.dueDate,
-    //         proposalFromCore.proposalDate,
-    //         proposalFromCore.serviceFee,
-    //         proposalFromCore.ltv,
-    //         proposalFromCore.tokenId,
-    //         proposalFromCore.isRepayed
-    //     );
-    // }
-
-    
 
 }

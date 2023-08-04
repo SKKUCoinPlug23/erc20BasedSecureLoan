@@ -456,36 +456,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         }
     }
 
-    function liquidationCall(
-        address _collateral,
-        address _reserve,
-        address _user,
-        uint256 _purchaseAmount,
-        bool _receiveAToken
-    ) external payable nonReentrant onlyActiveReserve(_reserve) onlyActiveReserve(_collateral) {
-        address liquidationManager = addressesProvider.getLendingBoardLiquidationManager();
-
-        //solium-disable-next-line
-        (bool success, bytes memory result) = liquidationManager.delegatecall(
-            abi.encodeWithSignature(
-                "liquidationCall(address,address,address,uint256,bool)",
-                _collateral,
-                _reserve,
-                _user,
-                _purchaseAmount,
-                _receiveAToken
-            )
-        );
-        require(success, "Liquidation call failed");
-
-        (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
-
-        if (returnCode != 0) {
-            //error found
-            revert(string(abi.encodePacked("Liquidation failed: ", returnMessage)));
-        }
-    }
-
     function liquidationCallProposeMode(
         uint256 _proposalId,
         bool _isBorrowProposal,
@@ -515,20 +485,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
 
     // WIP : borrowProposal, borrowProposalAccept, getBorrowProposal, lendProposal, lendProposalAccept, getLendProposal
 
-    struct BorrowProposal {
-        bool active;
-        address borrower;
-        address reserveToBorrow;
-        uint256 amount;
-        address reserveForCollateral;
-        uint256 interestRate;
-        uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
-        uint256 proposalDate;
-        uint256 borrowFee;
-        uint256 ltv;
-        uint tokenId;
-    }
-
     event BorrowProposed (
         address indexed _reserveToBorrow,
         address indexed _borrowProposer,
@@ -549,16 +505,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 indexed _proposalId,
         uint256 _amount,
         bool _isBorrowProposal,
-        uint256 _originationFee,
-        uint256 _timestamp
-    );
-
-    event BorrowAccepted (
-        address indexed _reserveToLend,
-        address indexed _lender,
-        address  _borrower,
-        uint256 indexed _proposalId,
-        uint256 _amount,
         uint256 _originationFee,
         uint256 _timestamp
     );
@@ -777,19 +723,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             result[resultIndex++] = core.getProposalFromCore(i,true);
         }
         return result;
-    }
-
-    struct LendProposal {
-        bool active;
-        address lender;
-        address reserveToLend;
-        uint256 amount;
-        address reserveForCollateral;
-        uint256 interestRate;
-        uint256 dueDate; // 추후에 enum으로 구분하여 1개월, 3개월, 6개월 이런식으로 정해서 input하게끔
-        uint256 proposalDate;
-        uint256 lendFee;
-        uint256 ltv;
     }
 
     struct LendLocalVars {
