@@ -91,6 +91,7 @@ library CoreLibrary {
 
     struct ProposalStructure {
         bool active;
+        bool isAccepted;
         address borrower;
         address lender;
         address reserveToReceive;
