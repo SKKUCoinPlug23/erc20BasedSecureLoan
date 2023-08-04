@@ -405,9 +405,9 @@ contract LendingBoardCore is VersionedInitializable {
         compoundInterestRate = 100 + proposalInstance.interestRate;
         balanceIncrease = ((principalBorrowBalance).mul(compoundInterestRate)).div(100) - principalBorrowBalance;
 
-        console.log("   => LBC : principalBorrowBalance : ",principalBorrowBalance);
-        console.log("   => LBC : compoundInterestRate : ",compoundInterestRate);
-        console.log("   => LBC : balanceIncrease : ",balanceIncrease);
+        // console.log("   => LBC : principalBorrowBalance : ",principalBorrowBalance);
+        // console.log("   => LBC : compoundInterestRate : ",compoundInterestRate);
+        // console.log("   => LBC : balanceIncrease : ",balanceIncrease);
 
         updateReserveStateOnBorrowInternal(
             _reserve,
@@ -923,10 +923,8 @@ contract LendingBoardCore is VersionedInitializable {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
         ILendingRateOracle oracle = ILendingRateOracle(addressesProvider.getLendingRateOracle());
 
-        console.log("   => LBC : Current Stable Borrow Rate : ",reserve.currentStableBorrowRate);
 
         if (reserve.currentStableBorrowRate == 0) {
-            console.log("   => LBC : Oracle Lending Rate Applied : ",oracle.getMarketBorrowRate(_reserve));
             //no stable rate borrows yet
             return oracle.getMarketBorrowRate(_reserve);
         }
@@ -1582,7 +1580,7 @@ contract LendingBoardCore is VersionedInitializable {
         CoreLibrary.UserReserveData storage user = usersReserveData[_user][_reserve];
 
         if (_rateMode == CoreLibrary.InterestRateMode.STABLE) {
-            console.log("       => LBC : rate mode STABLE, updateUserStateOnBorrowInternal reserve.currentStableBorrowRate : ",reserve.currentStableBorrowRate);
+            // console.log("       => LBC : rate mode STABLE, updateUserStateOnBorrowInternal reserve.currentStableBorrowRate : ",reserve.currentStableBorrowRate);
             //stable
             //reset the user variable index, and update the stable rate
             user.stableBorrowRate = reserve.currentStableBorrowRate;
@@ -1959,7 +1957,7 @@ contract LendingBoardCore is VersionedInitializable {
         } else if (previousRateMode == CoreLibrary.InterestRateMode.VARIABLE) {
             reserve.decreaseTotalBorrowsVariable(_principalBalance);
         } else{
-            console.log("   => LBC : previous Rate Mode is neither Stable nor Variable");
+            console.log("\x1b[43m %s \x1b[0m", "\n   => LBC : previous Rate Mode is neither Stable nor Variable");
         }
         
         uint256 newPrincipalAmount = _principalBalance.add(_balanceIncrease).add(_amountBorrowed);
@@ -2000,7 +1998,6 @@ contract LendingBoardCore is VersionedInitializable {
             reserve.totalBorrowsVariable,
             reserve.currentAverageStableBorrowRate
         );
-        console.log("       => LBC : updateReserveInterestRatesAndTimestampInternal => newStableRate : ",newStableRate);
         reserve.currentLiquidityRate = newLiquidityRate;
         reserve.currentStableBorrowRate = newStableRate;
         reserve.currentVariableBorrowRate = newVariableRate;
