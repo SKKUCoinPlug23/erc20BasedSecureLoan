@@ -1,5 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
-require('dotenv').config();
+require("dotenv").config();
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
 const SEPOLIA_PRIVATE_KEY1 = process.env.SEPOLIA_PRIVATE_KEY1;
@@ -17,20 +17,34 @@ module.exports = {
     sepolia: {
       loggingEnabled: true,
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: [SEPOLIA_PRIVATE_KEY1,SEPOLIA_PRIVATE_KEY2,SEPOLIA_PRIVATE_KEY3]
-    }
+      accounts: [
+        SEPOLIA_PRIVATE_KEY1,
+        SEPOLIA_PRIVATE_KEY2,
+        SEPOLIA_PRIVATE_KEY3,
+      ],
+    },
+    metadium: {
+      loggingEnabled: true,
+      url: `https://api.metadium.com/dev`,
+      accounts: [
+        SEPOLIA_PRIVATE_KEY1,
+        SEPOLIA_PRIVATE_KEY2,
+        SEPOLIA_PRIVATE_KEY3,
+      ],
+      gasPrice: 80000000000,
+    },
   },
   solidity: {
-    compilers:[
+    compilers: [
       {
         version: "0.8.13",
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200
+            runs: 200,
           },
           viaIR: true,
-        }
+        },
       },
       {
         version: "0.8.6",
@@ -42,11 +56,11 @@ module.exports = {
                 optimizerSteps: "u",
               },
             },
-            runs: 200
+            runs: 200,
           },
           viaIR: true,
-        }
+        },
       },
-    ]
-  }
-}
+    ],
+  },
+};
