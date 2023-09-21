@@ -1034,9 +1034,9 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       // getBorrowProposalList()를 확인하기 위해 동일한 Proposal 두개를 생성한다.
       // await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount2,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
 
-      const generatedBorrowProposal = await hardhatLendingBoardProposeMode
-        .connect(owner)
-        .getBorrowProposal(0);
+      // const generatedBorrowProposal = await hardhatLendingBoardProposeMode
+      //   .connect(owner)
+      //   .getBorrowProposal(0);
 
       const proposalLiquidationAvailability =
         await hardhatLendingBoardDataProvider.getProposalLiquidationAvailability(
@@ -1048,15 +1048,30 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
         proposalLiquidationAvailability
       );
 
+      // Owner's STKN Balance before Proposal Accept
+      var ownerSTKNBalance = await hardhatSampleToken.balanceOf(owner.address);
+
+      console.log(ownerSTKNBalance);
+
       await hardhatLendingBoardProposeMode
         .connect(user1)
         .borrowProposalAccept(0);
+
+      console.log(
+        "========================== Owner's STKN Balance after Proposal Accepted ========================== "
+      );
+
+      // Owner's STKN Balance after Proposal Accept
+      ownerSTKNBalance = await hardhatSampleToken.balanceOf(owner.address);
+
+      console.log(ownerSTKNBalance);
 
       let ownerSTKNReserveData =
         await hardhatLendingBoardDataProvider.getUserReserveData(
           STKNaddress,
           owner.address
         );
+
       console.log(
         "========================== Owner's STKN Reserve Data After Proposal Accepted ========================== "
       );
