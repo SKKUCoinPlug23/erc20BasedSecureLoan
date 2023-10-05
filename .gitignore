@@ -2,6 +2,7 @@
 # Hardhat Compile Cache
 artifacts/
 cache/
+node_modules/
 
 
 # .env for deploy private keys
