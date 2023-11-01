@@ -20,7 +20,7 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 
-const pages = ['Deposit', 'Lend&Borrow', 'Tokens', 'My page'];
+const pages = ['Deposit', 'Lend&Borrow', 'My page'];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
 export function ResponsiveAppBar() {

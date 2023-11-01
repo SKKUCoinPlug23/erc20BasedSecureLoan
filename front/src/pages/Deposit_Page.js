@@ -5,7 +5,7 @@ import './Deposit_Page.css';
 import { BrowserRouter as Router, Routes, Route, BrowserRouter, useNavigate, Link} from 'react-router-dom';
 
 import Card from '@mui/material/Card';
-import { TextField, Box, Button, Dialog, DialogTitle } from '@mui/material';
+import { TextField, Box, Button, Dialog, DialogTitle, InputAdornment } from '@mui/material';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 
@@ -32,7 +32,7 @@ import checkmark_image from '../images/checkmark.png'
 
 
 
-const pages = ['Deposit', 'Lend&Borrow', 'Tokens', 'My page'];
+const pages = ['Deposit', 'Lend&Borrow', 'My page'];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
 export function ResponsiveAppBar() {
@@ -201,11 +201,13 @@ export function ResponsiveAppBar() {
 }
 
 export default function Deposit_Page() {
-  const [selectedCurrency, setSelectedCurrency] = useState("");
+  
   const [inputQuantity, setInputQuantity] = useState("");
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [maxQuantity, setMaxQuantity] = useState(0);
+  const [selectedCurrency, setSelectedCurrency] = useState('');
+  const isLengthInvalid = selectedCurrency.length !== 32;
 
   const currencies = [
     {
@@ -283,20 +285,22 @@ export default function Deposit_Page() {
           marginLeft: '2rem'
         }}
       >
-        <TextField 
-          select 
-          fullWidth 
-          label="Select Currency" 
-          value={selectedCurrency} 
-          onChange={(e) => setSelectedCurrency(e.target.value)}
-          style={{ marginBottom: '1rem' }} 
-        >
-          {currencies.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
+       <TextField
+      fullWidth
+      label="Currency"
+      value={selectedCurrency}
+      onChange={(e) => setSelectedCurrency(e.target.value)}
+      style={{ marginBottom: '1rem' }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">0x</InputAdornment>
+        ),
+      }}
+      error={isLengthInvalid}
+      helperText={isLengthInvalid ? '32자리가 아닙니다!' : ''}
+    />
+
+
         <TextField 
     fullWidth 
     label="Quantity" 

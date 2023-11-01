@@ -20,7 +20,7 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 
-const pages = ['Deposit', 'Lend&Borrow', 'Tokens', 'My page'];
+const pages = ['Deposit', 'Lend&Borrow', 'My page'];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
 export function ResponsiveAppBar() {
@@ -197,14 +197,8 @@ export default function Main_page() {
         <Typography variant="h5" component="div">
           Deposit
         </Typography>
-        <Typography sx={{ mb: 1.5 }} color="text.secondary">
-          A Token, Plug Token
-        </Typography>
-        <Typography variant="body2">  
-          예치를 통해 다양한 서비스를 사용해 보세요.
-          <br />
-          {'"Coinplug"'}
-        </Typography>
+        
+        
       </CardContent>
       <CardActions sx={{ justifyContent: 'center', paddingBottom: '16px' }}>
         <Button 
@@ -239,14 +233,7 @@ export default function Main_page() {
         <Typography variant="h5" component="div">
             Lend & Borrow
         </Typography>
-        <Typography sx={{ mb: 1.5 }} color="text.secondary">
-            A Token, Plug Token
-        </Typography>
-        <Typography variant="body2">
-            대출제안 등 다양한 서비스를 사용해 보세요.
-            <br />
-            {'"Coinplug"'}
-        </Typography>
+        
     </CardContent>
     <CardActions sx={{ justifyContent: 'center' }}>
         <Button 
@@ -279,14 +266,7 @@ export default function Main_page() {
         <Typography variant="h5" component="div">
           My page
         </Typography>
-        <Typography sx={{ mb: 1.5 }} color="text.secondary">
-          A Token, Plug Token
-        </Typography>
-        <Typography variant="body2">
-          내 제안목록 등을 살펴보고 확인해 보세요.
-          <br />
-          {'"Coinplug"'}
-        </Typography>
+       
       </CardContent>
       <CardActions  sx={{ justifyContent: 'center' }}>
       <Button 

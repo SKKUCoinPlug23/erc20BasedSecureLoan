@@ -18,6 +18,11 @@
   .card{
     margin: 0 10px;
   }
+
+  .MuiBackdrop-root {
+    background-color: rgba(0, 0, 0, 0.5); /* 원하는 투명도로 조정 */
+}
+
   .container {
     margin-top: 350px;
     display: flex;

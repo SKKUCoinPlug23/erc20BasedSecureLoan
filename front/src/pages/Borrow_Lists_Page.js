@@ -28,15 +28,26 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {Pagination, PaginationItem} from '@mui/material'
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper'
+import Table from '@mui/material/Table';
 
 
 
 
 
 
-
-
-const pages = ['Deposit', 'Lend&Borrow', 'Tokens', 'My page'];
+const pages = ['Deposit', 'Lend&Borrow', 'My page'];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
 export function ResponsiveAppBar() {
@@ -197,202 +208,214 @@ export function ResponsiveAppBar() {
   );
 }
 
-export function BasicAccordion() {
+
+
+
+
+// export function ListDividers() {
+//   const style = {
+//     width: '120%',
+//     maxWidth: 1000,
+//     bgcolor: 'background.paper',
+//     border: '1px solid black'
+//   };
+
+//   const [page, setPage] = useState(1);
+
+//   const itemsPerPage = 5;
+//   const [items, setItems] = useState([
+//     { text: "Id: B#1241 Address: 0x8a13b14c19a Amount: $3142 Deadline: 23/11/10" },
+//     { text: "Id: B#2181 Address: 0x1c29a11b565 Amount: $8746 Deadline: 23/12/11" },
+//     { text: "Id: B#3574 Address: 0x7c94c1a755c Amount: $6547 Deadline: 24/3/1" },
+//     { text: "Id: B#9453 Address: 0x48ac89c87fa Amount: $5454 Deadline: 24/8/8" },
+//     { text: "Id: B#4846 Address: 0x91ba7898f9c Amount: $7742 Deadline: 24/3/7" },
+//     { text: "Id: B#9745 Address: 0x7845ac54c7b Amount: $4698 Deadline: 24/5/4" },
+//     { text: "Id: B#4731 Address: 0x1b578acd88e Amount: $7412 Deadline: 24/4/5" },
+//     { text: "Id: B#7510 Address: 0xab8e881c41b Amount: $1354 Deadline: 24/1/5" },
+//     { text: "Id: B#3457 Address: 0x784c8ac8ba4 Amount: $7845 Deadline: 24/9/7" },
+//     { text: "Id: B#8541 Address: 0x14ac514c56b Amount: $4459 Deadline: 24/1/4" },
+//     { text: "Id: B#5641 Address: 0x4731c48b4ca Amount: $1894 Deadline: 24/7/7" },
+//     { text: "Id: B#8412 Address: 0x4763bc87a6b Amount: $6212 Deadline: 24/3/6" },
+    
+    
+    
+//   ]);
+
+//   const [openConfirmation, setOpenConfirmation] = useState(false); // 새로운 상태 변수 추가
+//   const [selectedItemIndex, setSelectedItemIndex] = useState(null);
+
+//   const handleChange = (event, value) => {
+//     setPage(value);
+//   };
+
+//   const [open, setOpen] = useState(false);
+//   const [openRepay, setOpenRepay] = useState(false);
+
+//   const handleOpen = (idx) => {
+//     setOpen(true);
+//     setSelectedItemIndex(idx);  // 선택된 항목의 인덱스 저장
+//   };
+
+//   const handleClose = () => {
+//     setOpen(false);
+//   };
+
+//   // 현재 선택된 항목의 인덱스를 저장하기 위한 상태
+
+// // ...
+
+// const handleConfirmationOpen = () => {
+//   setOpen(false);
+//   setOpenConfirmation(true);
+// };
+
+// const handleConfirmationClose = () => {
+//   if (selectedItemIndex !== null) {
+//     const newItems = [...items];  // items 배열 복제
+//     newItems.splice((page - 1) * itemsPerPage + selectedItemIndex, 1);
+//     setItems(newItems);  // 상태 갱신
+//   }
+//   setOpenConfirmation(false);
+// };
+
+
+
+// return (
+//   <div>
+//     <List sx={style} component="nav" aria-label="mailbox folders">
+//       {items.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((item, idx) => (
+//         <React.Fragment key={idx}>
+//           <ListItem button>
+//             <ListItemText 
+//               primary={
+//                 <>
+//                   <span style={{ color: 'blue' }}>Id:</span> {item.text.split("Address:")[0].replace("Id:", "")}
+//                   <span style={{ color: 'blue' }}>Address:</span> {item.text.split("Amount:")[0].replace("Id:" + item.text.split("Address:")[0].replace("Id:", ""), "")}
+//                   <span style={{ color: 'blue' }}>Amount:</span> {item.text.split("Deadline:")[0].replace(item.text.split("Amount:")[0], "")}
+//                   Deadline: {item.text.split("Deadline:")[1]}
+//                 </>
+//               } 
+//             />
+//             <Button variant="contained" color="primary" onClick={() => handleOpen(idx)}>
+//               Borrow
+//             </Button>
+//           </ListItem>
+//           {(idx < itemsPerPage - 1) && <Divider />}
+//         </React.Fragment>
+//       ))}
+//     </List>
+
+
+//       <Dialog
+//   open={open}
+//   onClose={handleClose}
+// >
+//   <DialogTitle>{"Borrow"}</DialogTitle>
+//   <DialogContent>
+//     <DialogContentText>
+//      계속진행하시겠습니까?
+//     </DialogContentText>
+//   </DialogContent>
+//   <DialogActions>
+//     <Button onClick={handleClose} color="primary">
+//       취소
+//     </Button>
+//     <Button onClick={handleConfirmationOpen} color="primary" autoFocus>
+//       확인
+//     </Button>
+//   </DialogActions>
+// </Dialog>
+
+//       <Dialog
+//   open={openConfirmation}
+//   onClose={handleConfirmationClose}
+// >
+//   <DialogTitle>{"알림"}</DialogTitle>
+//   <DialogContent>
+//     <DialogContentText>
+//      완료되었습니다!
+//     </DialogContentText>
+//   </DialogContent>
+//   <DialogActions>
+//     <Button onClick={handleConfirmationClose} color="primary" autoFocus>
+//       닫기
+//     </Button>
+//   </DialogActions>
+// </Dialog>
+
+      
+
+//       <Pagination 
+//         count={Math.ceil(items.length / itemsPerPage)} 
+//         page={page} 
+//         onChange={handleChange}
+//         renderItem={(item) => (
+//           <PaginationItem
+//             {...item}
+//           />
+//         )}
+//       />
+//     </div>
+//   );
+// }
+
+function createData(Borrow_ID, Address, Amount, Deadline) {
+  return {Borrow_ID, Address, Amount, Deadline};
+}
+
+const rows = [
+  createData('B#1241', '0x8a13b14c19a', '$3142', '23/11/10'),
+  createData('B#5579', '0x1c29a11b565', '$8746', '23/12/11'),
+  createData('B#7641', '0x7c94c1a755c', '$6547', '24/11/10'),
+  createData('B#4871', '0x78ac5697b4f', '$8912', '24/5/7'),
+  createData('B#9785', '0xff789a4cb87', '$12684', '24/7/30'),
+  
+];
+
+export function BasicTable() {
   return (
-    <div>
-     <Accordion sx={{minwidth: 500, border: '1px solid black'}}>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
-          <Typography>대출ID: B#1241 </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-  <div>
-    <Typography component="span" sx={{ color: 'blue' }}>Address:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> 0x8a13b14c19a</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Amount:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> $3142</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Redemption deadline:</Typography>
-    <Typography component="span"> 23/11/10</Typography>
-  </div>
-  <Button size="small" color="primary" component={Link} to="/Deposit_Page">
-    repay
-  </Button>
-</AccordionDetails>
+    <TableContainer component={Paper} sx={{ maxWidth: 900, height: 330, border: '1px solid black' }}>
+      <Table sx={{ maxWidth: 900 }} aria-label="simple table">
+      <TableHead>
+  <TableRow>
+    <TableCell sx={{ color: 'blue' }}>Borrow_ID</TableCell>
+    <TableCell align="right" sx={{ color: 'blue' }}>Address</TableCell>
+    <TableCell align="right" sx={{ color: 'blue' }}>Amount</TableCell>
+    <TableCell align="right" sx={{ color: 'blue' }}>Deadline</TableCell>
+    <TableCell align="center" sx={{ color: 'blue' }}>Action</TableCell> {/* 추가된 헤더 셀 */}
+  </TableRow>
+</TableHead>
 
-      </Accordion>
-      <Accordion sx={{border: '1px solid black'}}>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
-          <Typography>대출ID: B#3819 </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-  <div>
-    <Typography component="span" sx={{ color: 'blue' }}>Address:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> 0x8a13b14c19a</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Amount:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> $3142</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Redemption deadline:</Typography>
-    <Typography component="span"> 23/11/10</Typography>
-  </div>
-  <Button size="small" color="primary" component={Link} to="/Deposit_Page">
-    repay
-  </Button>
-</AccordionDetails>
 
-      </Accordion>
-      <Accordion sx={{border: '1px solid black'}}>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
-          <Typography>대출ID: B#3819 </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-  <div>
-    <Typography component="span" sx={{ color: 'blue' }}>Address:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> 0x8a13b14c19a</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Amount:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> $3142</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Redemption deadline:</Typography>
-    <Typography component="span"> 23/11/10</Typography>
-  </div>
-  <Button size="small" color="primary" component={Link} to="/Deposit_Page">
-    repay
-  </Button>
-</AccordionDetails>
-
-      </Accordion><Accordion sx={{border: '1px solid black'}}>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
-          <Typography>대출ID: B#3819 </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-  <div>
-    <Typography component="span" sx={{ color: 'blue' }}>Address:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> 0x8a13b14c19a</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Amount:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> $3142</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Redemption deadline:</Typography>
-    <Typography component="span"> 23/11/10</Typography>
-  </div>
-  <Button size="small" color="primary" component={Link} to="/Deposit_Page">
-    repay
-  </Button>
-</AccordionDetails>
-
-      </Accordion><Accordion sx={{border: '1px solid black'}}>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
-          <Typography>대출ID: B#3819 </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-  <div>
-    <Typography component="span" sx={{ color: 'blue' }}>Address:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> 0x8a13b14c19a</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Amount:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> $3142</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Redemption deadline:</Typography>
-    <Typography component="span"> 23/11/10</Typography>
-  </div>
-  <Button size="small" color="primary" component={Link} to="/Deposit_Page">
-    repay
-  </Button>
-</AccordionDetails>
-
-      </Accordion><Accordion sx={{border: '1px solid black'}}>
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
-          <Typography>대출ID: B#3819 </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-  <div>
-    <Typography component="span" sx={{ color: 'blue' }}>Address:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> 0x8a13b14c19a</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Amount:</Typography>
-    <Typography component="span" sx={{ marginRight: 4 }}> $3142</Typography>
-    <Typography component="span" sx={{ color: 'blue' }}>Redemption deadline:</Typography>
-    <Typography component="span"> 23/11/10</Typography>
-  </div>
-  <Button size="small" color="primary" component={Link} to="/Deposit_Page">
-    repay
-  </Button>
-</AccordionDetails>
-
-      </Accordion>
-    </div>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow
+              key={row.Borrow_ID}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              <TableCell component="th" scope="row">
+                {row.Borrow_ID}
+              </TableCell>
+              <TableCell align="right">{row.Address}</TableCell>
+              <TableCell align="right">{row.Amount}</TableCell>
+              <TableCell align="right">{row.Deadline}</TableCell>
+              <TableCell align="center">
+        <Button variant="contained" color="primary">
+          Borrow
+        </Button>
+      </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
-
 }
 
 
 
-export function ListDividers() {
-
-  const style = {
-    width: '100%',
-    maxWidth: 760,
-    bgcolor: 'skyblue',
-    border: '2px solid black',
-    marginRight: 12,
-  };
 
 
- 
-  return (
-    
-    <List sx={style} component="nav" aria-label="mailbox folders">
-      <ListItem button>
-
-        <ListItemText primary="Address" />
-        <div style={{ color: 'red' }}>repay</div>
-      </ListItem>
-      <Divider />
-      <ListItem button divider>
-        <ListItemText primary="Address" />
-      </ListItem>
-      <ListItem button>
-        <ListItemText primary="Address" />
-      </ListItem>
-      <Divider light />
-      <ListItem button>
-        <ListItemText primary="Address" />
-        
-      </ListItem>
-      <Divider light />
-      <ListItem button>
-        <ListItemText primary="Address" />
-        
-      </ListItem>
-      <Divider light />
-      <ListItem button>
-        <ListItemText primary="Address" />
-        
-      </ListItem>
-      <Divider light />
-      <ListItem button>
-        <ListItemText primary="Address" />
-        
-      </ListItem>
-    </List>
-    
-  );
-}
 
 export default function Deposit_Page() {
 
@@ -404,27 +427,9 @@ export default function Deposit_Page() {
         <ResponsiveAppBar />
        
         <div className="container">
-        <BasicAccordion />
-        <Card className="card" sx={{ minWidth: 275, minHeight: 355, border: '2px solid black', display: 'flex', flexDirection: 'column'}}>
-        <CardContent sx={{ flex: 1 }}>
+        {/* <ListDividers /> */}
+        < BasicTable />
         
-        <Typography variant="h5" component="div" sx={{ marginTop: 7, fontSize: '2rem' }}>
-          Redeem
-        </Typography>
-        <Typography sx={{ mb: 1.5, marginTop: 4}} color="text.secondary">
-          A Token, Plug Token, S Token
-        </Typography>
-        <Typography variant="body2" sx={{marginTop: 6}}>  
-          다양한 자산들의 종류와 현재 가치를 확인해 보세요
-        
-        </Typography>
-        </CardContent>
-  <CardActions sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: 'auto' }}>
-    <Button size="small" color="primary" component={Link} to="/Deposit_Page">
-      내 자산 확인하러 가기
-    </Button>
-  </CardActions>
-    </Card>
           
         
 

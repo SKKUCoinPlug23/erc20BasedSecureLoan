@@ -15,32 +15,15 @@
     pointer-events: none;
   }
   
-  .card {
-    background-color: #eee;
-    padding: 10px;
-    border: 1px solid #ddd;
-    height: 170px;
+  .card{
+    margin: 0 10px;
   }
-  .grid-container {
-    display: grid;
-    margin-top: 320px;
-    margin-left: 100px;
-  
-    grid-template-columns: 1fr, 1fr, 1fr;  /* 2개의 동일한 너비의 열 + 큰 카드를 위한 열 */
-    grid-template-rows: 1fr, 1fr;          /* 2개의 동일한 높이의 행 */
-    gap: 10px;   
-    width: 80%;  
-    height: 350px;                                /* 카드 사이의 간격 */
-  }
-  .large-card {
-    background-color: #ddd;
-    padding: 20px;
-    border: 1px solid #ccc;
-    grid-column-start: 3;
-    grid-column-end: 4;
-    grid-row-start: 1;
-    grid-row-end: 3; 
-                              
+  .container {
+    margin-top: 350px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: 100vh;
   }
   
   .box {

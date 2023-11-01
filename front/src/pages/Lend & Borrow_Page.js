@@ -20,7 +20,7 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 
-const pages = ['Deposit', 'Lend&Borrow', 'Tokens', 'My page'];
+const pages = ['Deposit', 'Lend&Borrow', 'My page'];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 
 export function ResponsiveAppBar() {
@@ -239,15 +239,15 @@ export default function Main_page() {
       {renderCard("투자를 해보세요.", "E Token, Plug Token", "투자를 통해 다양한 이익을 얻어 보세요.")}
     </div> */}
 
-<div className="container">
+<div className="grid-container">
           
-          <Card className="card" sx={{ minWidth: 250, border: '2px solid black'}}>
+          <Card className="card" >
         <CardContent>
           <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
             자금을 예치해보세요.
           </Typography>
           <Typography variant="h5" component="div">
-            Lend Lists
+            Lend
           </Typography>
           <Typography variant="body2">  
             Lend 목록들을 살펴보세요
@@ -280,13 +280,13 @@ export default function Main_page() {
   
   
   
-  <Card className="card" sx={{ minWidth: 250, border: '2px solid black' }}>
+  <Card className="card">
       <CardContent>
           <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
               대출을 제안해보세요.
           </Typography>
           <Typography variant="h5" component="div">
-              Borrow Lists
+              Borrow
           </Typography>
           <Typography variant="body2">
               Borrow 목록들을 살펴보세요
@@ -317,13 +317,13 @@ export default function Main_page() {
       </CardActions>
   </Card>
   
-      <Card className="card" sx={{ minWidth: 250, border: '2px solid black' }}>
+      <Card className="card" >
         <CardContent>
           <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
             내 자산을 확인해 보세요.
           </Typography>
           <Typography variant="h5" component="div">
-            Lend Proposals
+            Lend Proposal
           </Typography>
           <Typography variant="body2">
             대출제안 목록을 살펴보세요.
@@ -336,7 +336,7 @@ export default function Main_page() {
               size="medium" 
               color="primary" 
               component={Link} 
-              to="/My_Page"
+              to="/Lend_Proposal_Page"
               sx={{
                 border: '2px solid deepskyblue', 
                 borderRadius: '4px', 
@@ -354,13 +354,13 @@ export default function Main_page() {
         </CardActions>
       </Card>
 
-      <Card className="card" sx={{ minWidth: 250, border: '2px solid black' }}>
+      <Card className="card" >
         <CardContent>
           <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
             내 자산을 확인해 보세요.
           </Typography>
           <Typography variant="h5" component="div">
-            Borrow Proposals
+            Borrow Proposal
           </Typography>
           <Typography variant="body2">
             대출제안 목록들을 살펴보세요.
@@ -373,7 +373,7 @@ export default function Main_page() {
               size="medium" 
               color="primary" 
               component={Link} 
-              to="/My_Page"
+              to="/Borrow_Proposal_Page"
               sx={{
                 border: '2px solid deepskyblue', 
                 borderRadius: '4px', 
@@ -391,13 +391,13 @@ export default function Main_page() {
         </CardActions>
       </Card>
 
-      <Card className="card" sx={{ minWidth: 250, border: '2px solid black' }}>
+      <Card className="large-card" >
         <CardContent>
           <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
             내 자산을 확인해 보세요.
           </Typography>
           <Typography variant="h5" component="div">
-            Liquidation Lists
+            Liquidation
           </Typography>
           <Typography variant="body2">
             청산제안들을 살펴보세요.
@@ -410,7 +410,7 @@ export default function Main_page() {
               size="medium" 
               color="primary" 
               component={Link} 
-              to="/My_Page"
+              to="/Liquidation_Lists_Page"
               sx={{
                 border: '2px solid deepskyblue', 
                 borderRadius: '4px', 

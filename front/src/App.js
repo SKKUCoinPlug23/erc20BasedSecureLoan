@@ -9,6 +9,8 @@ import Borrow_Lists_Page from "./pages/Borrow_Lists_Page"
 import Lend_Proposal_Page from "./pages/Lend_Proposal_Page"
 import Borrow_Proposal_Page from "./pages/Borrow_Proposal_Page"
 import Liquidation_Lists_Page from "./pages/Liquidation_Lists_Page"
+import My_Proposals from "./pages/My_Proposals"
+
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -28,6 +30,8 @@ function App() {
           <Route path="/Lend_Proposal_Page" element={<Lend_Proposal_Page />}></Route>
           <Route path="/Borrow_Proposal_Page" element={<Borrow_Proposal_Page />}></Route>
           <Route path="/Liquidation_Lists_Page" element={<Liquidation_Lists_Page />}></Route>
+          <Route path="/My_Proposals" element={<My_Proposals />}></Route>
+
           
         </Routes>
     </div>

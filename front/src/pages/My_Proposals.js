@@ -208,16 +208,16 @@ export function ResponsiveAppBar() {
 // InformationCard 컴포넌트
 export function InformationCard({ totalProfit, maxProfit, rowCount }) {
   return (
-    <Card sx={{ minWidth: 275, width: '1000px', height: '60px', border: '1px solid #000', marginBottom: '20px', marginTop: '-160px' }}>
+    <Card sx={{ minWidth: 275, width: '1000px', height: '60px', border: '1px solid #000', marginBottom: '30px', marginTop: '-130px' }}>
       <CardContent style={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography color='black' sx={{ fontSize: 18 }}>
-          Data Grid Rows: {rowCount}
+          제안 개수: {rowCount}
         </Typography>
         <Typography color='black' sx={{ fontSize: 18, margin: '40 100px' }}>
-          Maximum Profit: ${maxProfit.toFixed(2)}
+          최대금액: ${maxProfit.toFixed(2)}
         </Typography>
         <Typography style={{ color: 'black', fontSize: '18px' }}>
-          Total Profit: ${totalProfit.toFixed(2)}
+          총 제안 금액: ${totalProfit.toFixed(2)}
         </Typography>
       </CardContent>
     </Card>
@@ -226,40 +226,30 @@ export function InformationCard({ totalProfit, maxProfit, rowCount }) {
 
 
 const columns = [
-  { field: 'id', headerName: 'ID', width: 100 },
-  { field: 'Coin_Paid', headerName: 'Coin_Paid', width: 200 },
-  { field: 'Coin_Received', headerName: 'Coin_Received', width: 250 },
+  { field: 'id', headerName: 'ID', width: 150 },
+  { field: 'Coin_Paid', headerName: '구분', width: 300 },
+  { field: 'Coin_Received', headerName: '자산 종류', width: 300 },
   
 {
   field: 'Total_Profit',
-  headerName: 'Total_Profit',
+  headerName: '금액',
  
   
   width: 250
 },
-{
-    field: 'liquidation',
-    headerName: 'Liquidation',
-    sortable: false,
-    width: 150,
-    renderCell: (params) => (
-      <Button variant="contained" color="primary">
-        Liquidation
-      </Button>
-    ),
-  },
+
 ];
 
 const rows = [
-  { id: 1, Coin_Received: 'Bitcoin', Coin_Paid: 'Ethereum', age: 35, Total_Profit: 103.89 },
-  { id: 2, Coin_Received: 'PlugToken', Coin_Paid: 'AToken', age: 42, Total_Profit: 74.47 },
-  { id: 3, Coin_Received: 'SToken', Coin_Paid: 'SToken', age: 45, Total_Profit: 62.78 },
-  { id: 4, Coin_Received: 'PlugToken', Coin_Paid: 'AToken', age: 16, Total_Profit: 147.34 },
-  { id: 5, Coin_Received: 'Bitcoin', Coin_Paid: 'Ethereum', age: 47, Total_Profit: 200.97 },
-  { id: 6, Coin_Received: 'Bitcoin', Coin_Paid: 'SToken', age: 14, Total_Profit: 36.09 },
-  { id: 7, Coin_Received: 'AToken', Coin_Paid: 'PlugToken', age: 44, Total_Profit: 94.69 },
-  { id: 8, Coin_Received: 'Ethereum', Coin_Paid: 'Ethereum', age: 36, Total_Profit: 456.14 },
-  { id: 9, Coin_Received: 'SToken', Coin_Paid: 'AToken', age: 65, Total_Profit: 784.71 },
+  { id: 1, Coin_Received: 'Bitcoin', Coin_Paid: 'LendProposal', age: 35, Total_Profit: 103.89 },
+  { id: 2, Coin_Received: 'PlugToken', Coin_Paid: 'LendProposal', age: 42, Total_Profit: 74.47 },
+  { id: 3, Coin_Received: 'SToken', Coin_Paid: 'LendProposal', age: 45, Total_Profit: 62.78 },
+  { id: 4, Coin_Received: 'PlugToken', Coin_Paid: 'LendProposal', age: 16, Total_Profit: 147.34 },
+  { id: 5, Coin_Received: 'Bitcoin', Coin_Paid: 'LendProposal', age: 47, Total_Profit: 200.97 },
+  { id: 6, Coin_Received: 'Bitcoin', Coin_Paid: 'BorrowProposal', age: 14, Total_Profit: 36.09 },
+  { id: 7, Coin_Received: 'AToken', Coin_Paid: 'BorrowProposal', age: 44, Total_Profit: 94.69 },
+  { id: 8, Coin_Received: 'Ethereum', Coin_Paid: 'BorrowProposal', age: 36, Total_Profit: 456.14 },
+  { id: 9, Coin_Received: 'SToken', Coin_Paid: 'BorrowProposal', age: 65, Total_Profit: 784.71 },
 ];
 
 
@@ -281,6 +271,7 @@ const handleClose = () => {
   return (
     <div style={{ height: 400, width: '100%', width: '1000px' }}>
       <DataGrid
+      columnWidth={200}
         rows={rows}
         columns={columns.map((col) => {
           if (col.field === 'liquidation') {
@@ -291,27 +282,7 @@ const handleClose = () => {
                   <Button variant="contained" color="primary" onClick={handleClickOpen}>
                     Liquidation
                   </Button>
-                  <Dialog
-  open={open}
-  onClose={handleClose}
-  slotProps={{
-    backdrop: {
-      style: {
-        backgroundColor: 'rgba(0, 0, 0, 0.0)', // 원하는 스타일 적용
-      },
-    },
-  }}
->
-                    <DialogTitle>{"진행하시겠습니까?"}</DialogTitle>
-                    <DialogActions>
-                      <Button onClick={handleClose} color="primary">
-                        아니오
-                      </Button>
-                      <Button onClick={handleClose} color="primary" autoFocus>
-                        예
-                      </Button>
-                    </DialogActions>
-                  </Dialog>
+                 
                 </>
               )
             };
