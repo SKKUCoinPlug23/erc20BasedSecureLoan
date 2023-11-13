@@ -9,21 +9,22 @@ import Lend_Proposal_Page from "./pages/Lend_Proposal_Page"
 import Borrow_Proposal_Page from "./pages/Borrow_Proposal_Page"
 import Liquidation_Lists_Page from "./pages/Liquidation_Lists_Page"
 import My_Proposals from "./pages/My_Proposals"
-import Testpage from "./pages/Testpage"
+import Homepage from "./pages/Homepage"
 import My_Assets from "./pages/My_Assets"
 import NFT_Page from "./pages/NFT_Page"
 
-
+import { useState, useEffect, useCallback } from "react";
 
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 
 function App() {
+
   return (
     <div className="App">
         <Routes>
-          <Route path="/" element={<Testpage />}></Route>
+          <Route path="/" element={<Homepage />}></Route>
           <Route path="/Deposit_Page" element={<Deposit_Page />}></Route>
           <Route path="/Deposit_Page_2" element={<Deposit_Page_2 />}></Route>
           <Route path="/My_page" element={<My_page />}></Route>

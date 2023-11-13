@@ -13,8 +13,8 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Button from '@mui/material/Button';
-import wemix_image from '../images/wemix.png'
-
+import wemix_image from '../images/wemix.png';
+import WalletCard from './Walletconnet';
 
 
 
@@ -229,7 +229,9 @@ export default function Paperbase() {
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <Header onDrawerToggle={handleDrawerToggle} />
           <Box component="main" sx={{ flex: 1, py: 6, px: 4, bgcolor: '#eaeff1' }}>
+            <WalletCard/>
             <ImgMediaCard />
+            
           </Box>
           <Box component="footer" sx={{ p: 2, bgcolor: '#eaeff1' }}>
             <Copyright />
