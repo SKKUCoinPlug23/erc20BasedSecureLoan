@@ -59,22 +59,17 @@ async function main() {
   await hardhatLendingBoardProposeMode.deployed();
   const hardhatLendingBoardCore = await LendingBoardCore.deploy();
   await hardhatLendingBoardCore.deployed();
-  const hardhatLendingBoardConfigurator =
-    await LendingBoardConfigurator.deploy();
+  const hardhatLendingBoardConfigurator = await LendingBoardConfigurator.deploy();
   await hardhatLendingBoardConfigurator.deployed();
-  const hardhatLendingBoardDataProvider =
-    await LendingBoardDataProvider.deploy();
+  const hardhatLendingBoardDataProvider = await LendingBoardDataProvider.deploy();
   await hardhatLendingBoardDataProvider.deployed();
-  const hardhatLendingBoardParametersProvider =
-    await LendingBoardParametersProvider.deploy();
+  const hardhatLendingBoardParametersProvider = await LendingBoardParametersProvider.deploy();
   await hardhatLendingBoardParametersProvider.deployed();
   const hardhatLendingBoardFeeProvider = await LendingBoardFeeProvider.deploy();
   await hardhatLendingBoardFeeProvider.deployed();
-  const hardhatLendingBoardLiquidationManager =
-    await LendingBoardLiquidationManager.deploy();
+  const hardhatLendingBoardLiquidationManager = await LendingBoardLiquidationManager.deploy();
   await hardhatLendingBoardLiquidationManager.deployed();
-  const hardhatLendingBoardAddressesProvider =
-    await LendingBoardAddressesProvider.deploy();
+  const hardhatLendingBoardAddressesProvider = await LendingBoardAddressesProvider.deploy();
   await hardhatLendingBoardAddressesProvider.deployed();
   const hardhatTestOracle = await TestOracle.deploy();
   await hardhatTestOracle.deployed();
@@ -86,6 +81,8 @@ async function main() {
   await hardhatLendingBoardNFT.deployed();
   // Test -> might be erased
   console.log("hardhatLendingBoardAddressesProvider deployed to : ", hardhatLendingBoardAddressesProvider.address);
+  console.log("hardhatLendingBoardConfigurator deployed to : ", hardhatLendingBoardConfigurator.address);
+  console.log("hardhatLendingBoardDataProvider deployed to : ", hardhatLendingBoardDataProvider.address);
   console.log("NFT Token Deployed to : ", hardhatLendingBoardNFT.address);
   console.log("\x1b[43m%s\x1b[0m", "\nSmart Contract Deployment Successful");
 
@@ -298,15 +295,12 @@ async function main() {
   let approvalResult = await hardhatSampleToken
     .connect(owner)
     .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
-  console.log("Pass 1");
   approvalResult = await hardhatPlugToken
     .connect(owner)
     .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
-  console.log("Pass 2");
 
   // deposit() 이용하여 서비스에 STKN 예치
   const depositAmount = ethers.utils.parseEther("1000");
-  console.log("Pass 3");
 
   estimatedGas = await hardhatLendingBoardProposeMode
     .connect(owner)
