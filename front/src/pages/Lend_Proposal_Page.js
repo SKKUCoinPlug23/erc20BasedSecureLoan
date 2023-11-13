@@ -3,7 +3,11 @@ import { useState, useEffect, useRef } from 'react';
 import BasicCard from '@mui/material/Card';
 import './Lend_Proposal_Page.css';
 import { BrowserRouter as Router, Routes, Route, BrowserRouter, useNavigate, Link} from 'react-router-dom';
-
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import CssBaseline from '@mui/material/CssBaseline';
+import Navigator from './Navigator';
+import Header from './Header';
 import Card from '@mui/material/Card';
 import { TextField, Box, Button, Dialog, DialogTitle,  InputAdornment } from '@mui/material';
 import CardActions from '@mui/material/CardActions';
@@ -27,180 +31,171 @@ import error_image from '../images/pngwing.com.png'
 import checkmark_image from '../images/checkmark.png'
 
 
+export default function Lend_Proposal_Page() {
 
-
-
-
-
-const pages = ['Deposit', 'Lend&Borrow', 'My page'];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
-
-export function ResponsiveAppBar() {
-  const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const navigate = useNavigate();
-
- 
-
-
-
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = (page) => {
-    if (page === 'My page') {
-        navigate('/My_page');
-    }
-    // 메뉴를 닫는 로직 (예: 상태 변경)
-};
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-
+  function Copyright() {
+    return (
+      <Typography variant="body2" color="text.secondary" align="center">
+        {'Copyright © '}
+        <Link color="inherit" href="https://mui.com/">
+          Your Website
+        </Link>{' '}
+        {new Date().getFullYear()}.
+      </Typography>
+    );
+  }
   
-
+  let theme = createTheme({
+    palette: {
+      primary: {
+        light: '#63ccff',
+        main: '#009be5',
+        dark: '#006db3',
+      },
+    },
+    typography: {
+      h5: {
+        fontWeight: 500,
+        fontSize: 26,
+        letterSpacing: 0.5,
+      },
+    },
+    shape: {
+      borderRadius: 8,
+    },
+    components: {
+      MuiTab: {
+        defaultProps: {
+          disableRipple: true,
+        },
+      },
+    },
+    mixins: {
+      toolbar: {
+        minHeight: 48,
+      },
+    },
+  });
   
+  theme = {
+    ...theme,
+    components: {
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: '#081627',
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+          },
+          contained: {
+            boxShadow: 'none',
+            '&:active': {
+              boxShadow: 'none',
+            },
+          },
+        },
+      },
+      MuiTabs: {
+        styleOverrides: {
+          root: {
+            marginLeft: theme.spacing(1),
+          },
+          indicator: {
+            height: 3,
+            borderTopLeftRadius: 3,
+            borderTopRightRadius: 3,
+            backgroundColor: theme.palette.common.white,
+          },
+        },
+      },
+      MuiTab: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+            margin: '0 16px',
+            minWidth: 0,
+            padding: 0,
+            [theme.breakpoints.up('md')]: {
+              padding: 0,
+              minWidth: 0,
+            },
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            padding: theme.spacing(1),
+          },
+        },
+      },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: {
+            borderRadius: 4,
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            backgroundColor: 'rgb(255,255,255,0.15)',
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            '&.Mui-selected': {
+              color: '#4fc3f7',
+            },
+          },
+        },
+      },
+      MuiListItemText: {
+        styleOverrides: {
+          primary: {
+            fontSize: 14,
+            fontWeight: theme.typography.fontWeightMedium,
+          },
+        },
+      },
+      MuiListItemIcon: {
+        styleOverrides: {
+          root: {
+            color: 'inherit',
+            minWidth: 'auto',
+            marginRight: theme.spacing(2),
+            '& svg': {
+              fontSize: 20,
+            },
+          },
+        },
+      },
+      MuiAvatar: {
+        styleOverrides: {
+          root: {
+            width: 32,
+            height: 32,
+          },
+        },
+      },
+    },
+  };
+  
+  const drawerWidth = 256;
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
 
-  return (
-    <AppBar position="fixed" sx={{ height: 300 }}>
-      <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
-          <Typography
-            variant="h6"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              mr: 2,
-              display: { xs: 'none', md: 'flex' },
-              // fontFamily: 'monospace',
-              fontWeight: 700,
-              // letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            Coinplug
-          </Typography>
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-              sx={{
-                display: { xs: 'block', md: 'none' },
-              }}
-            >
-              {pages.map((page) => (
-                <MenuItem key={page} 
-                onClick={handleCloseNavMenu}
-                >
-                  <Typography textAlign="center">{page}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-          <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              mr: 2,
-              display: { xs: 'flex', md: 'none' },
-              flexGrow: 1,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            LOGO
-          </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, paddingLeft: 10 }}>
-    {pages.map((page) => (
-        <Button
-            key={page}
-            onClick={() => handleCloseNavMenu(page)}
-            sx={{ my: 2, ml: 2, mr: 2, color: 'white', display: 'block' }}
-        >
-            {page}
-        </Button>
-    ))}
-</Box>
-
-
-
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-        </Toolbar>
-        <div style={{ padding: '10px',paddingTop: '50px',paddingLeft: '230px', textAlign: 'left', color: '#fff' }}>
-        코인플러그 대출 서비스는 대출 제안 목록들을 제시해 사용자들의 1대1 계약에 도움을 주며<br />
-         성사된 계약은 nft 형태의 부채 정보가 있는 채권으로 만들어 구매할 수 있는 기회를 사용자들에게 제공합니다.<br />
-          또한 원하는 토큰을 빌릴 수 있는 기회를 제공하는 등 다양한 DeFi서비스를 운영합니다.
-      </div>
-      </Container>
-    </AppBar>
-  );
-}
-
-export default function Deposit_Page() {
   const [selectedCurrency, setSelectedCurrency] = useState("");
   const [inputQuantity, setInputQuantity] = useState("");
   const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -271,14 +266,34 @@ export default function Deposit_Page() {
 
   return (
     <div className="App">
-      <ResponsiveAppBar />
-      <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingLeft: '10rem' }}>
+      <ThemeProvider theme={theme}>
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+
+            <CssBaseline />
+            <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+              {isSmUp ? null : (
+                <Navigator
+                  PaperProps={{ style: { width: drawerWidth } }}
+                  variant="temporary"
+                  open={mobileOpen}
+                  onClose={handleDrawerToggle}
+                />
+              )}
+              <Navigator
+                PaperProps={{ style: { width: drawerWidth } }}
+                sx={{ display: { sm: 'block', xs: 'none' } }}
+              />
+            </Box>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Header onDrawerToggle={handleDrawerToggle} title="Lend_Proposal" />
+                <Box component="main" sx={{ display: 'flex', py: 8, px: 4 }}>
+
         
-        <div style={{ display: 'flex', alignItems: 'center' }}> 
+        {/* <div style={{ display: 'flex', alignItems: 'center' }}>  */}
           {/* This div wraps both the Card and the TextField Boxes */}
           
           {/* Card */}
-          <Card sx={{ maxWidth: 300, height: '350px', border: '2px solid black', margin: '1rem', marginTop: '-20px' }}>
+          <Card sx={{ maxWidth: 300, height: '350px', border: '0.5px solid black', margin: '1rem', marginTop: '-20px' }}>
             <CardMedia
               sx={{ height: 140 }}
               image={bitcon_image}
@@ -305,20 +320,6 @@ export default function Deposit_Page() {
           marginLeft: '2rem'
         }}
       >
-        {/* <TextField 
-          select 
-          fullWidth   
-          label="Select Currency" 
-          value={selectedCurrency} 
-          onChange={(e) => setSelectedCurrency(e.target.value)}
-          style={{ marginBottom: '1rem' }} 
-        >
-          {currencies.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField> */}
         <TextField
       fullWidth
       label="Currency"
@@ -341,10 +342,25 @@ export default function Deposit_Page() {
     style={{ marginBottom: '1rem' }}
 />
 
+<TextField
+      fullWidth
+      label="Reserve for collateral"
+      value={selectedCurrency}
+      onChange={(e) => setSelectedCurrency(e.target.value)}
+      style={{ marginBottom: '1rem' }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">0x</InputAdornment>
+        ),
+      }}
+      error={isLengthInvalid}
+      helperText={isLengthInvalid ? '32자리가 아닙니다!' : ''}
+    />
+
 <TextField 
     select 
     fullWidth 
-    label="Loan Period" 
+    label="Loan Period(month)" 
     value={loanPeriod}   
     onChange={(e) => setLoanPeriod(e.target.value)}
     style={{ marginBottom: '1rem' }}
@@ -423,10 +439,16 @@ export default function Deposit_Page() {
           </CardActions>
         </Card>
       </Dialog>
+      </Box>
+              <Box component="footer" sx={{ p: 2, bgcolor: '#eaeff1' }}>
+                <Copyright />
+              </Box>
+            </Box>
+          </Box>
+        </ThemeProvider>
 
-    </div>
+    {/* </div> */}
 
-      </div>
     </div>
   );
 }

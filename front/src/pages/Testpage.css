@@ -2,10 +2,6 @@
     text-align: center;
   }
   
-  .boldHeader {
-    font-weight: bold !important;
-  }
-  
   .black-nav {
     display: flex;
     background: black;

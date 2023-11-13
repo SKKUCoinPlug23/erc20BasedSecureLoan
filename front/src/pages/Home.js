@@ -218,7 +218,26 @@ export default function Main_page() {
               }
             }}
         >
-            예치하러 가기
+          예치하러 가기
+          </Button>
+          <Button 
+            size="medium" 
+            color="primary" 
+            component={Link} 
+            to="/Testpage"
+            sx={{
+              border: '2px solid deepskyblue', 
+              borderRadius: '4px', 
+              padding: '4px 24px', 
+              backgroundColor: 'deepskyblue',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'deepskyblue',
+                color: 'white'
+              }
+            }}
+        >
+            테스트 페이지로 가기
         </Button>        
       </CardActions>
 </Card>

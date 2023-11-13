@@ -1,97 +1,20 @@
 import React from "react";
-import { useState, useEffect, useRef } from 'react';
-import BasicCard from '@mui/material/Card';
 import './My_page.css';
 import { BrowserRouter as Router, Routes, Route, BrowserRouter, useNavigate, Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import Button from '@mui/material/Button';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
-import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
-import Tooltip from '@mui/material/Tooltip';
-import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
-import CardMedia from '@mui/material/CardMedia';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import Divider from '@mui/material/Divider';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {Pagination, PaginationItem, Tabs, Tab} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import TablePagination from '@mui/material/TablePagination'
 import CssBaseline from '@mui/material/CssBaseline';
 import Navigator from './Navigator';
 import Header from './Header';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { Dialog, DialogTitle, DialogActions } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-
-
-
-
-const columns = [
-  { field: 'id', headerName: 'ID', width: 70 },
-  { field: 'Type', headerName: 'Type', width: 130 },
-  { field: 'Coin_Paid', headerName: 'Coin_Paid', width: 200 },
-  { field: 'Coin_Received', headerName: 'Coin_Received', width: 250 },
-  { field: 'Price', headerName: 'Price', width: 150 },
-];
-
-
-const rows = [
-  { id: 1, Type: 'LendProposal', Coin_Paid: 'Bitcoin', Coin_Received: 'Ethereum', Price: '9310' },
-  { id: 2, Type: 'LendProposal', Coin_Paid: 'Bitcoin', Coin_Received: 'PlugToken', Price: '5687'},
-  { id: 3, Type: 'BorrowProposal', Coin_Paid: 'AToken', Coin_Received: 'Ethereum', Price: '7814'},
-  { id: 4, Type: 'LendProposal', Coin_Paid: 'PlugToken', Coin_Received: 'AToken', Price: '879'},
-  { id: 5, Type: 'LendProposal', Coin_Paid: 'PlugToken', Coin_Received: 'Ethereum', Price: '77'},
-  { id: 6, Type: 'BorrowProposal', Coin_Paid: 'Bitcoin', Coin_Received: 'Ethereum', Price: '6487'}
-];
-
-
-
-export function DataTable() {
-  const totalProfitSum = rows.reduce((sum, row) => sum + Number(row.Price.replace('$', '')), 0);
-  // '$' 기호를 제거한 후 문자열을 숫자로 변환
-
-  return (
-    <div style={{ height: 400, width: '1000px' }}> {/* 중복된 width 스타일 속성을 하나로 통합 */}
-      <DataGrid
-        rows={rows}
-        columns={columns} // 여기서 columns 배열을 직접 사용합니다. 불필요한 liquidation 필드와 관련된 코드를 제거했습니다.
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-        hideFooterSelectedRowCount
-      />
-    </div>
-  );
-}
-
-
-
+import { CardActionArea } from '@mui/material';
+import nft1 from '../images/nft1.jpg'
+import nft2 from '../images/nft2.jpg'
+import nft3 from '../images/nft3.jpg'
+import CardContent from '@mui/material/CardContent';
+import Card from '@mui/material/Card';
+import CardMedia from '@mui/material/CardMedia';
 
 function Copyright() {
     return (
@@ -251,6 +174,81 @@ function Copyright() {
   const drawerWidth = 256;
 
 
+  export function ActionAreaCard1() {
+    return (
+      <Card sx={{ Width: 500 }}>
+        <CardActionArea>
+        <CardMedia
+                    sx={{ height: 240 }}
+                    image={nft1}
+                    title="nft1"
+                  />
+          <CardContent>
+            <Typography gutterBottom variant="h5" component="div">
+              NFT#231
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+            This nft is being traded with Contract as a bond.<br />
+            borrower: User#2259<br /> Amount: 13.3 <br />
+            Due Date: 25/09/12<br /> Contract time stamp: 23/10/13<br />
+            InterestRate: 13.5%<br /> Payback amount minus fee: 12.1
+            </Typography>
+          </CardContent>
+        </CardActionArea>
+      </Card>
+    );
+  }  
+
+  export function ActionAreaCard2() {
+    return (
+      <Card sx={{ maxWidth: 345 }}>
+        <CardActionArea>
+        <CardMedia
+                    sx={{ height: 240 }}
+                    image={nft2}
+                    title="nft2"
+                  />
+          <CardContent>
+            <Typography gutterBottom variant="h5" component="div">
+              NFT#156
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+            This nft is being traded with Contract as a bond.<br />
+            borrower: User#2259<br /> Amount: 13.3 <br />
+            Due Date: 25/09/12<br /> Contract time stamp: 23/10/13<br />
+            InterestRate: 13.5%<br /> Payback amount minus fee: 12.1
+            </Typography>
+          </CardContent>
+        </CardActionArea>
+      </Card>
+    );
+  }  
+
+  export function ActionAreaCard3() {
+    return (
+      <Card sx={{ maxWidth: 345 }}>
+        <CardActionArea>
+        <CardMedia
+                    sx={{ height: 240 }}
+                    image={nft3}
+                    title="nft3"
+                  />
+          <CardContent>
+            <Typography gutterBottom variant="h5" component="div">
+              NFT#931
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              This nft is being traded with Contract as a bond.<br />
+            borrower: User#2259<br /> Amount: 13.3 <br />
+            Due Date: 25/09/12<br /> Contract time stamp: 23/10/13<br />
+            InterestRate: 13.5%<br /> Payback amount minus fee: 12.1
+            </Typography>
+          </CardContent>
+        </CardActionArea>
+      </Card>
+    );
+  }  
+
 
 
 
@@ -289,9 +287,12 @@ export default function My_Assets_Page() {
           </Box>
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <Header onDrawerToggle={handleDrawerToggle} />
-            <Box component="main" sx={{ flex: 1, py: 10, px: 18, bgcolor: '#eaeff1' }}>
-              <DataTable />
-            </Box>
+            <Box component="main" sx={{ flex: 1, p: 3, bgcolor: '#eaeff1', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap' }}>
+  <ActionAreaCard1 />
+  <ActionAreaCard2 />
+  <ActionAreaCard3 />
+</Box>
+
             <Box component="footer" sx={{ p: 2, bgcolor: '#eaeff1' }}>
               <Copyright />
             </Box>

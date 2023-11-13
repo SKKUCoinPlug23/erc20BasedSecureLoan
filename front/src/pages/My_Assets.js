@@ -43,55 +43,169 @@ import Navigator from './Navigator';
 import Header from './Header';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { Dialog, DialogTitle, DialogActions } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
 
 
+export function VerticalTabs() {
+  const [value, setValue] = useState(0);
 
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
 
-const columns = [
-  { field: 'id', headerName: 'ID', width: 70 },
-  { field: 'Type', headerName: 'Type', width: 130 },
-  { field: 'Coin_Paid', headerName: 'Coin_Paid', width: 200 },
-  { field: 'Coin_Received', headerName: 'Coin_Received', width: 250 },
-  { field: 'Price', headerName: 'Price', width: 150 },
-];
+  const createData = (Asset_type, Address, Amount, Price) => {
+    return { Asset_type, Address, Amount, Price };
+  };
+  const createData_1 = (Coin_Received, Coin_Paid, Type, Price) => {
+    return { Coin_Received, Coin_Paid, Type, Price };
+  };
 
+  
 
-const rows = [
-  { id: 1, Type: 'LendProposal', Coin_Paid: 'Bitcoin', Coin_Received: 'Ethereum', Price: '9310' },
-  { id: 2, Type: 'LendProposal', Coin_Paid: 'Bitcoin', Coin_Received: 'PlugToken', Price: '5687'},
-  { id: 3, Type: 'BorrowProposal', Coin_Paid: 'AToken', Coin_Received: 'Ethereum', Price: '7814'},
-  { id: 4, Type: 'LendProposal', Coin_Paid: 'PlugToken', Coin_Received: 'AToken', Price: '879'},
-  { id: 5, Type: 'LendProposal', Coin_Paid: 'PlugToken', Coin_Received: 'Ethereum', Price: '77'},
-  { id: 6, Type: 'BorrowProposal', Coin_Paid: 'Bitcoin', Coin_Received: 'Ethereum', Price: '6487'}
-];
+  const rowsTab1 = [
+    createData('Bitcoin', '0x8a13b14c19a', '1.25', '$3142'),
+    createData('Ethereum', '0x1c29a11b565', '17.11', '$5489'),
+    createData('XRP', '0x7c94c1a755c', '478.1', '$8486'),
+    createData('SToken', '0x78ac5697b4f', '84.35', '$568'),
+    createData('AToken', '0xff789a4cb87', '78.46', '$104'),
+    
+  ];
 
+  const rowsTab2 = [
+    createData_1('Bitcoin', 'Ethereum', 'LendProposal', '$9310'),
+    createData_1('Bitcoin', 'PlugToken', 'LendProposal', '$5687'),
+    createData_1('AToken', 'Ethereum', 'LendProposal', '$7814'),
+    createData_1('PlugToken', 'AToken', 'LendProposal', '$879'),
+    createData_1('PlugToken', 'Ethereum', 'BorrowProposal', '$77'),
+    createData_1('Bitcoin', 'Ethereum', 'BorrowProposal', '$6879')
+  ];
 
+  // const rowsTab3 = [
+  //   createData('Item1', 408, 3.2),
+  //   createData('Item2', 237, 9.0),
+  //   createData('Item3', 375, 0.0),
+  //   createData('Item4', 518, 26.0),
+  // ];
 
-export function DataTable() {
-  const totalProfitSum = rows.reduce((sum, row) => sum + Number(row.Price.replace('$', '')), 0);
-  // '$' 기호를 제거한 후 문자열을 숫자로 변환
+  const renderTableTab1 = (rows) => (
+    <TableContainer component={Paper} style={{ width: '800px', height: '320px', border: '0.5px solid black' }}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell style={{color: 'blue', width: '100px'}}>Asset Type</TableCell>
+            <TableCell align="right" style={{color: 'blue', width: '100px'}}>Address</TableCell>
+            <TableCell align="right" style={{color: 'blue', width: '100px'}}>Amount</TableCell>
+            <TableCell align="right" style={{color: 'blue', width: '100px'}}>Price</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.Asset_type}>
+              <TableCell>{row.Asset_type}</TableCell>
+              <TableCell align="right">{row.Address}</TableCell>
+              <TableCell align="right">{row.Amount}</TableCell>
+              <TableCell align="right">{row.Price}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+  
+  const renderTableTab2 = (rows) => (
+    <TableContainer component={Paper} style={{ width: '800px', height: '320px', border: '0.5px solid black' }}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell style={{color: 'blue', width: '100px'}}>Coin Received</TableCell>
+            <TableCell align="right" style={{color: 'blue', width: '100px'}}>Coin Paid</TableCell>
+            <TableCell align="right" style={{color: 'blue', width: '100px'}}>Type</TableCell>
+            <TableCell align="right" style={{color: 'blue', width: '100px'}}>Price</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.Coin_Received}>
+              <TableCell>{row.Coin_Received}</TableCell>
+              <TableCell align="right">{row.Coin_Paid}</TableCell>
+              <TableCell align="right">{row.Type}</TableCell>
+              <TableCell align="right">{row.Price}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
 
   return (
-    <div style={{ height: 400, width: '1000px' }}> {/* 중복된 width 스타일 속성을 하나로 통합 */}
-      <DataGrid
-        rows={rows}
-        columns={columns} // 여기서 columns 배열을 직접 사용합니다. 불필요한 liquidation 필드와 관련된 코드를 제거했습니다.
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-        hideFooterSelectedRowCount
-      />
+    <div style={{ display: 'flex', height: 500, marginLeft: '-200px',marginTop: '-148px'}}>
+      <Tabs
+        orientation="vertical"
+        variant="scrollable"
+        value={value}
+        onChange={handleChange}
+        aria-label="Vertical tabs example"
+        style={{ borderRight: `1px solid rgba(0, 0, 0, 0.12)` }}
+      >
+        <Tab label="Assets" />
+        <Tab label="My_Proposals" />
+        {/* <Tab label="Tab 3" /> */}
+      </Tabs>
+      <div style={{ flexGrow: 1, padding: '5rem' }}>
+        {value === 0 && renderTableTab1(rowsTab1)}
+        {value === 1 && renderTableTab2(rowsTab2)}
+      </div>
     </div>
   );
 }
 
 
+function createData(Asset_type, Address, Amount, Price) {
+  return {Asset_type, Address, Amount, Price};
+}
 
+const rows = [
+  createData('Bitcoin', '0x8a13b14c19a', '1.25', '$3142'),
+  createData('Ethereum', '0x1c29a11b565', '17.11', '$5489'),
+  createData('XRP', '0x7c94c1a755c', '478.1', '$8486'),
+  createData('SToken', '0x78ac5697b4f', '84.35', '$568'),
+  createData('AToken', '0xff789a4cb87', '78.46', '$104'),
+  
+];
+
+export function BasicTable() {
+  return (
+    <TableContainer component={Paper} sx={{ maxWidth: 700, height: 330, border: '1px solid black' }}>
+      <Table sx={{ maxWidth: 700 }} aria-label="simple table">
+      <TableHead>
+  <TableRow>
+    <TableCell sx={{ color: 'blue' }}>Asset_type</TableCell>
+    <TableCell align="right" sx={{ color: 'blue' }}>Address</TableCell>
+    <TableCell align="right" sx={{ color: 'blue' }}>Amount</TableCell>
+    <TableCell align="right" sx={{ color: 'blue' }}>Price</TableCell>
+  </TableRow>
+</TableHead>
+
+
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow
+              key={row.Asset_type}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              <TableCell component="th" scope="row">
+                {row.Asset_type}
+              </TableCell>
+              <TableCell align="right">{row.Address}</TableCell>
+              <TableCell align="right">{row.Amount}</TableCell>
+              <TableCell align="right">{row.Price}</TableCell>
+              
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
 
 function Copyright() {
     return (
@@ -290,7 +404,7 @@ export default function My_Assets_Page() {
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <Header onDrawerToggle={handleDrawerToggle} />
             <Box component="main" sx={{ flex: 1, py: 10, px: 18, bgcolor: '#eaeff1' }}>
-              <DataTable />
+              <BasicTable />
             </Box>
             <Box component="footer" sx={{ p: 2, bgcolor: '#eaeff1' }}>
               <Copyright />

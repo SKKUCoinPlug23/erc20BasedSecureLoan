@@ -3,7 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import BasicCard from '@mui/material/Card';
 import './Deposit_Page.css';
 import { BrowserRouter as Router, Routes, Route, BrowserRouter, useNavigate, Link} from 'react-router-dom';
-
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import CssBaseline from '@mui/material/CssBaseline';
+import Navigator from './Navigator';
+import Content from './Content';
+import Header from './Header';
 import Card from '@mui/material/Card';
 import { TextField, Box, Button, Dialog, DialogTitle, InputAdornment } from '@mui/material';
 import CardActions from '@mui/material/CardActions';
@@ -27,178 +32,6 @@ import error_image from '../images/pngwing.com.png'
 import checkmark_image from '../images/checkmark.png'
 
 
-
-
-
-
-
-const pages = ['Deposit', 'Lend&Borrow', 'My page'];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
-
-export function ResponsiveAppBar() {
-  const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
-  const navigate = useNavigate();
-
- 
-
-
-
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = (page) => {
-    if (page === 'My page') {
-        navigate('/My_page');
-    }
-    // 메뉴를 닫는 로직 (예: 상태 변경)
-};
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-
-  
-
-  
-
-  return (
-    <AppBar position="fixed" sx={{ height: 300 }}>
-      <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
-          <Typography
-            variant="h6"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              mr: 2,
-              display: { xs: 'none', md: 'flex' },
-              // fontFamily: 'monospace',
-              fontWeight: 700,
-              // letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            Coinplug
-          </Typography>
-
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-              sx={{
-                display: { xs: 'block', md: 'none' },
-              }}
-            >
-              {pages.map((page) => (
-                <MenuItem key={page} 
-                onClick={handleCloseNavMenu}
-                >
-                  <Typography textAlign="center">{page}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-          <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              mr: 2,
-              display: { xs: 'flex', md: 'none' },
-              flexGrow: 1,
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            LOGO
-          </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, paddingLeft: 10 }}>
-    {pages.map((page) => (
-        <Button
-            key={page}
-            onClick={() => handleCloseNavMenu(page)}
-            sx={{ my: 2, ml: 2, mr: 2, color: 'white', display: 'block' }}
-        >
-            {page}
-        </Button>
-    ))}
-</Box>
-
-
-
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-        </Toolbar>
-        <div style={{ padding: '10px',paddingTop: '50px',paddingLeft: '230px', textAlign: 'left', color: '#fff' }}>
-        코인플러그 대출 서비스는 대출 제안 목록들을 제시해 사용자들의 1대1 계약에 도움을 주며<br />
-         성사된 계약은 nft 형태의 부채 정보가 있는 채권으로 만들어 구매할 수 있는 기회를 사용자들에게 제공합니다.<br />
-          또한 원하는 토큰을 빌릴 수 있는 기회를 제공하는 등 다양한 DeFi서비스를 운영합니다.
-      </div>
-      </Container>
-    </AppBar>
-  );
-}
 
 export default function Deposit_Page() {
   
@@ -246,129 +79,290 @@ export default function Deposit_Page() {
       setShowSuccessDialog(true);  // 성공 팝업창 표시
     }
   }
+  function Copyright() {
+    return (
+      <Typography variant="body2" color="text.secondary" align="center">
+        {'Copyright © '}
+        <Link color="inherit" href="https://mui.com/">
+          Your Website
+        </Link>{' '}
+        {new Date().getFullYear()}.
+      </Typography>
+    );
+  }
+  
+  let theme = createTheme({
+    palette: {
+      primary: {
+        light: '#63ccff',
+        main: '#009be5',
+        dark: '#006db3',
+      },
+    },
+    typography: {
+      h5: {
+        fontWeight: 500,
+        fontSize: 26,
+        letterSpacing: 0.5,
+      },
+    },
+    shape: {
+      borderRadius: 8,
+    },
+    components: {
+      MuiTab: {
+        defaultProps: {
+          disableRipple: true,
+        },
+      },
+    },
+    mixins: {
+      toolbar: {
+        minHeight: 48,
+      },
+    },
+  });
+  
+  theme = {
+    ...theme,
+    components: {
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: '#081627',
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+          },
+          contained: {
+            boxShadow: 'none',
+            '&:active': {
+              boxShadow: 'none',
+            },
+          },
+        },
+      },
+      MuiTabs: {
+        styleOverrides: {
+          root: {
+            marginLeft: theme.spacing(1),
+          },
+          indicator: {
+            height: 3,
+            borderTopLeftRadius: 3,
+            borderTopRightRadius: 3,
+            backgroundColor: theme.palette.common.white,
+          },
+        },
+      },
+      MuiTab: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+            margin: '0 16px',
+            minWidth: 0,
+            padding: 0,
+            [theme.breakpoints.up('md')]: {
+              padding: 0,
+              minWidth: 0,
+            },
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            padding: theme.spacing(1),
+          },
+        },
+      },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: {
+            borderRadius: 4,
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            backgroundColor: 'rgb(255,255,255,0.15)',
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            '&.Mui-selected': {
+              color: '#4fc3f7',
+            },
+          },
+        },
+      },
+      MuiListItemText: {
+        styleOverrides: {
+          primary: {
+            fontSize: 14,
+            fontWeight: theme.typography.fontWeightMedium,
+          },
+        },
+      },
+      MuiListItemIcon: {
+        styleOverrides: {
+          root: {
+            color: 'inherit',
+            minWidth: 'auto',
+            marginRight: theme.spacing(2),
+            '& svg': {
+              fontSize: 20,
+            },
+          },
+        },
+      },
+      MuiAvatar: {
+        styleOverrides: {
+          root: {
+            width: 32,
+            height: 32,
+          },
+        },
+      },
+    },
+  };
+  
+  const drawerWidth = 256;
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
 
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
 
 
   return (
     <div className="App">
-      <ResponsiveAppBar />
-      <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingLeft: '10rem' }}>
-        
-        <div style={{ display: 'flex', alignItems: 'center' }}> 
-          {/* This div wraps both the Card and the TextField Boxes */}
-          
-          {/* Card */}
-          <Card sx={{ maxWidth: 300, height: '350px', border: '2px solid black', margin: '1rem', marginTop: '-20px' }}>
-            <CardMedia
-              sx={{ height: 140 }}
-              image={bitcon_image}
-              title="bitcoin"
-            />
-            <CardContent>
-              <Typography gutterBottom variant="h5" component="div">
-                Deposit
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ marginBottom: '1rem' }}>
-                예치할 자산의 종류와 양을 입력해 주세요
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                많은 자산을 예치할수록 이용할 수 있는 서비스의 종류가 다양해집니다.
-              </Typography>
-            </CardContent>
-          </Card>
-
-          {/* TextField Boxes */}
-          <Box
-        sx={{
-          width: 500,
-          maxWidth: '100%',
-          marginLeft: '2rem'
-        }}
-      >
-       <TextField
-      fullWidth
-      label="Currency"
-      value={selectedCurrency}
-      onChange={(e) => setSelectedCurrency(e.target.value)}
-      style={{ marginBottom: '1rem' }}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">0x</InputAdornment>
-        ),
-      }}
-      error={isLengthInvalid}
-      helperText={isLengthInvalid ? '32자리가 아닙니다!' : ''}
-    />
-
-
-        <TextField 
-    fullWidth 
-    label="Quantity" 
-    value={inputQuantity} 
-    onChange={(e) => setInputQuantity(e.target.value)}
-    style={{ marginBottom: '1rem' }}  // <-- Add margin to the bottom
-/>
-<TextField 
-    fullWidth 
-    label="Address" 
-    
-        // <-- Add margin to the top
-/>
-
-        <Button onClick={checkValues} variant="contained" style={{ marginTop: '1rem' }}>
-          예치
-        </Button>
-      </Box>
-
-      {/* 에러 팝업창 */}
-      <Dialog open={showErrorDialog} onClose={() => setShowErrorDialog(false)}>
-        <Card sx={{ maxWidth: 345 }}>
-        <CardMedia
-  sx={{ height: 200, '& img': { objectFit: 'cover' }}} // or 'contain'
-  image={error_image}
-  title="error"
-/>
-          <CardContent>
-            <Typography gutterBottom variant="h5" component="div">
-              오류 발생!
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              입력한 수량이 최대 수량을 초과하였습니다.
-            </Typography>
-          </CardContent>
-          <CardActions>
-            <Button size="small" onClick={() => setShowErrorDialog(false)}>닫기</Button>
-          </CardActions>
-        </Card>
-      </Dialog>
-
-      {/* 성공 팝업창 */}
-      <Dialog open={showSuccessDialog} onClose={() => setShowSuccessDialog(false)}>
-      <Card sx={{ maxWidth: 345 }}>
-        <CardMedia
-  sx={{ height: 200, '& img': { objectFit: 'cover' }}} // or 'contain'
-  image={checkmark_image}
-  title="checkmark"
-/>
-          <CardContent>
-            <Typography gutterBottom variant="h5" component="div">
-              예치 성공!
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              예치가 완료되었습니다
-            </Typography>
-          </CardContent>
-          <CardActions>
-          <Button size="small" onClick={() => setShowSuccessDialog(false)}>닫기</Button>
-          </CardActions>
-        </Card>
-      </Dialog>
-
-    </div>
-
-      </div>
+        <ThemeProvider theme={theme}>
+          <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+            <CssBaseline />
+            <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+              {isSmUp ? null : (
+                <Navigator
+                  PaperProps={{ style: { width: drawerWidth } }}
+                  variant="temporary"
+                  open={mobileOpen}
+                  onClose={handleDrawerToggle}
+                />
+              )}
+              <Navigator
+                PaperProps={{ style: { width: drawerWidth } }}
+                sx={{ display: { sm: 'block', xs: 'none' } }}
+              />
+            </Box>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Header onDrawerToggle={handleDrawerToggle} title="Deposit" />
+              <Box component="main" sx={{ display: 'flex', py: 12, px: 4 }}>
+                <Card
+                  sx={{ maxWidth: 300, height: '350px', border: '0.5px solid black', margin: '1rem', marginTop: '-20px' }}
+                >
+                  <CardMedia
+                    sx={{ height: 140 }}
+                    image={bitcon_image}
+                    title="bitcoin"
+                  />
+                  <CardContent>
+                    <Typography gutterBottom variant="h5" component="div">
+                      Deposit
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ marginBottom: '1rem' }}>
+                      예치할 자산의 종류와 양을 입력해 주세요
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      많은 자산을 예치할수록 이용할 수 있는 서비스의 종류가 다양해집니다.
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Box sx={{ width: 500, maxWidth: '100%', marginLeft: '2rem' }}>
+                  <TextField
+                    fullWidth
+                    label="Currency"
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value)}
+                    style={{ marginBottom: '1rem' }}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">0x</InputAdornment>,
+                    }}
+                    error={isLengthInvalid}
+                    helperText={isLengthInvalid ? '32자리가 아닙니다!' : ''}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Quantity"
+                    value={inputQuantity}
+                    onChange={(e) => setInputQuantity(e.target.value)}
+                    style={{ marginBottom: '1rem' }}
+                  />
+                 
+                  <Button onClick={checkValues} variant="contained" style={{ marginTop: '1rem' }}>
+                    예치
+                  </Button>
+                </Box>
+                {/* 에러 팝업창 */}
+                <Dialog open={showErrorDialog} onClose={() => setShowErrorDialog(false)}>
+                  <Card sx={{ maxWidth: 345 }}>
+                    <CardMedia
+                      sx={{ height: 200, '& img': { objectFit: 'cover' }}}
+                      image={error_image}
+                      title="error"
+                    />
+                    <CardContent>
+                      <Typography gutterBottom variant="h5" component="div">
+                        오류 발생!
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        입력한 수량이 최대 수량을 초과하였습니다.
+                      </Typography>
+                    </CardContent>
+                    <CardActions>
+                      <Button size="small" onClick={() => setShowErrorDialog(false)}>닫기</Button>
+                    </CardActions>
+                  </Card>
+                </Dialog>
+                {/* 성공 팝업창 */}
+                <Dialog open={showSuccessDialog} onClose={() => setShowSuccessDialog(false)}>
+                  <Card sx={{ maxWidth: 345 }}>
+                    <CardMedia
+                      sx={{ height: 200, '& img': { objectFit: 'cover' }}}
+                      image={checkmark_image}
+                      title="checkmark"
+                    />
+                    <CardContent>
+                      <Typography gutterBottom variant="h5" component="div">
+                        예치 성공!
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        예치가 완료되었습니다
+                      </Typography>
+                    </CardContent>
+                    <CardActions>
+                      <Button size="small" onClick={() => setShowSuccessDialog(false)}>닫기</Button>
+                    </CardActions>
+                  </Card>
+                </Dialog>
+              </Box>
+              <Box component="footer" sx={{ p: 2, bgcolor: '#eaeff1' }}>
+                <Copyright />
+              </Box>
+            </Box>
+          </Box>
+        </ThemeProvider>
+      {/* </div> */}
     </div>
   );
+  
 }
 
 
