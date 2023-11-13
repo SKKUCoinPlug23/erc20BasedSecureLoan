@@ -86,6 +86,7 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
     const hardhatLendingBoardNFT = await LendingBoardNFT.deploy(); // NFT Minting Contracts Deployment
     await hardhatLendingBoardNFT.deployed();
     // Test -> might be erased
+    console.log("hardhatLendingBoardAddressesProvider deployed to : ", hardhatLendingBoardAddressesProvider.address);
     console.log("NFT Token Deployed to : ", hardhatLendingBoardNFT.address);
 
     // Using LendingBoardAddressesProvider(LBAP) set the deployed Smart Contract address to the appropriate location

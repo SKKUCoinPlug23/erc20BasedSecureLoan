@@ -85,6 +85,7 @@ async function main() {
   const hardhatLendingBoardNFT = await LendingBoardNFT.deploy(); // NFT Minting Contracts Deployment
   await hardhatLendingBoardNFT.deployed();
   // Test -> might be erased
+  console.log("hardhatLendingBoardAddressesProvider deployed to : ", hardhatLendingBoardAddressesProvider.address);
   console.log("NFT Token Deployed to : ", hardhatLendingBoardNFT.address);
   console.log("\x1b[43m%s\x1b[0m", "\nSmart Contract Deployment Successful");
 
@@ -184,6 +185,7 @@ async function main() {
 
   // 임의로 TestOracle AssetPrice 및 TestLendingRateOracle의 LendingRate 설정
   const STKNPrice = ethers.utils.parseEther("2");
+  console.log("STKN Address : ", STKNaddress);
   console.log("STKN Price : ", STKNPrice);
   await hardhatTestOracle.setAssetPrice(STKNaddress, STKNPrice);
 
@@ -201,12 +203,15 @@ async function main() {
   const PLUGaddress = hardhatPlugToken.address;
 
   const PLUGPrice = ethers.utils.parseEther("5");
-  await hardhatTestOracle.setAssetPrice(PLUGaddress, PLUGPrice);
+  console.log("PLUG Address : ", PLUGaddress);
+  console.log("PLUG Price : ", PLUGPrice);
+  await hardhatTestOracle.setAssetPrice(PLUGaddress, PLUGPrice, { gasLimit: 3000000 });
 
   const PLUGLendingRate = ethers.utils.parseEther("0.1");
   await hardhatTestLendingRateOracle.setMarketBorrowRate(
     PLUGaddress,
-    PLUGLendingRate
+    PLUGLendingRate,
+    { gasLimit: 3000000 }
   );
 
   // Default Reserve Interest-Rate Strategy Contract Setting
@@ -230,7 +235,8 @@ async function main() {
       sampleVariableRateSlope1,
       sampleVariableRateSlope2,
       sampleStableRateSlope1,
-      sampleStableRateSlope2
+      sampleStableRateSlope2,
+      { gasLimit: 3000000 }
     );
   await STKNhardhatDefaultReserveInterestRateStrategy.deployed();
   const STKNstrategyAddress =
@@ -239,7 +245,8 @@ async function main() {
   await hardhatLendingBoardConfigurator.initReserve(
     STKNaddress,
     18,
-    STKNstrategyAddress
+    STKNstrategyAddress,
+    { gasLimit: 3000000 }
   );
   // await hardhatLendingBoardConfigurator.setReserveInterestRateStrategyAddress(STKNaddress,STKNstrategyAddress)
 
@@ -252,7 +259,8 @@ async function main() {
       sampleVariableRateSlope1,
       sampleVariableRateSlope2,
       sampleStableRateSlope1,
-      sampleStableRateSlope2
+      sampleStableRateSlope2,
+      { gasLimit: 3000000 }
     );
   await PLUGhardhatDefaultReserveInterestRateStrategy.deployed();
   const PLUGstrategyAddress =
@@ -261,7 +269,8 @@ async function main() {
   await hardhatLendingBoardConfigurator.initReserve(
     PLUGaddress,
     18,
-    PLUGstrategyAddress
+    PLUGstrategyAddress,
+    { gasLimit: 3000000 }
   );
 
   console.log(
@@ -273,8 +282,8 @@ async function main() {
   const transferAmount = ethers.utils.parseEther("3000");
   await hardhatSampleToken
     .connect(owner)
-    .transfer(user1.address, transferAmount);
-  await hardhatPlugToken.connect(owner).transfer(user1.address, transferAmount);
+    .transfer(user1.address, transferAmount, { gasLimit: 3000000 });
+  await hardhatPlugToken.connect(owner).transfer(user1.address, transferAmount, { gasLimit: 3000000 });
 
   console.log(
     " ====================== Depositing STKN and PLUG ======================"
@@ -283,21 +292,25 @@ async function main() {
   // Approve LendingBoard contract to spend tokens
   const approveAmount = ethers.utils.parseEther("2000");
 
+  console.log("Pass 0");
   // Send the approval transaction. The address should be LBCore not LB itself.
   // Owner의 approval 및 deposit
   let approvalResult = await hardhatSampleToken
     .connect(owner)
-    .approve(hardhatLendingBoardCore.address, approveAmount);
+    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
+  console.log("Pass 1");
   approvalResult = await hardhatPlugToken
     .connect(owner)
-    .approve(hardhatLendingBoardCore.address, approveAmount);
+    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
+  console.log("Pass 2");
 
   // deposit() 이용하여 서비스에 STKN 예치
   const depositAmount = ethers.utils.parseEther("1000");
+  console.log("Pass 3");
 
   estimatedGas = await hardhatLendingBoardProposeMode
     .connect(owner)
-    .estimateGas.deposit(STKNaddress, depositAmount, 0);
+    .deposit(STKNaddress, depositAmount, 0, { gasLimit: 3000000 });
   console.log("Estimated Gas for LBPM Deposit : ", estimatedGas);
 
   // STKN 1000개 예치
@@ -317,10 +330,10 @@ async function main() {
   // User1의 approval 및 Deposit
   approvalResult = await hardhatSampleToken
     .connect(user1)
-    .approve(hardhatLendingBoardCore.address, approveAmount);
+    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
   approvalResult = await hardhatPlugToken
     .connect(user1)
-    .approve(hardhatLendingBoardCore.address, approveAmount);
+    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
 
   await hardhatLendingBoardProposeMode
     .connect(user1)
@@ -338,7 +351,7 @@ async function main() {
   // configuring STKN Reserve for Borrowing and Collateral
   await hardhatLendingBoardConfigurator
     .connect(owner)
-    .enableBorrowingOnReserve(STKNaddress, true);
+    .enableBorrowingOnReserve(STKNaddress, true, { gasLimit: 3000000 });
   // WIP : parseEther('0.70') 으로 해야할지 '70'일지 '0.70'일지
   baseLTVasCollateral = ethers.utils.parseEther("0.5");
   // liquidationThreshold = ethers.utils.parseEther('0.70');
@@ -350,20 +363,20 @@ async function main() {
       STKNaddress,
       baseLTVasCollateral,
       liquidationThreshold,
-      liquidationBonus
+      liquidationBonus, { gasLimit: 3000000 }
     );
 
   await hardhatLendingBoardProposeMode
     .connect(owner)
-    .setUserUseReserveAsCollateral(STKNaddress, 1); // 1 : enable, 0 : disable
+    .setUserUseReserveAsCollateral(STKNaddress, 1, { gasLimit: 3000000 }); // 1 : enable, 0 : disable
   await hardhatLendingBoardProposeMode
     .connect(user1)
-    .setUserUseReserveAsCollateral(STKNaddress, 1); // 1 : enable, 0 : disable
+    .setUserUseReserveAsCollateral(STKNaddress, 1, { gasLimit: 3000000 }); // 1 : enable, 0 : disable
 
   // configuring PLUG Reserve for Borrowing and Collateral
   await hardhatLendingBoardConfigurator
     .connect(owner)
-    .enableBorrowingOnReserve(PLUGaddress, true);
+    .enableBorrowingOnReserve(PLUGaddress, true, { gasLimit: 3000000 });
   baseLTVasCollateral = ethers.utils.parseEther("0.5");
   // liquidationThreshold = ethers.utils.parseEther('0.70');
   liquidationThreshold = "70";
@@ -374,15 +387,15 @@ async function main() {
       PLUGaddress,
       baseLTVasCollateral,
       liquidationThreshold,
-      liquidationBonus
+      liquidationBonus, { gasLimit: 3000000 }
     );
 
   await hardhatLendingBoardProposeMode
     .connect(owner)
-    .setUserUseReserveAsCollateral(PLUGaddress, 1); // 1 : enable, 0 : disable
+    .setUserUseReserveAsCollateral(PLUGaddress, 1, { gasLimit: 3000000 }); // 1 : enable, 0 : disable
   await hardhatLendingBoardProposeMode
     .connect(user1)
-    .setUserUseReserveAsCollateral(PLUGaddress, 1); // 1 : enable, 0 : disable
+    .setUserUseReserveAsCollateral(PLUGaddress, 1, { gasLimit: 3000000 }); // 1 : enable, 0 : disable
   // console.log("set PLUG as Collateral enabled");
 
   console.log(
