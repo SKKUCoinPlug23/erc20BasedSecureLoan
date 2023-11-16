@@ -12,7 +12,7 @@ import My_Proposals from "./pages/My_Proposals"
 import Homepage from "./pages/Homepage"
 import My_Assets from "./pages/My_Assets"
 import NFT_Page from "./pages/NFT_Page"
-
+import { MetaMaskProvider } from './pages/MetaMaskContext';
 import { useState, useEffect, useCallback } from "react";
 
 
@@ -22,6 +22,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 function App() {
 
   return (
+  <MetaMaskProvider>
     <div className="App">
         <Routes>
           <Route path="/" element={<Homepage />}></Route>
@@ -43,6 +44,7 @@ function App() {
           
         </Routes>
     </div>
+  </MetaMaskProvider>
   );
 }
 export default App;

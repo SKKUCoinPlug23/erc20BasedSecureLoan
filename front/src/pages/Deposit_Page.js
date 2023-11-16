@@ -1,7 +1,8 @@
 import React from "react";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import BasicCard from '@mui/material/Card';
 import './Deposit_Page.css';
+import { MetaMaskContext } from './MetaMaskContext';
 import { BrowserRouter as Router, Routes, Route, BrowserRouter, useNavigate, Link} from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -33,7 +34,14 @@ import checkmark_image from '../images/checkmark.png'
 
 
 
-export default function Deposit_Page() {
+const Deposit_Page = () => {
+  const { account, connectWallet } = useContext(MetaMaskContext); 
+
+  useEffect(() => {
+    if (!account) {
+        connectWallet();
+    }
+}, [account, connectWallet]);
   
   const [inputQuantity, setInputQuantity] = useState("");
   const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -245,6 +253,15 @@ export default function Deposit_Page() {
 
   return (
     <div className="App">
+
+{account ? (
+                <p>Connected Account: {account}</p>
+            ) : (
+                <div>
+                    <p>메타마스크에 연결되어 있지 않습니다.</p>
+                    <Button variant="contained" onClick={connectWallet}>메타마스크 연결</Button>
+                </div>
+            )}
         <ThemeProvider theme={theme}>
           <Box sx={{ display: 'flex', minHeight: '100vh' }}>
             <CssBaseline />
@@ -364,6 +381,44 @@ export default function Deposit_Page() {
   );
   
 }
+export default Deposit_Page;
+// const web3 = new Web3(Web3.givenProvider || 'ws://localhost:8545');
+// const contractABI = [/* 스마트 컨트랙트 ABI */];
+// const contractAddress = '/* 스마트 컨트랙트 주소 */';
+
+// const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+// function App() {
+//   const [deposits, setDeposits] = useState([]);
+
+//   useEffect(() => {
+//     contract.events.Deposit({
+//       fromBlock: 0
+//     }, (error, event) => {
+//       if (error) {
+//         console.error(error);
+//       } else {
+//         setDeposits(currentDeposits => [...currentDeposits, event.returnValues]);
+//       }
+//     });
+//   }, []);
+
+//   return (
+//     <div>
+//       <h1>Deposit Events</h1>
+//       {deposits.map((deposit, index) => (
+//         <div key={index}>
+//           <p>Reserve: {deposit._reserve}</p>
+//           <p>User: {deposit._user}</p>
+//           <p>Amount: {deposit._amount}</p>
+//           <p>Timestamp: {deposit._timestamp}</p>
+//         </div>
+//       
+//     </div>
+//   );
+// }
+
+
 
 
 

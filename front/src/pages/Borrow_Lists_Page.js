@@ -41,7 +41,7 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Pagination, PaginationItem } from "@mui/material";
+import { Pagination, PaginationItem, Grid } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -54,93 +54,126 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
+import { MetaMaskContext } from './MetaMaskContext';
+import { useContext } from 'react';
 
+
+const Deposit_Page = () => {
+  const { defaultAccount, userBalance, errorMessage, connectWalletHandler } = useContext(MetaMaskContext);
+}
 
 const rows = [
-  { id: "B#1241", address: "0x8a13b14c19a", Amount: "$3142", date: "23/11/10" },
-  { id: "B#5579", address: "0x1c29a11b565", Amount: "$8746", date: "23/12/11"},
-  { id: "B#7641", address: "0x7c94c1a755c", Amount: "$6547", date: "24/11/10" },
-  { id: "B#4871", address: "0x78ac5697b4f", Amount: "$8912", date: "24/05/07" },
-  { id: "B#9785", address: "0xff789a4cb87", Amount: "$12684", date: "24/07/30" },
+  { ID: "B#1241", Address: "0x8a13b14c19a", Amount: "$3142", Date: "23/11/10" },
+  { ID: "B#5579", Address: "0x1c29a11b565", Amount: "$8746", Date: "23/12/11"},
+  { ID: "B#7641", Address: "0x7c94c1a755c", Amount: "$6547", Date: "24/11/10" },
+  { ID: "B#4871", Address: "0x78ac5697b4f", Amount: "$8912", Date: "24/05/07" },
+  { ID: "B#9785", Address: "0xff789a4cb87", Amount: "$12684", Date: "24/07/30" },
 ];
 const columns = [
-  { field: 'id', headerName: 'ID', width: 100 },
-  { field: 'address', headerName: 'address', width: 200 },
+  { field: 'ID', headerName: 'ID', width: 100 },
+  { field: 'Address', headerName: 'Address', width: 200 },
   { field: 'Amount', headerName: 'Amount', width: 250 },
-  { field: 'date', headerName: 'date', width: 250 },
+  { field: 'Date', headerName: 'Date', width: 250 },
 {
-    field: 'Lend',
-    headerName: 'Lend',
+    field: 'Borrow',
+    headerName: 'Borrow',
     sortable: false,
     width: 150,
     renderCell: (params) => (
       <Button variant="contained" color="primary">
-        Lend
+        Borrow
       </Button>
     ),
   },
 ];
 
+
 export function DataTable() {
-  const totalProfitSum = rows.reduce((sum, row) => sum + row.Total_Profit, 0);
-const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [BorrowCompleteOpen, setBorrowCompleteOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
 
-const handleClickOpen = () => {
-  setOpen(true);
-};
+  const handleClickOpen = (row) => {
+    setOpen(true);
+    setSelectedRow(row);
+  };
 
-const handleClose = () => {
-  setOpen(false);
-};
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleBorrowCompleteOpen = () => {
+    setBorrowCompleteOpen(true);
+  };
+
+  const handleBorrowCompleteClose = () => {
+    setBorrowCompleteOpen(false);
+  };
+
+  const updatedColumns = columns.map((col) => {
+    if (col.field === 'Borrow') {
+      return {
+        ...col,
+        renderCell: (params) => (
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => handleClickOpen(params.row)}
+          >
+            Borrow
+          </Button>
+        ),
+      };
+    }
+    return col;
+  });
 
   return (
-    <div style={{ height: 400, width: '100%', width: '1000px' }}>
+    <div style={{ height: 400, width: '100%' }}>
       <DataGrid
         rows={rows}
-        columns={columns.map((col) => {
-          if (col.field === 'Lend') {
-            return {
-              ...col,
-              renderCell: (params) => (
-                <>
-                  <Button variant="contained" color="primary" onClick={handleClickOpen}>
-                    Lend
-                  </Button>
-                  <Dialog
-  open={open}
-  onClose={handleClose}
-  slotProps={{
-    backdrop: {
-      style: {
-        backgroundColor: 'rgba(0, 0, 0, 0.0)', // 원하는 스타일 적용
-      },
-    },
-  }}
->
-                    <DialogTitle>{"진행하시겠습니까?"}</DialogTitle>
-                    <DialogActions>
-                      <Button onClick={handleClose} color="primary">
-                        아니오
-                      </Button>
-                      <Button onClick={handleClose} color="primary" autoFocus>
-                        예
-                      </Button>
-                    </DialogActions>
-                  </Dialog>
-                </>
-              )
-            };
-          }
-          return col;
-        })}
-        initialState={{
-          pagination: {
-            paginationModel: { page: 0, pageSize: 5 },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
+        columns={updatedColumns}
+        pageSize={5}
+        rowsPerPageOptions={[5]}
         hideFooterSelectedRowCount
+        getRowId={(row) => row.ID}
       />
+
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>{"Borrow"}</DialogTitle>
+        <DialogContent>
+          {selectedRow && (
+            <Grid container spacing={2}>
+              {Object.entries(selectedRow).map(([key, value], index) => (
+                <Grid item xs={6} key={key}>
+                  <Typography gutterBottom>
+                    <span style={{ color: 'blue' }}>{key}</span>: {value}
+                  </Typography>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { handleClose(); handleBorrowCompleteOpen(); }} color="primary">
+            진행
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={BorrowCompleteOpen} onClose={handleBorrowCompleteClose}>
+        <DialogTitle>{"Borrow Completed"}</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Borrow has been completed.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleBorrowCompleteClose} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

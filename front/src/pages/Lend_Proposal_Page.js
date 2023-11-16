@@ -285,7 +285,7 @@ export default function Lend_Proposal_Page() {
               />
             </Box>
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Header onDrawerToggle={handleDrawerToggle} title="Lend_Proposal" />
+                <Header onDrawerToggle={handleDrawerToggle} title="Lend Proposal" />
                 <Box component="main" sx={{ display: 'flex', py: 8, px: 4 }}>
 
         
