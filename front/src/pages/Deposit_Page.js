@@ -100,11 +100,12 @@ const Deposit_Page = () => {
       console.log(provider);
       const signer = await provider.getSigner();
       console.log('address:', await signer.getAddress());
+
       const stoken = new ethers.Contract(contractsAddr["STKNToken"], stokenTokenABI['abi'], signer);
       const approveAmount = ethers.utils.parseEther("3000");
-      //console.log('address:', await stoken.signer.getAddress());
       const res = await stoken.approve(contractsAddr["LBCore"], approveAmount);
       console.log(res);
+
       const proposeMode = new ethers.Contract(contractsAddr["LBProposeMode"], proposeModeABI['abi'], signer);
       const deposit = await proposeMode.deposit(contractsAddr["STKNToken"], inputQuantity, 0, {gasLimit: 3000000});
       console.log(deposit);
