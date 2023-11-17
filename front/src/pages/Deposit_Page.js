@@ -34,6 +34,7 @@ import checkmark_image from '../images/checkmark.png';
 
 import { contractsAddr } from '../config/config';
 const addrProviderABI = require("../contractAbis/interfaces/ILendingBoardAddressesProvider.sol/ILendingBoardAddressesProvider.json");
+const proposeModeABI = require("../contractAbis/lendingboard/LendingBoardProposeMode.sol/LendingBoardProposeMode.json");
 const stokenTokenABI = require("../contractAbis/SampleToken.sol/SampleToken.json");
 
 const ethers = require('ethers');
@@ -102,10 +103,11 @@ const Deposit_Page = () => {
       const stoken = new ethers.Contract(contractsAddr["STKNToken"], stokenTokenABI['abi'], signer);
       const approveAmount = ethers.utils.parseEther("3000");
       //console.log('address:', await stoken.signer.getAddress());
-      stoken.approve(contractsAddr["LBCore"], approveAmount);
-      const contract = new ethers.Contract(contractsAddr["LBAddrProvider"], addrProviderABI['abi'], provider);
-      const feeProvider = await contract.getFeeProvider();
-      console.log(feeProvider);
+      const res = await stoken.approve(contractsAddr["LBCore"], approveAmount);
+      console.log(res);
+      const proposeMode = new ethers.Contract(contractsAddr["LBProposeMode"], proposeModeABI['abi'], signer);
+      const deposit = await proposeMode.deposit(contractsAddr["STKNToken"], inputQuantity, 0, {gasLimit: 3000000});
+      console.log(deposit);
 
       setShowSuccessDialog(true);  // 성공 팝업창 표시
 //    }
