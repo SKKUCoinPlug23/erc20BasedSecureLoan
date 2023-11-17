@@ -86,7 +86,11 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
     const hardhatLendingBoardNFT = await LendingBoardNFT.deploy(); // NFT Minting Contracts Deployment
     await hardhatLendingBoardNFT.deployed();
     // Test -> might be erased
+    console.log("hardhatLendingBoardProposeMode deployed to : ", hardhatLendingBoardProposeMode.address);
+    console.log("hardhatLendingBoardCore deployed to : ", hardhatLendingBoardCore.address);
     console.log("hardhatLendingBoardAddressesProvider deployed to : ", hardhatLendingBoardAddressesProvider.address);
+    console.log("hardhatLendingBoardConfigurator deployed to : ", hardhatLendingBoardConfigurator.address);
+    console.log("hardhatLendingBoardDataProvider deployed to : ", hardhatLendingBoardDataProvider.address);
     console.log("NFT Token Deployed to : ", hardhatLendingBoardNFT.address);
 
     // Using LendingBoardAddressesProvider(LBAP) set the deployed Smart Contract address to the appropriate location
@@ -170,7 +174,7 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
 
     // Sample Token Address 확인
     const STKNaddress = hardhatSampleToken.address;
-    // console.log("STKNaddress : ",STKNaddress);
+    console.log("STKNaddress : ", STKNaddress);
 
     // 임의로 TestOracle AssetPrice 및 TestLendingRateOracle의 LendingRate 설정
     const STKNPrice = ethers.utils.parseEther("2");
@@ -198,6 +202,7 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       PLUGaddress,
       PLUGLendingRate
     );
+    console.log("PLUGaddress : ", PLUGaddress);
 
     // Default Reserve Interest-Rate Strategy Contract Setting
     const DefaultReserveInterestRateStrategy = await ethers.getContractFactory(
@@ -277,6 +282,10 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
     console.log(
       " ====================== Depositing STKN and PLUG ======================"
     );
+    ownerSTKNBalance = await hardhatSampleToken.balanceOf(owner.address);
+    console.log("1. STKN Balance:", ownerSTKNBalance);
+    ownerPLUGBalance = await hardhatPlugToken.balanceOf(owner.address);
+    console.log("1. PLUG Balance:", ownerPLUGBalance);
     // Send the approval transaction. The address should be LBCore not LB itself.
     // Owner의 approval 및 deposit
     let approvalResult = await hardhatSampleToken
@@ -298,6 +307,10 @@ describe("\x1b[44m<LendingBoardProposeMode Contract Test Implementation>", funct
       .connect(owner)
       .deposit(PLUGaddress, depositAmount, 0); // Set Referral Code = 0
 
+    ownerSTKNBalance = await hardhatSampleToken.balanceOf(owner.address);
+    console.log("2. STKN Balance:", ownerSTKNBalance);
+    ownerPLUGBalance = await hardhatPlugToken.balanceOf(owner.address);
+    console.log("2. PLUG Balance:", ownerPLUGBalance);
     console.log(
       " ====================== ====================== ======================"
     );
