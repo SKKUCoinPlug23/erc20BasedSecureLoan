@@ -1,5 +1,8 @@
 const hre = require("hardhat");
 
+const STKN = require('../artifacts/contracts/SampleToken.sol/SampleToken.json');
+const PLUG = require('../artifacts/contracts/PlugToken.sol/PlugToken.json');
+
 async function main() {
   console.log(
     "\x1b[43m%s\x1b[0m",
@@ -18,37 +21,21 @@ async function main() {
   );
 
   // Main Contracts 객체 생성
-  const LendingBoardProposeMode = await ethers.getContractFactory(
-    "LendingBoardProposeMode"
-  );
+  const LendingBoardProposeMode = await ethers.getContractFactory("LendingBoardProposeMode");
   const LendingBoardCore = await ethers.getContractFactory("LendingBoardCore", {
     signer: owner,
     libraries: {
       CoreLibrary: hardhatCoreLibrary.address,
     },
   });
-  const LendingBoardConfigurator = await ethers.getContractFactory(
-    "LendingBoardConfigurator"
-  );
-  const LendingBoardDataProvider = await ethers.getContractFactory(
-    "LendingBoardDataProvider"
-  );
-  const LendingBoardParametersProvider = await ethers.getContractFactory(
-    "LendingBoardParametersProvider"
-  );
-  const LendingBoardFeeProvider = await ethers.getContractFactory(
-    "FeeProvider"
-  );
-  const LendingBoardLiquidationManager = await ethers.getContractFactory(
-    "LendingBoardLiquidationManager"
-  );
-  const LendingBoardAddressesProvider = await ethers.getContractFactory(
-    "LendingBoardAddressesProvider"
-  );
+  const LendingBoardConfigurator = await ethers.getContractFactory("LendingBoardConfigurator");
+  const LendingBoardDataProvider = await ethers.getContractFactory("LendingBoardDataProvider");
+  const LendingBoardParametersProvider = await ethers.getContractFactory("LendingBoardParametersProvider");
+  const LendingBoardFeeProvider = await ethers.getContractFactory("FeeProvider");
+  const LendingBoardLiquidationManager = await ethers.getContractFactory("LendingBoardLiquidationManager");
+  const LendingBoardAddressesProvider = await ethers.getContractFactory("LendingBoardAddressesProvider");
   const TestOracle = await ethers.getContractFactory("TestOracle");
-  const TestLendingRateOracle = await ethers.getContractFactory(
-    "TestLendingRateOracle"
-  );
+  const TestLendingRateOracle = await ethers.getContractFactory("TestLendingRateOracle");
   const TokenDistributor = await ethers.getContractFactory("TokenDistributor");
   const LendingBoardNFT = await ethers.getContractFactory("LendingBoardNFT");
 
@@ -80,6 +67,8 @@ async function main() {
   const hardhatLendingBoardNFT = await LendingBoardNFT.deploy(); // NFT Minting Contracts Deployment
   await hardhatLendingBoardNFT.deployed();
   // Test -> might be erased
+  console.log("hardhatLendingBoardProposeMode deployed to : ", hardhatLendingBoardProposeMode.address);
+  console.log("hardhatLendingBoardCore deployed to : ", hardhatLendingBoardCore.address);
   console.log("hardhatLendingBoardAddressesProvider deployed to : ", hardhatLendingBoardAddressesProvider.address);
   console.log("hardhatLendingBoardConfigurator deployed to : ", hardhatLendingBoardConfigurator.address);
   console.log("hardhatLendingBoardDataProvider deployed to : ", hardhatLendingBoardDataProvider.address);
@@ -88,42 +77,42 @@ async function main() {
 
   // Using LendingBoardAddressesProvider(LBAP) set the deployed Smart Contract address to the appropriate location
   await hardhatLendingBoardAddressesProvider.setLendingBoardImpl(
-    hardhatLendingBoardProposeMode.address
+    hardhatLendingBoardProposeMode.address, { gasLimit: 3000000}
   );
   await hardhatLendingBoardAddressesProvider.setLendingBoardCoreImpl(
-    hardhatLendingBoardCore.address
+    hardhatLendingBoardCore.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setLendingBoardConfiguratorImpl(
-    hardhatLendingBoardConfigurator.address
+    hardhatLendingBoardConfigurator.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setLendingBoardDataProviderImpl(
-    hardhatLendingBoardDataProvider.address
+    hardhatLendingBoardDataProvider.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setLendingBoardParametersProviderImpl(
-    hardhatLendingBoardParametersProvider.address
+    hardhatLendingBoardParametersProvider.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setFeeProviderImpl(
-    hardhatLendingBoardFeeProvider.address
+    hardhatLendingBoardFeeProvider.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setLendingBoardNFTImpl(
-    hardhatLendingBoardNFT.address
+    hardhatLendingBoardNFT.address, { gasLimit: 3000000 }
   ); // Newly updated for NFT
 
   // Setting address for contracts that are outside the context of the protocol
   await hardhatLendingBoardAddressesProvider.setLendingBoardLiquidationManager(
-    hardhatLendingBoardLiquidationManager.address
+    hardhatLendingBoardLiquidationManager.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setLendingBoardManager(
-    owner.address
+    owner.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setPriceOracle(
-    hardhatTestOracle.address
+    hardhatTestOracle.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setLendingRateOracle(
-    hardhatTestLendingRateOracle.address
+    hardhatTestLendingRateOracle.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardAddressesProvider.setTokenDistributor(
-    hardhatTokenDistributor.address
+    hardhatTokenDistributor.address, { gasLimit: 3000000 }
   );
 
   console.log(
@@ -141,29 +130,28 @@ async function main() {
   );
   console.log("Estimated Gas for LBPM initialization : ", estimatedGas);
   await hardhatLendingBoardProposeMode.initialize(
-    hardhatLendingBoardAddressesProvider.address,
-    { gasLimit: 30000000 }
+    hardhatLendingBoardAddressesProvider.address, { gasLimit: 3000000 }
   );
 
   await hardhatLendingBoardCore.initialize(
-    hardhatLendingBoardAddressesProvider.address
+    hardhatLendingBoardAddressesProvider.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardConfigurator.initialize(
-    hardhatLendingBoardAddressesProvider.address
+    hardhatLendingBoardAddressesProvider.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardDataProvider.initialize(
-    hardhatLendingBoardAddressesProvider.address
+    hardhatLendingBoardAddressesProvider.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardParametersProvider.initialize(
-    hardhatLendingBoardAddressesProvider.address
+    hardhatLendingBoardAddressesProvider.address, { gasLimit: 3000000 }
   );
   await hardhatLendingBoardFeeProvider.initialize(
-    hardhatLendingBoardAddressesProvider.address
+    hardhatLendingBoardAddressesProvider.address, { gasLimit: 3000000 }
   );
   // since DISTRIBUTION_BASE = 10000; set in TokenDistributor.sol dummy data for percentages set like below
   await hardhatTokenDistributor.initialize(
     [owner.address, user1.address, user2.address],
-    [4000, 3000, 2000]
+    [4000, 3000, 2000], { gasLimit: 3000000 }
   );
   // await hardhatLendingBoardLiquidationManager.initialize(hardhatLendingBoardAddressesProvider.address);
 
@@ -173,43 +161,48 @@ async function main() {
   );
 
   // SampleToken(STKN) Deployment for Testing. SampleToken.sol에서 가져옴
-  const SampleToken = await ethers.getContractFactory("SampleToken");
-  const hardhatSampleToken = await SampleToken.deploy();
-  await hardhatSampleToken.deployed();
+  //const SampleToken = await ethers.getContractFactory("SampleToken");
+  //const hardhatSampleToken = await SampleToken.deploy();
+  //await hardhatSampleToken.deployed();
 
   // Sample Token Address 확인
-  const STKNaddress = hardhatSampleToken.address;
+  //const STKNaddress = hardhatSampleToken.address;
+  const STKNaddress = '0xc2f13398Bf020c8e6FC3d4C4F9858be1D630Ee87';
+  const hardhatSampleToken = await ethers.getContractAt(STKN.abi, STKNaddress, owner);
 
   // 임의로 TestOracle AssetPrice 및 TestLendingRateOracle의 LendingRate 설정
   const STKNPrice = ethers.utils.parseEther("2");
   console.log("STKN Address : ", STKNaddress);
   console.log("STKN Price : ", STKNPrice);
-  await hardhatTestOracle.setAssetPrice(STKNaddress, STKNPrice);
+  await hardhatTestOracle.setAssetPrice(STKNaddress, STKNPrice, { gasLimit: 3000000 });
 
   const STKNLendingRate = ethers.utils.parseEther("0.05");
   await hardhatTestLendingRateOracle.setMarketBorrowRate(
     STKNaddress,
-    STKNLendingRate
+    STKNLendingRate, { gasLimit: 3000000 }
   );
 
   // PlugToken(PLUG) Deployment
-  const PlugToken = await ethers.getContractFactory("PlugToken");
-  const hardhatPlugToken = await PlugToken.deploy();
-  await hardhatPlugToken.deployed();
+  //const PlugToken = await ethers.getContractFactory("PlugToken");
+  //const hardhatPlugToken = await PlugToken.deploy();
+  //await hardhatPlugToken.deployed();
 
-  const PLUGaddress = hardhatPlugToken.address;
+  //const PLUGaddress = hardhatPlugToken.address;
+  const PLUGaddress = '0xc2f13398Bf020c8e6FC3d4C4F9858be1D630Ee87';
+  const hardhatPlugToken = await ethers.getContractAt(PLUG.abi, PLUGaddress, owner);
 
   const PLUGPrice = ethers.utils.parseEther("5");
   console.log("PLUG Address : ", PLUGaddress);
   console.log("PLUG Price : ", PLUGPrice);
-  await hardhatTestOracle.setAssetPrice(PLUGaddress, PLUGPrice, { gasLimit: 3000000 });
+  await hardhatTestOracle.setAssetPrice(PLUGaddress, PLUGPrice, { gasLimit: 6000000 });
 
   const PLUGLendingRate = ethers.utils.parseEther("0.1");
-  await hardhatTestLendingRateOracle.setMarketBorrowRate(
+  let tx = await hardhatTestLendingRateOracle.setMarketBorrowRate(
     PLUGaddress,
     PLUGLendingRate,
-    { gasLimit: 3000000 }
+    { gasLimit: 6000000 }
   );
+  console.log('tx hash:', tx.hash);
 
   // Default Reserve Interest-Rate Strategy Contract Setting
   const DefaultReserveInterestRateStrategy = await ethers.getContractFactory(
@@ -233,7 +226,7 @@ async function main() {
       sampleVariableRateSlope2,
       sampleStableRateSlope1,
       sampleStableRateSlope2,
-      { gasLimit: 3000000 }
+      { gasLimit: 6000000 }
     );
   await STKNhardhatDefaultReserveInterestRateStrategy.deployed();
   const STKNstrategyAddress =
@@ -243,7 +236,7 @@ async function main() {
     STKNaddress,
     18,
     STKNstrategyAddress,
-    { gasLimit: 3000000 }
+    { gasLimit: 6000000 }
   );
   // await hardhatLendingBoardConfigurator.setReserveInterestRateStrategyAddress(STKNaddress,STKNstrategyAddress)
 
@@ -257,7 +250,7 @@ async function main() {
       sampleVariableRateSlope2,
       sampleStableRateSlope1,
       sampleStableRateSlope2,
-      { gasLimit: 3000000 }
+      { gasLimit: 6000000 }
     );
   await PLUGhardhatDefaultReserveInterestRateStrategy.deployed();
   const PLUGstrategyAddress =
@@ -267,7 +260,7 @@ async function main() {
     PLUGaddress,
     18,
     PLUGstrategyAddress,
-    { gasLimit: 3000000 }
+    { gasLimit: 6000000 }
   );
 
   console.log(
@@ -276,11 +269,13 @@ async function main() {
   );
 
   // user1에게 STKN과 PLUG를 전송해준다.
+  /*
   const transferAmount = ethers.utils.parseEther("3000");
   await hardhatSampleToken
     .connect(owner)
-    .transfer(user1.address, transferAmount, { gasLimit: 3000000 });
-  await hardhatPlugToken.connect(owner).transfer(user1.address, transferAmount, { gasLimit: 3000000 });
+    .transfer(user1.address, transferAmount, { gasLimit: 6000000 });
+  await hardhatPlugToken.connect(owner).transfer(user1.address, transferAmount, { gasLimit: 6000000 });
+  */
 
   console.log(
     " ====================== Depositing STKN and PLUG ======================"
@@ -292,29 +287,31 @@ async function main() {
   console.log("Pass 0");
   // Send the approval transaction. The address should be LBCore not LB itself.
   // Owner의 approval 및 deposit
-  let approvalResult = await hardhatSampleToken
+  await hardhatSampleToken
     .connect(owner)
-    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
-  approvalResult = await hardhatPlugToken
+    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 6000000 });
+  await hardhatPlugToken
     .connect(owner)
-    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
+    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 6000000 });
 
   // deposit() 이용하여 서비스에 STKN 예치
   const depositAmount = ethers.utils.parseEther("1000");
 
   estimatedGas = await hardhatLendingBoardProposeMode
     .connect(owner)
-    .deposit(STKNaddress, depositAmount, 0, { gasLimit: 3000000 });
+    .deposit(STKNaddress, depositAmount, 0, { gasLimit: 6000000 });
   console.log("Estimated Gas for LBPM Deposit : ", estimatedGas);
 
   // STKN 1000개 예치
-  await hardhatLendingBoardProposeMode
+  tx = await hardhatLendingBoardProposeMode
     .connect(owner)
-    .deposit(STKNaddress, depositAmount, 0, { gasLimit: 30000000 }); // Set Referral Code = 0
+    .deposit(STKNaddress, depositAmount, 0, { gasLimit: 60000000 }); // Set Referral Code = 0
+  console.log("tx hash:", tx.hash);
   // PLUG 1000개 예치
-  await hardhatLendingBoardProposeMode
+  tx = await hardhatLendingBoardProposeMode
     .connect(owner)
-    .deposit(PLUGaddress, depositAmount, 0, { gasLimit: 30000000 }); // Set Referral Code = 0
+    .deposit(PLUGaddress, depositAmount, 0, { gasLimit: 60000000 }); // Set Referral Code = 0
+  console.log("tx hash:", tx.hash);
 
   console.log(
     "\x1b[43m%s\x1b[0m",
@@ -324,17 +321,17 @@ async function main() {
   // User1의 approval 및 Deposit
   approvalResult = await hardhatSampleToken
     .connect(user1)
-    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
+    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 6000000 });
   approvalResult = await hardhatPlugToken
     .connect(user1)
-    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 3000000 });
+    .approve(hardhatLendingBoardCore.address, approveAmount, { gasLimit: 6000000 });
 
   await hardhatLendingBoardProposeMode
     .connect(user1)
-    .deposit(STKNaddress, depositAmount, 0, { gasLimit: 30000000 }); // Set Referral Code = 0
+    .deposit(STKNaddress, depositAmount, 0, { gasLimit: 60000000 }); // Set Referral Code = 0
   await hardhatLendingBoardProposeMode
     .connect(user1)
-    .deposit(PLUGaddress, depositAmount, 0, { gasLimit: 30000000 }); // Set Referral Code = 0
+    .deposit(PLUGaddress, depositAmount, 0, { gasLimit: 60000000 }); // Set Referral Code = 0
 
   console.log(
     "\x1b[43m%s\x1b[0m",
@@ -345,7 +342,7 @@ async function main() {
   // configuring STKN Reserve for Borrowing and Collateral
   await hardhatLendingBoardConfigurator
     .connect(owner)
-    .enableBorrowingOnReserve(STKNaddress, true, { gasLimit: 3000000 });
+    .enableBorrowingOnReserve(STKNaddress, true, { gasLimit: 6000000 });
   // WIP : parseEther('0.70') 으로 해야할지 '70'일지 '0.70'일지
   baseLTVasCollateral = ethers.utils.parseEther("0.5");
   // liquidationThreshold = ethers.utils.parseEther('0.70');
@@ -357,20 +354,20 @@ async function main() {
       STKNaddress,
       baseLTVasCollateral,
       liquidationThreshold,
-      liquidationBonus, { gasLimit: 3000000 }
+      liquidationBonus, { gasLimit: 6000000 }
     );
 
   await hardhatLendingBoardProposeMode
     .connect(owner)
-    .setUserUseReserveAsCollateral(STKNaddress, 1, { gasLimit: 3000000 }); // 1 : enable, 0 : disable
+    .setUserUseReserveAsCollateral(STKNaddress, 1, { gasLimit: 6000000 }); // 1 : enable, 0 : disable
   await hardhatLendingBoardProposeMode
     .connect(user1)
-    .setUserUseReserveAsCollateral(STKNaddress, 1, { gasLimit: 3000000 }); // 1 : enable, 0 : disable
+    .setUserUseReserveAsCollateral(STKNaddress, 1, { gasLimit: 6000000 }); // 1 : enable, 0 : disable
 
   // configuring PLUG Reserve for Borrowing and Collateral
   await hardhatLendingBoardConfigurator
     .connect(owner)
-    .enableBorrowingOnReserve(PLUGaddress, true, { gasLimit: 3000000 });
+    .enableBorrowingOnReserve(PLUGaddress, true, { gasLimit: 6000000 });
   baseLTVasCollateral = ethers.utils.parseEther("0.5");
   // liquidationThreshold = ethers.utils.parseEther('0.70');
   liquidationThreshold = "70";
@@ -381,15 +378,15 @@ async function main() {
       PLUGaddress,
       baseLTVasCollateral,
       liquidationThreshold,
-      liquidationBonus, { gasLimit: 3000000 }
+      liquidationBonus, { gasLimit: 6000000 }
     );
 
   await hardhatLendingBoardProposeMode
     .connect(owner)
-    .setUserUseReserveAsCollateral(PLUGaddress, 1, { gasLimit: 3000000 }); // 1 : enable, 0 : disable
+    .setUserUseReserveAsCollateral(PLUGaddress, 1, { gasLimit: 6000000 }); // 1 : enable, 0 : disable
   await hardhatLendingBoardProposeMode
     .connect(user1)
-    .setUserUseReserveAsCollateral(PLUGaddress, 1, { gasLimit: 3000000 }); // 1 : enable, 0 : disable
+    .setUserUseReserveAsCollateral(PLUGaddress, 1, { gasLimit: 6000000 }); // 1 : enable, 0 : disable
   // console.log("set PLUG as Collateral enabled");
 
   console.log(
