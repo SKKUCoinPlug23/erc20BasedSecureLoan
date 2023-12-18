@@ -2,9 +2,9 @@ require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
-const SEPOLIA_PRIVATE_KEY1 = process.env.SEPOLIA_PRIVATE_KEY1;
-const SEPOLIA_PRIVATE_KEY2 = process.env.SEPOLIA_PRIVATE_KEY2;
-const SEPOLIA_PRIVATE_KEY3 = process.env.SEPOLIA_PRIVATE_KEY3;
+const USER_WALLET_PRIVATE_KEY1 = process.env.USER_WALLET_PRIVATE_KEY1;
+const USER_WALLET_PRIVATE_KEY2 = process.env.USER_WALLET_PRIVATE_KEY2;
+const USER_WALLET_PRIVATE_KEY3 = process.env.USER_WALLET_PRIVATE_KEY3;
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -18,18 +18,18 @@ module.exports = {
       loggingEnabled: true,
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
       accounts: [
-        SEPOLIA_PRIVATE_KEY1,
-        SEPOLIA_PRIVATE_KEY2,
-        SEPOLIA_PRIVATE_KEY3,
+        USER_WALLET_PRIVATE_KEY1,
+        USER_WALLET_PRIVATE_KEY2,
+        USER_WALLET_PRIVATE_KEY3,
       ],
     },
     metadium: {
       loggingEnabled: true,
       url: `https://api.metadium.com/dev`,
       accounts: [
-        SEPOLIA_PRIVATE_KEY1,
-        SEPOLIA_PRIVATE_KEY2,
-        SEPOLIA_PRIVATE_KEY3,
+        USER_WALLET_PRIVATE_KEY1,
+        USER_WALLET_PRIVATE_KEY2,
+        USER_WALLET_PRIVATE_KEY3,
       ],
       gasPrice: 80000000000,
     },
