@@ -264,6 +264,7 @@ async function main() {
   );
   console.log("Tx address after hardhatLendingBoardConfigurator.initReserve : ", txData.hash);
 
+  // git config check
 
   console.log(
     "\x1b[32m%s\x1b[0m",
