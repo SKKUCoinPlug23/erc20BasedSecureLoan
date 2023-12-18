@@ -29,8 +29,15 @@ import AdbIcon from '@mui/icons-material/Adb';
 import CardMedia from '@mui/material/CardMedia';
 
 import bitcon_image from '../images/bitcoin.jpg';
-import error_image from '../images/pngwing.com.png'
-import checkmark_image from '../images/checkmark.png'
+import error_image from '../images/pngwing.com.png';
+import checkmark_image from '../images/checkmark.png';
+
+import { contractsAddr } from '../config/config';
+const addrProviderABI = require("../contractAbis/interfaces/ILendingBoardAddressesProvider.sol/ILendingBoardAddressesProvider.json");
+const proposeModeABI = require("../contractAbis/lendingboard/LendingBoardProposeMode.sol/LendingBoardProposeMode.json");
+const stokenTokenABI = require("../contractAbis/SampleToken.sol/SampleToken.json");
+
+const ethers = require('ethers');
 
 
 
@@ -48,7 +55,8 @@ const Deposit_Page = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [maxQuantity, setMaxQuantity] = useState(0);
   const [selectedCurrency, setSelectedCurrency] = useState('');
-  const isLengthInvalid = selectedCurrency.length !== 32;
+  const isLengthInvalid = selectedCurrency.length !== 40;
+
 
   const currencies = [
     {
@@ -80,12 +88,30 @@ const Deposit_Page = () => {
     }
   }, [selectedCurrency, currencies]);
 
-  const checkValues = () => {
-    if (parseFloat(inputQuantity) > maxQuantity) {
-      setShowErrorDialog(true);  // 에러 팝업창 표시
-    } else {
+  const checkValues = async () => {
+//    if (parseFloat(inputQuantity) > maxQuantity) {
+//      setShowErrorDialog(true);  // 에러 팝업창 표시
+//    } else {
+      console.log(contractsAddr);
+      console.log(account);
+      console.log(window.ethereum.isConnected());
+      console.log(window.ethereum.networkVersion, 'window.ethereum.networkVersion');
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      console.log(provider);
+      const signer = await provider.getSigner();
+      console.log('address:', await signer.getAddress());
+
+      const stoken = new ethers.Contract(contractsAddr["STKNToken"], stokenTokenABI['abi'], signer);
+      const approveAmount = ethers.utils.parseEther("3000");
+      const res = await stoken.approve(contractsAddr["LBCore"], approveAmount);
+      console.log(res);
+
+      const proposeMode = new ethers.Contract(contractsAddr["LBProposeMode"], proposeModeABI['abi'], signer);
+      const deposit = await proposeMode.deposit(contractsAddr["STKNToken"], inputQuantity, 0, {gasLimit: 3000000});
+      console.log(deposit);
+
       setShowSuccessDialog(true);  // 성공 팝업창 표시
-    }
+//    }
   }
   function Copyright() {
     return (
