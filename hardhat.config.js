@@ -23,6 +23,16 @@ module.exports = {
         USER_WALLET_PRIVATE_KEY3,
       ],
     },
+    tb: {
+      loggingEnabled: true,
+      url: `http://106.240.238.226:10188`,
+      accounts: [
+        USER_WALLET_PRIVATE_KEY1,
+        USER_WALLET_PRIVATE_KEY2,
+        USER_WALLET_PRIVATE_KEY3,
+      ],
+      gasPrice: 80000000000,
+    },
     metadium: {
       loggingEnabled: true,
       url: `https://api.metadium.com/dev`,

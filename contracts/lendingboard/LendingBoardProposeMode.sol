@@ -289,32 +289,8 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         RepayLocalVars memory vars;
         CoreLibrary.ProposalStructure memory proposalStructure;
 
-        // // Get Borrow Proposal Structure
-        // if (_isBorrowProposal) {
-        //     proposalStructure = core.getBorrowProposalFromCore(_proposalId);
-        // } else {
-        //     proposalStructure = core.getLendProposalFromCore(_proposalId);
-        //     // WIP : need validation like Borrow Proposal
-        // }
-
         proposalStructure = core.getProposalFromCore(_proposalId,_isBorrowProposal);
         require(msg.sender == proposalStructure.borrower,"Currently Borrow Proposal Case is only possible for testing, later Proposal Structure Modification Required");
-
-        // (
-        //     ,
-        //     ,
-        //     vars.reserve,
-        //     vars.principalBorrowBalance,
-        //     address reserveForCollateral,
-        //     ,
-        //     uint256 interestRate,
-        //     uint256 dueDate,
-        //     ,
-        //     vars.originationFee ,
-        //     ,
-        //     ,
-            
-        // ) = dataProvider.getProposalData(_proposalId,_isBorrowProposal);
 
         // Check reserve validity
         vars.reserve = proposalStructure.reserveToReceive;
@@ -330,12 +306,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         vars.isETH = EthAddressLib.ethAddress() == vars.reserve;
 
         require(vars.compoundedBorrowBalance > 0, "The user does not have any borrow pending");
-
-        // proposalStructure에 borower 추가되면 주석 해제
-        // require(
-        //     proposalStructure.borrower == msg.sender,
-        //     "To repay on behalf of an user an explicit amount to repay is needed."
-        // );
 
         // pay origination fee to service
         require(
@@ -355,11 +325,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         //default to max amount
         vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
         vars.paybackAmountMinusFees = vars.paybackAmount.sub(vars.originationFee);
-
-        // require(
-        //     ((!vars.isETH && _amount == vars.paybackAmount) || (vars.isETH && vars.paybackAmount == msg.value)), 
-        //     "Invalid amount parameter sent for the repayment"
-        // );
 
         // Borrower should have enough balance to cover the repay
         require(
@@ -573,6 +538,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         uint256 userCurrentBorrowBalance;
         uint256 userCurrentAvailableReserveBalanceInWei;
         uint256 userCurrentAvailableReserveBalance;
+        
         (
             userCurrentATokenBalance,
             userCurrentBorrowBalance,
@@ -858,7 +824,6 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         );
         
         uint256 userCurrentAvailableLendBalanceInWei = getUserReserveBalance(_reserveToLend,msg.sender).mul(10 ** 18);
-
 
         uint256 collateralLTV;
 
