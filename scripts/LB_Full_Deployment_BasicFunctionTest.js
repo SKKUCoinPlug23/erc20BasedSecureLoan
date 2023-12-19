@@ -160,15 +160,16 @@ async function main() {
     "\nEach Smart Contract Initialization Successful"
   );
 
-  // SampleToken(STKN) Deployment for Testing. SampleToken.sol에서 가져옴
-  //const SampleToken = await ethers.getContractFactory("SampleToken");
-  //const hardhatSampleToken = await SampleToken.deploy();
-  //await hardhatSampleToken.deployed();
+  // SampleToken(STKN) Deployment for Testing. SampleToken.sol에서 가져온다
+  // giirafe setting
+  const SampleToken = await ethers.getContractFactory("SampleToken");
+  const hardhatSampleToken = await SampleToken.deploy();
+  await hardhatSampleToken.deployed();
+  const STKNaddress = hardhatSampleToken.address;
 
-  // Sample Token Address 확인
-  //const STKNaddress = hardhatSampleToken.address;
-  const STKNaddress = '0xc2f13398Bf020c8e6FC3d4C4F9858be1D630Ee87';
-  const hardhatSampleToken = await ethers.getContractAt(STKN.abi, STKNaddress, owner);
+  // trident90 setting
+  // const STKNaddress = '0xc2f13398Bf020c8e6FC3d4C4F9858be1D630Ee87';
+  // const hardhatSampleToken = await ethers.getContractAt(STKN.abi, STKNaddress, owner);
 
   // 임의로 TestOracle AssetPrice 및 TestLendingRateOracle의 LendingRate 설정
   const STKNPrice = ethers.utils.parseEther("2");
@@ -183,13 +184,15 @@ async function main() {
   );
 
   // PlugToken(PLUG) Deployment
-  //const PlugToken = await ethers.getContractFactory("PlugToken");
-  //const hardhatPlugToken = await PlugToken.deploy();
-  //await hardhatPlugToken.deployed();
+  // giirafe setting
+  const PlugToken = await ethers.getContractFactory("PlugToken");
+  const hardhatPlugToken = await PlugToken.deploy();
+  await hardhatPlugToken.deployed();
+  const PLUGaddress = hardhatPlugToken.address;
 
-  //const PLUGaddress = hardhatPlugToken.address;
-  const PLUGaddress = '0xc2f13398Bf020c8e6FC3d4C4F9858be1D630Ee87';
-  const hardhatPlugToken = await ethers.getContractAt(PLUG.abi, PLUGaddress, owner);
+  // tridnet90 setting
+  // const PLUGaddress = '0xc2f13398Bf020c8e6FC3d4C4F9858be1D630Ee87';
+  // const hardhatPlugToken = await ethers.getContractAt(PLUG.abi, PLUGaddress, owner);
 
   const PLUGPrice = ethers.utils.parseEther("5");
   console.log("PLUG Address : ", PLUGaddress);
@@ -202,7 +205,7 @@ async function main() {
     PLUGLendingRate,
     { gasLimit: 6000000 }
   );
-  console.log("\x1b[31m%s\x1b[0m",'tx hash:', tx.hash);
+  console.log("\x1b[31m%s\x1b[0m",'lendingRateOracle setMarketBorrowRate tx hash:', tx.hash);
 
   // Default Reserve Interest-Rate Strategy Contract Setting
   const DefaultReserveInterestRateStrategy = await ethers.getContractFactory(
@@ -309,12 +312,12 @@ async function main() {
   tx = await hardhatLendingBoardProposeMode
     .connect(owner)
     .deposit(STKNaddress, depositAmount, 0, { gasLimit: 60000000 }); // Set Referral Code = 0
-  console.log("\x1b[31m%s\x1b[0m","tx hash:", tx.hash);
+  console.log("\x1b[31m%s\x1b[0m"," LB deposit STKN tx hash:", tx.hash);
   // PLUG 1000개 예치
   tx = await hardhatLendingBoardProposeMode
     .connect(owner)
     .deposit(PLUGaddress, depositAmount, 0, { gasLimit: 60000000 }); // Set Referral Code = 0
-  console.log("\x1b[31m%s\x1b[0m","tx hash:", tx.hash);
+  console.log("\x1b[31m%s\x1b[0m","LB deposit PLUG tx hash:", tx.hash);
 
   console.log(
     "\x1b[32m%s\x1b[0m",
