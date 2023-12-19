@@ -19,7 +19,7 @@ $ npm install
 Create a `.env` file and add your wallet's private key in the following format:
 
 ```
-USER_WALLET_PRIVATE_KEY{n} # n = [1,2,3]
+USER{n}_WALLET_PRIVATE_KEY # n = [1,2,3]
 ```
 
 ## Compilation
@@ -41,6 +41,7 @@ $ npx hardhat test test/LendingBoardProposeModeTest.js
 ## Deployment
 
 Test deploying compiled Smart Contracts on the localhost network:
+Replace 'localhost' to your custom network name in order to deploy on custom networks.
 
 ```
 $ npx hardhat run --network localhost scripts/LendingBoardDeployment.js

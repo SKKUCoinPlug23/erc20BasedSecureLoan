@@ -9,7 +9,7 @@ async function main() {
     "\n Lending Board Smart Contract Deployment Start"
   );
   const [owner, user1, user2] = await ethers.getSigners();
-  console.log("\x1b[43m%s\x1b[0m", "\n Getting MetaMask Wallet Account");
+  console.log("\x1b[33m%s\x1b[0m", "\n Getting MetaMask Wallet Account");
 
   // Libraries
   const CoreLibrary = await ethers.getContractFactory("CoreLibrary");
