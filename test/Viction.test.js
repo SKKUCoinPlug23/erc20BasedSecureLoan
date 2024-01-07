@@ -515,7 +515,14 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       // print Borrow Proposal #1 Data
       console.log("\x1b[32m%s\x1b[0m", "\n\nBorrow Proposal #1");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(generatedBorrowProposal);
+      console.log(" Borrower          :", generatedBorrowProposal.borrower);
+      console.log(" Lender            :", generatedBorrowProposal.lender);
+      console.log(" Amount            :", generatedBorrowProposal.amount.toString());
+      console.log(" Collateral Amount :", generatedBorrowProposal.collateralAmount.toString());
+      console.log(" Interest Rate     :", generatedBorrowProposal.interestRate.toString());
+      console.log(" Due Date          :", generatedBorrowProposal.dueDate.toString());
+      console.log(" LTV               :", generatedBorrowProposal.ltv.toString());
+      console.log(" is Repayed        :", generatedBorrowProposal.isRepayed);
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       // Data from borowProposal needs to have a borrower's id matching that of owner.address.
@@ -527,9 +534,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
           STKNaddress,
           owner.address
         );
-      console.log("\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data Before Borrow Proposal Accept");
+      console.log("\x1b[32m%s\x1b[0m\x1b[31m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data ", "Before ", "Borrow Proposal Accept");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(ownerSTKNReserveData);
+      console.log(" Current AToken Balance   :", ownerSTKNReserveData.currentATokenBalance.toString());
+      console.log(" Current Borrow Balance   :", ownerSTKNReserveData.currentBorrowBalance.toString());
+      console.log(" Principal Borrow Balance :", ownerSTKNReserveData.principalBorrowBalance.toString());
+      console.log(" Origination Fee          :", ownerSTKNReserveData.originationFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       let ownerPLUGReserveData =
@@ -537,9 +547,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
         PLUGaddress,
         owner.address
         );
-      console.log("\x1b[32m%s\x1b[0m", "\n\nUser1's PLUG(Collateral) Reserve Data After Borrow Proposal Accept");
+      console.log("\x1b[32m%s\x1b[0m\x1b[31m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's PLUG(Collateral) Reserve Data ", "Before ", "Borrow Proposal Accept");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(ownerPLUGReserveData);
+      console.log(" Current AToken Balance   :", ownerPLUGReserveData.currentATokenBalance.toString());
+      console.log(" Current Borrow Balance   :", ownerPLUGReserveData.currentBorrowBalance.toString());
+      console.log(" Principal Borrow Balance :", ownerPLUGReserveData.principalBorrowBalance.toString());
+      console.log(" Origination Fee          :", ownerPLUGReserveData.originationFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       // User1 accepts Borrow Proposal #1
@@ -573,9 +586,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
           STKNaddress,
           owner.address
         );
-      console.log("\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data After Borrow Proposal Accept");
+      console.log("\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data ", "After ", "Borrow Proposal Accept");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(ownerSTKNReserveData);
+      console.log(" Current Borrow Balance   :", ownerSTKNReserveData.currentBorrowBalance.toString());
+      console.log(" Principal Borrow Balance :", ownerSTKNReserveData.principalBorrowBalance.toString());
+      console.log(" Origination Fee          :", ownerSTKNReserveData.originationFee.toString());
+      console.log(" Current AToken Balance   :", ownerSTKNReserveData.currentATokenBalance.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       ownerPLUGReserveData =
@@ -583,9 +599,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
           PLUGaddress,
           owner.address
         );
-      console.log("\x1b[32m%s\x1b[0m", "\n\nUser1's PLUG(Collateral) Reserve Data After Borrow Proposal Accept");
+      console.log("\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's PLUG(Collateral) Reserve Data ", "After ", "Borrow Proposal Accept");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(ownerPLUGReserveData);
+      console.log(" Current AToken Balance   :", ownerPLUGReserveData.currentATokenBalance.toString());
+      console.log(" Current Borrow Balance   :", ownerPLUGReserveData.currentBorrowBalance.toString());
+      console.log(" Principal Borrow Balance :", ownerPLUGReserveData.principalBorrowBalance.toString());
+      console.log(" Origination Fee          :", ownerPLUGReserveData.originationFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
 
@@ -600,20 +619,26 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log("\x1b[36m%s\x1b[0m", "╚════════════════════════════════════════════════╝");
       console.log("\x1b[36m%s\x1b[0m", "=> NFT is minted right after Borrow Proposal Accept");
       console.log("\x1b[36m%s\x1b[0m", "=> NFT is minted to the Lender");
-      console.log("[*] NFT is minted to the Lender");
+      console.log("    [*] NFT is minted to the Lender");
 
       // Get Information of NFT (Get mapping Value) 
       let nftInfo1 = await hardhatLendingBoardNFT.connect(user1).getNFTMetadata(1);
-      console.log("\x1b[32m%s\x1b[0m", "\n\nMetadata of NFT for Borrow Proposal #1");
+      console.log("\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nMetadata of ", "NFT ", "for Borrow Proposal #1");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(nftInfo1);
+      console.log(" Proposal ID              :", nftInfo1.proposalId.toString());
+      console.log(" Borrower                 :", nftInfo1.borrower);
+      console.log(" Amount                   :", nftInfo1.amount.toString());
+      console.log(" Due Date                 :", nftInfo1.dueDate.toString());
+      console.log(" Timestamp                :", nftInfo1.contractTimestamp.toString());
+      console.log(" Interest Rate            :", nftInfo1.interestRate.toString());
+      console.log(" Payback Amount minus fee :", nftInfo1.paybackAmountMinusFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       // check lender's NFT balance before repay & burn NFT
       const beforeNFTbalance = await hardhatLendingBoardNFT.balanceOf(user1.address);
-      console.log("\x1b[32m%s\x1b[0m", "\n\nLender's NFT Balance Before Repayment");
+      console.log("\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m\x1b[31m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nLender's ", "NFT ", "Balance ", "Before ", "Repayment");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(beforeNFTbalance);
+      console.log(" Lender's NFT Balance :", beforeNFTbalance.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       // ===============
@@ -648,9 +673,12 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
           STKNaddress,
           owner.address
         );
-      console.log("\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data After Repayment");
+      console.log("\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data ", "After ", "Repayment");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(ownerSTKNReserveData);
+      console.log(" Current AToken Balance   :", ownerSTKNReserveData.currentATokenBalance.toString());
+      console.log(" Current Borrow Balance   :", ownerSTKNReserveData.currentBorrowBalance.toString());
+      console.log(" Principal Borrow Balance :", ownerSTKNReserveData.principalBorrowBalance.toString());
+      console.log(" Origination Fee          :", ownerSTKNReserveData.originationFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       ownerPLUGReserveData =
@@ -658,16 +686,19 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
           PLUGaddress,
           owner.address
         );
-      console.log("\x1b[32m%s\x1b[0m", "\n\nUser1's PLUG(Collateral) Reserve Data After Repayment");
+      console.log("\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's PLUG(Collateral) Reserve Data ", "After ", "Repayment");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(ownerPLUGReserveData);
+      console.log(" Current AToken Balance   :", ownerPLUGReserveData.currentATokenBalance.toString());
+      console.log(" Current Borrow Balance   :", ownerPLUGReserveData.currentBorrowBalance.toString());
+      console.log(" Principal Borrow Balance :", ownerPLUGReserveData.principalBorrowBalance.toString());
+      console.log(" Origination Fee          :", ownerPLUGReserveData.originationFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
           
       // check lender's NFT balance after repay & burn NFT
       const afterNFTbalance = await hardhatLendingBoardNFT.balanceOf(user1.address);
-      console.log("\x1b[32m%s\x1b[0m", "\n\nLender's NFT Balance After Repayment");
+      console.log("\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nLender's ", "NFT ", "Balance ", "After ", "Repayment");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(afterNFTbalance);
+      console.log(" Lender's NFT Balance :", afterNFTbalance.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     });
   });
