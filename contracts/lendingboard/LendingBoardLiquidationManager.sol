@@ -317,7 +317,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         bool _receiveAToken
     ) external payable returns (uint256, string memory){
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager Start");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager Start");
         
         LiquidationCallLocalVars memory vars;
 
@@ -338,7 +338,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             bool isRepayed
         ) = dataProvider.getProposalData(_proposalId,_isBorrowProposal);
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : getProposalData done");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : getProposalData done");
         
         // !----- Currently Only Borrow Proposal Liquidation is allowd, later REAL borrower로 변경 요망 -----!
         // address borrower = proposer; 
@@ -361,11 +361,11 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             );
         }
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : Health Factor Threshold Checked");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : Health Factor Threshold Checked");
 
         uint256 borrowerCollateralBalance = core.getUserUnderlyingAssetBalance(reserveForCollateral,borrower);
 
-        console.log("\x1b[43m%s %s\x1b[0m", "\n   => Liquidation Manager : borrowerCollateralBalance ",borrowerCollateralBalance);
+        // console.log("\x1b[43m%s %s\x1b[0m", "\n   => Liquidation Manager : borrowerCollateralBalance ",borrowerCollateralBalance);
 
         if (borrowerCollateralBalance == 0) {
             return (
@@ -374,7 +374,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             );
         }
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager :   Borrower Collateral Balance Checked");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager :   Borrower Collateral Balance Checked");
         
         bool isCollateralEnabled =
             core.isReserveUsageAsCollateralEnabled(reserveForCollateral) &&
@@ -387,7 +387,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             );
         }
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager :  Collateral Enabled Checked");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager :  Collateral Enabled Checked");
 
         // WIP : 현재 Proposal Structure의 재조정이 이뤄지지 않은 상태이기에 Borrow Proposal의 경우에만 Liquidation이 이뤄지게 끔
         require(_isBorrowProposal, "!------Currently Only Borrow Proposals are available for Liquidation-------!");
@@ -403,7 +403,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             );
         }
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : Liquidation Conditions are Met");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : Liquidation Conditions are Met");
 
         // now Liquidation Conditions are met
         
@@ -418,7 +418,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             vars.actualAmountToLiquidate
         );
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : collateralToTransfer calculation done");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : collateralToTransfer calculation done");
 
         // Service Fee는 대출자산을 기준으로 계산됨
         vars.originationFee = serviceFee;
@@ -430,7 +430,7 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
         );
         vars.feeLiquidated = vars.originationFee;
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : liquidatedCollateralForFee calculation done");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : liquidatedCollateralForFee calculation done");
 
         //if liquidator reclaims the underlying asset, we make sure there is enough available collateral in the reserve
         if (!_receiveAToken) {
@@ -455,11 +455,11 @@ contract LendingBoardLiquidationManager is ReentrancyGuard, VersionedInitializab
             _receiveAToken
         );
 
-        console.log("\x1b[42m%s %s\x1b[0m", "\n   => Liquidation Manager :  vars.actualAmountToLiquidate",vars.actualAmountToLiquidate);
+        // console.log("\x1b[42m%s %s\x1b[0m", "\n   => Liquidation Manager :  vars.actualAmountToLiquidate",vars.actualAmountToLiquidate);
         
-        console.log("\x1b[42m%s %s\x1b[0m", "\n   => Liquidation Manager :  collateralToTransfer",collateralToTransfer);
+        // console.log("\x1b[42m%s %s\x1b[0m", "\n   => Liquidation Manager :  collateralToTransfer",collateralToTransfer);
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : updateStateOnLiquidation done");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => Liquidation Manager : updateStateOnLiquidation done");
 
         AToken collateralAtoken = AToken(core.getReserveATokenAddress(reserveForCollateral));
 

@@ -1129,10 +1129,10 @@ contract LendingBoardProposeModeTemporal is ReentrancyGuard,VersionedInitializab
             ,
         ) = dataProvider.getReserveConfigurationData(_reserveForCollateral);
 
-        uint256 requestedLendAmountInWei = oracle
-            .getAssetPrice(_reserveToLend)
-            .mul(_amount)
-            .div(10 ** reserveDecimals); 
+        // uint256 requestedLendAmountInWei = oracle
+        //     .getAssetPrice(_reserveToLend)
+        //     .mul(_amount)
+        //     .div(10 ** reserveDecimals); 
 
         // console.log("   => LBPM : _amount, requestedLendAmountInWei, collateralLTV : ",_amount,requestedLendAmountInWei,collateralLTV);
 

@@ -704,7 +704,7 @@ contract LendingBoardCore is VersionedInitializable {
             require(msg.value >= _amount, "The amount and the value sent to deposit do not match");
             if (msg.value > _amount) {
                 //send back excess ETH
-                uint256 excessAmount = msg.value.sub(_amount);
+                // uint256 excessAmount = msg.value.sub(_amount);
                 //solium-disable-next-line
                 // (bool result, ) = _user.call.value(excessAmount).gas(50000)("");
                 (bool result, ) = _user.call{value: _amount}("");

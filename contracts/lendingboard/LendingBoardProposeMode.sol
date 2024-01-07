@@ -837,10 +837,10 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             ,
         ) = dataProvider.getReserveConfigurationData(_reserveForCollateral);
 
-        uint256 requestedLendAmountInWei = oracle
-            .getAssetPrice(_reserveToLend)
-            .mul(_amount)
-            .div(10 ** reserveDecimals); 
+        // uint256 requestedLendAmountInWei = oracle
+        //     .getAssetPrice(_reserveToLend)
+        //     .mul(_amount)
+        //     .div(10 ** reserveDecimals); 
 
         // Lemd하기에 충분한 balance를 가지고 있는지 확인한다.
         require(userCurrentAvailableLendBalanceInWei >= _amount,"There is not enough balance to lend in order to cover a new lend proposal");
