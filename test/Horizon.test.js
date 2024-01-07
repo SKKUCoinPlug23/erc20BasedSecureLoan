@@ -465,7 +465,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log("\x1b[36m%s\x1b[0m", "║                                                ║");
       console.log("\x1b[36m%s\x1b[0m", "╚════════════════════════════════════════════════╝");
       console.log("\x1b[36m%s\x1b[0m", "=> User1 wants to borrow some asset to others.");
-      console.log("\x1b[36m%s\x1b[0m", "=> User1 makes a Borrow Proposals to service.");
+      console.log("\x1b[36m%s\x1b[0m", "=> User1 makes a Borrow Proposal to service.");
       
       await expect(
         hardhatLendingBoardProposeMode
@@ -478,6 +478,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
             dueDate
           )
       ).to.emit(hardhatLendingBoardProposeMode, "BorrowProposed");
+      console.log("    [*] Borrow Proposal #1 Done");
 
       // getBorrowProposalList()를 확인하기 위해 동일한 Proposal 두개를 생성한다.
       // await expect(hardhatLendingBoardProposeMode.connect(owner).borrowProposal(STKNaddress,borrowAmount2,PLUGaddress,interestRate,dueDate)).to.emit(hardhatLendingBoardProposeMode,"BorrowProposed");
@@ -495,6 +496,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log(" Proposal Liquidation Availability : ", proposalLiquidationAvailability);
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("\x1b[33m%s\x1b[0m", "--> Borrow Proposal should be accepted before Liquidation.");
 
       // Owner's STKN Balance before Proposal Accept
       var ownerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(
@@ -535,6 +537,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       await hardhatLendingBoardProposeMode
         .connect(user1)
         .borrowProposalAccept(0);
+      console.log("    [*] Borrow Proposal #1 Accepted");
       
       // proposalLiquidationAvailability =
       // await hardhatLendingBoardDataProvider.getProposalLiquidationAvailability(
@@ -553,11 +556,13 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
         );
       console.log("\x1b[32m%s\x1b[0m\x1b[34m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data ", "After ", "Borrow Proposal Accept");
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log(" Current AToken Balance   :", ownerSTKNReserveData.currentATokenBalance.toString());
       console.log(" Current Borrow Balance   :", ownerSTKNReserveData.currentBorrowBalance.toString());
       console.log(" Principal Borrow Balance :", ownerSTKNReserveData.principalBorrowBalance.toString());
       console.log(" Origination Fee          :", ownerSTKNReserveData.originationFee.toString());
-      console.log(" Current AToken Balance   :", ownerSTKNReserveData.currentATokenBalance.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("\x1b[33m%s\x1b[0m", "--> Borrow Balance Values are changed.");
+      console.log("\x1b[33m%s\x1b[0m", "--> Also Origination Fee is charged.");
 
       ownerPLUGReserveData =
         await hardhatLendingBoardDataProvider.getUserReserveData(
@@ -571,6 +576,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log(" Principal Borrow Balance :", ownerPLUGReserveData.principalBorrowBalance.toString());
       console.log(" Origination Fee          :", ownerPLUGReserveData.originationFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("\x1b[33m%s\x1b[0m", "--> Amount of PLUG(Collateral) decreased.");
 
       
       /*
@@ -584,19 +590,18 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log("\x1b[36m%s\x1b[0m", "╚════════════════════════════════════════════════╝");
       console.log("\x1b[36m%s\x1b[0m", "=> User3 wants to liquidate someone's Borrow Position.");
 
-      let liquidatorSTKNReserveData =
-        await hardhatLendingBoardDataProvider.getUserReserveData(
-          STKNaddress,
-          user2.address
-        );
-
-      console.log("\x1b[32m%s\x1b[0m\x1b[31m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser3's STKN Reserve Data ", "Before ", "Liquidation Execution");
-      console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(" Current AToken Balance   :", liquidatorSTKNReserveData.currentATokenBalance.toString());
-      console.log(" Current Borrow Balance   :", liquidatorSTKNReserveData.currentBorrowBalance.toString());
-      console.log(" Principal Borrow Balance :", liquidatorSTKNReserveData.principalBorrowBalance.toString());
-      console.log(" Origination Fee          :", liquidatorSTKNReserveData.originationFee.toString());
-      console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      // let liquidatorSTKNReserveData =
+      //   await hardhatLendingBoardDataProvider.getUserReserveData(
+      //     STKNaddress,
+      //     user2.address
+      //   );
+      // console.log("\x1b[32m%s\x1b[0m\x1b[31m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser3's STKN Reserve Data ", "Before ", "Liquidation Execution");
+      // console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      // console.log(" Current AToken Balance   :", liquidatorSTKNReserveData.currentATokenBalance.toString());
+      // console.log(" Current Borrow Balance   :", liquidatorSTKNReserveData.currentBorrowBalance.toString());
+      // console.log(" Principal Borrow Balance :", liquidatorSTKNReserveData.principalBorrowBalance.toString());
+      // console.log(" Origination Fee          :", liquidatorSTKNReserveData.originationFee.toString());
+      // console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       let liquidatorPLUGReserveData =
         await hardhatLendingBoardDataProvider.getUserReserveData(
@@ -635,18 +640,22 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       await hardhatLendingBoardProposeMode
         .connect(user2)
         .liquidationCallProposeMode(0, true, true);
+      console.log("    [*] Borrow Proposal #1 Liquidated");
 
-      var ownerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(
-        STKNaddress,
-        owner.address
-      )
-      console.log("\x1b[32m%s\x1b[0m\x1b[36m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data ", "After ", "Liquidation Execution");
-      console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(" Current AToken Balance   :", ownerSTKNReserveData.currentATokenBalance.toString());
-      console.log(" Current Borrow Balance   :", ownerSTKNReserveData.currentBorrowBalance.toString());
-      console.log(" Principal Borrow Balance :", ownerSTKNReserveData.principalBorrowBalance.toString());
-      console.log(" Origination Fee          :", ownerSTKNReserveData.originationFee.toString());
-      console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      // var ownerSTKNReserveData = await hardhatLendingBoardDataProvider.getUserReserveData(
+      //   STKNaddress,
+      //   owner.address
+      // )
+      // console.log("\x1b[32m%s\x1b[0m\x1b[36m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser1's STKN Reserve Data ", "After ", "Liquidation Execution");
+      // console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      // console.log(" Current AToken Balance   :", ownerSTKNReserveData.currentATokenBalance.toString());
+      // console.log(" Current Borrow Balance   :", ownerSTKNReserveData.currentBorrowBalance.toString());
+      // console.log(" Principal Borrow Balance :", ownerSTKNReserveData.principalBorrowBalance.toString());
+      // console.log(" Origination Fee          :", ownerSTKNReserveData.originationFee.toString());
+      // console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      // console.log("\x1b[33m%s\x1b[0m", "--> User3 liquidates User1's Borrow Position.");
+      // console.log("\x1b[33m%s\x1b[0m", "--> User1 do not have to pat origination fee.");
+      // console.log("\x1b[33m%s\x1b[0m", "--> Still, User1 has to pay back the Borrowed Amount.");
 
       ownerPLUGReserveData =
       await hardhatLendingBoardDataProvider.getUserReserveData(
@@ -660,20 +669,20 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log(" Principal Borrow Balance :", ownerPLUGReserveData.principalBorrowBalance.toString());
       console.log(" Origination Fee          :", ownerPLUGReserveData.originationFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("\x1b[33m%s\x1b[0m", "--> Borrow Position is Liquidated, so User1's PLUG(Collateral) is decreased.");
 
-      liquidatorSTKNReserveData =
-        await hardhatLendingBoardDataProvider.getUserReserveData(
-          STKNaddress,
-          user2.address
-        );
-
-      console.log("\x1b[32m%s\x1b[0m\x1b[36m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser3's STKN Reserve Data ", "After ", "Liquidation Execution");
-      console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(" Current AToken Balance   :", liquidatorSTKNReserveData.currentATokenBalance.toString());
-      console.log(" Current Borrow Balance   :", liquidatorSTKNReserveData.currentBorrowBalance.toString());
-      console.log(" Principal Borrow Balance :", liquidatorSTKNReserveData.principalBorrowBalance.toString());
-      console.log(" Origination Fee          :", liquidatorSTKNReserveData.originationFee.toString());
-      console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      // liquidatorSTKNReserveData =
+      //   await hardhatLendingBoardDataProvider.getUserReserveData(
+      //     STKNaddress,
+      //     user2.address
+      //   );
+      // console.log("\x1b[32m%s\x1b[0m\x1b[36m%s\x1b[0m\x1b[32m%s\x1b[0m", "\n\nUser3's STKN Reserve Data ", "After ", "Liquidation Execution");
+      // console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      // console.log(" Current AToken Balance   :", liquidatorSTKNReserveData.currentATokenBalance.toString());
+      // console.log(" Current Borrow Balance   :", liquidatorSTKNReserveData.currentBorrowBalance.toString());
+      // console.log(" Principal Borrow Balance :", liquidatorSTKNReserveData.principalBorrowBalance.toString());
+      // console.log(" Origination Fee          :", liquidatorSTKNReserveData.originationFee.toString());
+      // console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
       liquidatorPLUGReserveData =
         await hardhatLendingBoardDataProvider.getUserReserveData(
@@ -687,6 +696,7 @@ describe("<LendingBoardProposeMode Contract Test Implementation>", function () {
       console.log(" Principal Borrow Balance :", liquidatorPLUGReserveData.principalBorrowBalance.toString());
       console.log(" Origination Fee          :", liquidatorPLUGReserveData.originationFee.toString());
       console.log("\x1b[32m%s\x1b[0m", "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("\x1b[33m%s\x1b[0m", "--> User3 got some PLUG(Collateral) as a reward of Liquidation.");
 
       // // check lender's NFT balance after liquidation & burn NFT
       // const afterNFTbalance = await hardhatLendingBoardNFT.balanceOf(owner.address);
