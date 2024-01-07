@@ -320,7 +320,7 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
             addressesProvider.getTokenDistributor()
         );
 
-        console.log("\x1b[43m %s %s \x1b[0m", "\n   => LBPM : Fee Collected Amount", vars.originationFee);
+        // console.log("\x1b[43m %s %s \x1b[0m", "\n   => LBPM : Fee Collected Amount", vars.originationFee);
 
         //default to max amount
         vars.paybackAmount = vars.compoundedBorrowBalance.add(vars.originationFee);
@@ -1062,14 +1062,14 @@ contract LendingBoardProposeMode is ReentrancyGuard,VersionedInitializable{
         // After Proposal Accepted => Deactivation
         core.deactivateProposal(_proposalId,_isBorrowProposal);
 
-        console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Started");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Started");
         // @김주헌 Added Minting NFT & Send to Lender
         uint256 _tokenId;
         uint256 _contractTimestamp = block.timestamp;
         // require(block.timestamp <= _dueDate, "[!] Loan: Loan is expired");
         _tokenId = nft.mintNFT(_lender, _proposalId, _borrower, _amount, dueDate, _contractTimestamp, interestRate, paybackAmountMinusFee);
         
-        console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Done");
+        // console.log("\x1b[43m%s\x1b[0m", "\n   => LBPM : NFT Minting Done");
 
         if (_isBorrowProposal) {
             core.setTokenIdToBorrowProposalId(_proposalId, _tokenId);
