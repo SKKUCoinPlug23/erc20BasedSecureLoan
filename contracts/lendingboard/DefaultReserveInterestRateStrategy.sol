@@ -135,7 +135,7 @@ contract DefaultReserveInterestRateStrategy is IReserveInterestRateStrategy {
 
         // WIP : 기존 Oracle에서 currentStableBorrowRate를 현재 임의로 dummy value : _averageStableBorrowRate로 대체
         currentStableBorrowRate = _averageStableBorrowRate;
-        console.log("currentStableBorrowRate : ",currentStableBorrowRate);
+        // console.log("currentStableBorrowRate : ",currentStableBorrowRate);
 
         if (utilizationRate > OPTIMAL_UTILIZATION_RATE) {
             uint256 excessUtilizationRateRatio = utilizationRate

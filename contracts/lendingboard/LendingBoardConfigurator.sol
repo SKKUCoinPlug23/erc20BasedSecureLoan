@@ -182,7 +182,7 @@ contract LendingBoardConfigurator is VersionedInitializable {
         string memory aTokenName = string(abi.encodePacked("Aave Interest bearing ", asset.name()));
         string memory aTokenSymbol = string(abi.encodePacked("a", asset.symbol()));
 
-        console.log("aToken Name and Symbol",aTokenName,aTokenSymbol);
+        // console.log("aToken Name and Symbol",aTokenName,aTokenSymbol);
 
         initReserveWithData(
             _reserve,

@@ -405,12 +405,12 @@ contract LendingBoardDataProvider is VersionedInitializable {
             collateralLiquidationThreshold
         );
 
-        console.log("\x1b[42m%s\x1b[0m", "  => LBDP collateralBalanceETH ",collateralBalanceETH);
-        console.log("\x1b[42m%s\x1b[0m", "  => LBDP borrowBalanceETH ",borrowBalanceETH);
-        console.log("\x1b[42m%s\x1b[0m", "  => LBDP serviceFeeETH ",serviceFeeETH);
-        console.log("\x1b[42m%s\x1b[0m", "  => LBDP collateralLiquidationThreshold ",collateralLiquidationThreshold);
+        // console.log("\x1b[42m%s\x1b[0m", "  => LBDP collateralBalanceETH ",collateralBalanceETH);
+        // console.log("\x1b[42m%s\x1b[0m", "  => LBDP borrowBalanceETH ",borrowBalanceETH);
+        // console.log("\x1b[42m%s\x1b[0m", "  => LBDP serviceFeeETH ",serviceFeeETH);
+        // console.log("\x1b[42m%s\x1b[0m", "  => LBDP collateralLiquidationThreshold ",collateralLiquidationThreshold);
         // calculated ProposalStructure HealthFactor check
-        console.log("\x1b[42m%s\x1b[0m", "  => LBDP propoosalHealthFactor ",propoosalHealthFactor);
+        // console.log("\x1b[42m%s\x1b[0m", "  => LBDP propoosalHealthFactor ",propoosalHealthFactor);
 
         // If Proposal's Health Factor is lower than 1e18 => Available for Liquidation
         proposalLiquidationAvailability = propoosalHealthFactor < HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
